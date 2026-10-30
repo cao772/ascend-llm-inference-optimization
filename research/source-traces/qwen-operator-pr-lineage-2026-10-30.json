@@ -1,0 +1,310 @@
+{
+  "schema_version": "1.0",
+  "record_date": "2026-10-30",
+  "scope": "public upstream PR lifecycle and named file paths, not executable locally nor performance proof",
+  "sources": "GitHub PR metadata and per-file diff API inspected; version/author metrics stay in their source context",
+  "project_hardware_benchmark_count": 0,
+  "entries": [
+    {
+      "id": "PR-SGL-12787",
+      "repo": "sgl-project/sglang",
+      "number": 12787,
+      "title": "Initial MNNVL fused allreduce+residual+RMSNorm integration",
+      "merge_commit": "d35fea1b2b8ea919396c16ddef6c84d8bc276153",
+      "path": [
+        "python/sglang/srt/layers/flashinfer_comm_fusion.py"
+      ],
+      "mechanisms": [
+        "fusion",
+        "communication_overlap"
+      ],
+      "cases": [
+        "QINF-002"
+      ],
+      "finding": "First merged MNNVL backend for unified FlashInfer fusion; later reverted",
+      "evidence": "merged_pr_source",
+      "url": "https://github.com/sgl-project/sglang/pull/12787",
+      "merged": true,
+      "measured_by_us": false
+    },
+    {
+      "id": "PR-SGL-20792",
+      "repo": "sgl-project/sglang",
+      "number": 20792,
+      "title": "Revert MNNVL FlashInfer fusion due to hangs",
+      "merge_commit": "3d8fc9a0cad331f60b7c635e6809dd89eb409f9d",
+      "path": [
+        "python/sglang/srt/layers/flashinfer_comm_fusion.py"
+      ],
+      "mechanisms": [
+        "fusion",
+        "graph_capture"
+      ],
+      "cases": [
+        "QINF-002"
+      ],
+      "finding": "Reverted PR #12787; later PR #23402 explained piecewise CUDA graph interaction",
+      "evidence": "merged_pr_source",
+      "url": "https://github.com/sgl-project/sglang/pull/20792",
+      "merged": true,
+      "measured_by_us": false
+    },
+    {
+      "id": "PR-SGL-22664",
+      "repo": "sgl-project/sglang",
+      "number": 22664,
+      "title": "Enable pre-existing FlashInfer allreduce fusion for Qwen3Next",
+      "merge_commit": "c6a45fab649db965c0eddb620ebf8d1782304d17",
+      "path": [
+        "python/sglang/srt/server_args.py"
+      ],
+      "mechanisms": [
+        "fusion",
+        "communication_overlap"
+      ],
+      "cases": [
+        "QINF-002"
+      ],
+      "finding": "Only 1 file / +3 -1: model whitelist auto-enables existing fusion on SM90/SM100 TP>1; PR reports H100 TP4 5.49→9.41 req/s, not a new kernel implementation",
+      "evidence": "merged_pr_and_author_benchmark",
+      "url": "https://github.com/sgl-project/sglang/pull/22664",
+      "merged": true,
+      "measured_by_us": false
+    },
+    {
+      "id": "PR-SGL-23402",
+      "repo": "sgl-project/sglang",
+      "number": 23402,
+      "title": "Reintroduce MNNVL backend with graph-safety and fallback protections",
+      "merge_commit": "32685874f335282496087d15c3d67e67102cdda8",
+      "path": [
+        "python/sglang/srt/layers/flashinfer_comm_fusion.py",
+        "python/sglang/srt/layers/communicator.py",
+        "python/sglang/srt/server_args.py"
+      ],
+      "mechanisms": [
+        "fusion",
+        "communication_overlap",
+        "graph_capture"
+      ],
+      "cases": [
+        "QINF-002"
+      ],
+      "finding": "Explicit backend auto/trtllm/mnnvl; MNNVL+piecewise CUDA graph unsafe; fallback must still perform AllReduce if fusion returns None",
+      "evidence": "merged_pr_source_and_author_benchmark",
+      "url": "https://github.com/sgl-project/sglang/pull/23402",
+      "merged": true,
+      "measured_by_us": false
+    },
+    {
+      "id": "PR-SGL-24629",
+      "repo": "sgl-project/sglang",
+      "number": 24629,
+      "title": "Disable FlashInfer fusion in deterministic inference",
+      "merge_commit": "e9a15b95da4463a6558760c9526893220ec6b2c8",
+      "path": [
+        "python/sglang/srt/server_args.py"
+      ],
+      "mechanisms": [
+        "fusion"
+      ],
+      "cases": [
+        "QINF-002"
+      ],
+      "finding": "Batch-dependent reduction ordering breaks bit-exact logprobs; explicit deterministic mode must override Qwen3Next auto enable",
+      "evidence": "merged_pr_and_author_correctness_repro",
+      "url": "https://github.com/sgl-project/sglang/pull/24629",
+      "merged": true,
+      "measured_by_us": false
+    },
+    {
+      "id": "PR-ASC-12119",
+      "repo": "vllm-project/vllm-ascend",
+      "number": 12119,
+      "title": "Remove matmul-allreduce and fused AllReduce-RMS optimization path",
+      "merge_commit": "2ee50f3847e4873e61d280911b2a24d85f5278d6",
+      "path": [
+        "csrc/mc2/matmul_allreduce_add_rmsnorm/",
+        "vllm_ascend/compilation/passes/allreduce_rmsnorm_fusion_pass.py",
+        "vllm_ascend/ops/linear_op.py"
+      ],
+      "mechanisms": [
+        "fusion",
+        "communication_overlap"
+      ],
+      "cases": [
+        "QINF-001"
+      ],
+      "finding": "Deletes deprecated internal custom op, graph pass, env config and tests; old Ascend optimization path cannot be assumed to exist on later releases",
+      "evidence": "merged_pr_removal",
+      "url": "https://github.com/vllm-project/vllm-ascend/pull/12119",
+      "merged": true,
+      "measured_by_us": false
+    },
+    {
+      "id": "PR-ASC-11956",
+      "repo": "vllm-project/vllm-ascend",
+      "number": 11956,
+      "title": "Remove underutilized multistream overlap gate",
+      "merge_commit": "77baade98ded755b3e5ea30091bcf40a30ae0335",
+      "path": [
+        "vllm_ascend/ops/fused_moe/"
+      ],
+      "mechanisms": [
+        "communication_overlap",
+        "fusion"
+      ],
+      "cases": [
+        "QINF-001"
+      ],
+      "finding": "Removes FC3 overlap gate and its stream management; PR describes feature as underutilized / low-value",
+      "evidence": "merged_pr_removal",
+      "url": "https://github.com/vllm-project/vllm-ascend/pull/11956",
+      "merged": true,
+      "measured_by_us": false
+    },
+    {
+      "id": "PR-ASC-11949",
+      "repo": "vllm-project/vllm-ascend",
+      "number": 11949,
+      "title": "Remove weight prefetch feature/config",
+      "merge_commit": "e77502ef715f612f2cc6f3c833174431f26cb765",
+      "path": [
+        "vllm_ascend/"
+      ],
+      "mechanisms": [
+        "memory_traffic"
+      ],
+      "cases": [
+        "QINF-001"
+      ],
+      "finding": "Removes prefetch implementation, configuration and documentation; PR says underutilized / low-value",
+      "evidence": "merged_pr_removal",
+      "url": "https://github.com/vllm-project/vllm-ascend/pull/11949",
+      "merged": true,
+      "measured_by_us": false
+    },
+    {
+      "id": "PR-FI-3001",
+      "repo": "flashinfer-ai/flashinfer",
+      "number": 3001,
+      "title": "Blackwell GDN prefill CuTe-DSL kernel",
+      "merge_commit": "7c562d502513343c40281d15f4f846af38ecebe1",
+      "path": [
+        "flashinfer/gdn_kernels/blackwell/gdn_prefill.py",
+        "flashinfer/gdn_kernels/blackwell/gated_delta_net_chunked.py"
+      ],
+      "mechanisms": [
+        "kernel_specialization",
+        "memory_traffic"
+      ],
+      "cases": [
+        "QINF-004"
+      ],
+      "finding": "Adds kernel + shape-aware benchmark; original implementation later needed SM count correction",
+      "evidence": "merged_pr_and_author_microbenchmark",
+      "url": "https://github.com/flashinfer-ai/flashinfer/pull/3001",
+      "merged": true,
+      "measured_by_us": false
+    },
+    {
+      "id": "PR-FI-3155",
+      "repo": "flashinfer-ai/flashinfer",
+      "number": 3155,
+      "title": "Fix physical SM count for GDN persistent scheduler",
+      "merge_commit": "5e1318cb33eb71dc669464c73890e3515c3fa3ef",
+      "path": [
+        "flashinfer/gdn_kernels/blackwell/gdn_prefill.py"
+      ],
+      "mechanisms": [
+        "kernel_specialization"
+      ],
+      "cases": [
+        "QINF-004"
+      ],
+      "finding": "Original HardwareInfo get_max_active_clusters could be zero/stale in subprocess workers and hang at first kernel call; replaced with get_num_sm(q.device)",
+      "evidence": "merged_pr_bugfix",
+      "url": "https://github.com/flashinfer-ai/flashinfer/pull/3155",
+      "merged": true,
+      "measured_by_us": false
+    },
+    {
+      "id": "PR-VLLM-40717",
+      "repo": "vllm-project/vllm",
+      "number": 40717,
+      "title": "Enable FlashInfer GDN prefill on Blackwell with guarded fallback",
+      "merge_commit": "1cb224430bea0d037b57e24cf91001f47b69ddf3",
+      "path": [
+        "vllm/model_executor/layers/mamba/gdn_linear_attn.py"
+      ],
+      "mechanisms": [
+        "kernel_specialization"
+      ],
+      "cases": [
+        "QINF-004"
+      ],
+      "finding": "Blackwell dispatch requires CUDA, head_k_dim=128 and CUDA runtime>=13; otherwise fallback Triton/FLA; original PR cautions wait for FI bugfix #3155",
+      "evidence": "merged_pr_and_author_microbenchmark",
+      "url": "https://github.com/vllm-project/vllm/pull/40717",
+      "merged": true,
+      "measured_by_us": false
+    },
+    {
+      "id": "PR-VLLM-51674",
+      "repo": "vllm-project/vllm",
+      "number": 51674,
+      "title": "Fused CUDA post-conv GDN MTP decode, public checkpoint dispatch mismatch",
+      "merge_commit": "1be36283678a9a94fc8fdaad6c95c2896d6b4015",
+      "path": [
+        "csrc/libtorch_stable/gdn/fused_gdn_decode_kernel.cu",
+        "vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py",
+        "tests/kernels/mamba/test_gdn_fused_mtp.py"
+      ],
+      "mechanisms": [
+        "fusion",
+        "kernel_specialization",
+        "speculative"
+      ],
+      "cases": [
+        "QINF-004"
+      ],
+      "finding": "Kernel microbench cold 1.17–2.20x, but dispatch requires num_v_heads==8*num_k_heads, CUDA GDN decode, BF16/FP32 recurrent state, MTP-only spec, <=8 speculative tokens, op built; PR says public Qwen3.5 checkpoints tested do not satisfy ratio, no public checkpoint end-to-end eval of kernel",
+      "evidence": "merged_pr_microbenchmark_not_public_checkpoint_e2e",
+      "url": "https://github.com/vllm-project/vllm/pull/51674",
+      "merged": true,
+      "measured_by_us": false
+    }
+  ],
+  "edges": [
+    {
+      "from": "PR-SGL-12787",
+      "to": "PR-SGL-20792",
+      "relation": "reverted_by",
+      "source": "https://github.com/sgl-project/sglang/pull/20792"
+    },
+    {
+      "from": "PR-SGL-20792",
+      "to": "PR-SGL-23402",
+      "relation": "reintroduced_with_safety_guard_by",
+      "source": "https://github.com/sgl-project/sglang/pull/23402"
+    },
+    {
+      "from": "PR-SGL-22664",
+      "to": "PR-SGL-24629",
+      "relation": "determinism_regression_mitigated_by",
+      "source": "https://github.com/sgl-project/sglang/pull/24629"
+    },
+    {
+      "from": "PR-FI-3001",
+      "to": "PR-FI-3155",
+      "relation": "subprocess_deadlock_fixed_by",
+      "source": "https://github.com/flashinfer-ai/flashinfer/pull/3155"
+    },
+    {
+      "from": "PR-FI-3155",
+      "to": "PR-VLLM-40717",
+      "relation": "fix_required_before_enable",
+      "source": "https://github.com/vllm-project/vllm/pull/40717"
+    }
+  ]
+}
