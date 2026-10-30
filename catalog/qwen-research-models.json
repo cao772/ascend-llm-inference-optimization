@@ -1,0 +1,63 @@
+{
+  "schema_version": "1.0",
+  "as_of": "2026-10-30",
+  "status": "selected official model checkpoints, NOT exhaustive of all Qwen models/variants/quantizations",
+  "weights_uploaded_to_drive": false,
+  "selection_rule": "only identified official Qwen checkpoints; lock SHA before claiming any completed replica",
+  "models": [
+    {
+      "id": "Qwen/Qwen3-0.6B",
+      "family": "Qwen3",
+      "architecture": "dense",
+      "purpose": "small text baseline",
+      "priority": "P1",
+      "known_size_gb": 1.52,
+      "source": "https://huggingface.co/Qwen/Qwen3-0.6B/tree/main"
+    },
+    {
+      "id": "Qwen/Qwen3-Embedding-0.6B",
+      "family": "Qwen3-Embedding",
+      "architecture": "embedding",
+      "purpose": "embedding/search experiments",
+      "priority": "P1",
+      "known_size_gb": null,
+      "source": "https://huggingface.co/Qwen/Qwen3-Embedding-0.6B/tree/main"
+    },
+    {
+      "id": "Qwen/Qwen3.5-35B-A3B",
+      "family": "Qwen3.5",
+      "architecture": "MoE",
+      "purpose": "Dewu article primary model",
+      "priority": "P0",
+      "known_size_gb": 71.9,
+      "source": "https://huggingface.co/Qwen/Qwen3.5-35B-A3B/tree/main"
+    },
+    {
+      "id": "Qwen/Qwen3.6-27B",
+      "family": "Qwen3.6",
+      "architecture": "dense",
+      "purpose": "user's deployed-model research",
+      "priority": "P0",
+      "known_size_gb": null,
+      "source": "https://huggingface.co/Qwen/Qwen3.6-27B/tree/main"
+    },
+    {
+      "id": "Qwen/Qwen3.6-35B-A3B",
+      "family": "Qwen3.6",
+      "architecture": "MoE",
+      "purpose": "MTP / MoE follow-on",
+      "priority": "P1",
+      "known_size_gb": 71.9,
+      "source": "https://huggingface.co/Qwen/Qwen3.6-35B-A3B/tree/main"
+    },
+    {
+      "id": "Qwen/Qwen3.8-27B",
+      "family": "Qwen3.8",
+      "architecture": "dense",
+      "purpose": "newer architecture comparison",
+      "priority": "P1",
+      "known_size_gb": null,
+      "source": "https://huggingface.co/Qwen/Qwen3.8-27B/tree/main"
+    }
+  ]
+}
