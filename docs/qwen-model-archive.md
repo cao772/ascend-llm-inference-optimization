@@ -4,7 +4,7 @@
 
 ## 三端位置
 
-- 研究代码：\`cao772/ascend-llm-inference-optimization\`，工作分支 \`research/2026-10-30-foundation\`（Draft PR #4，不修改 main）。
+- 研究代码：`cao772/ascend-llm-inference-optimization`，工作分支 `research/2026-10-30-foundation`（Draft PR #4，不修改 main）。
 - Notion：<https://app.notion.com/p/4097bbed1352816fad17d3102052812e>。
 - Drive 根目录：<https://drive.google.com/drive/folders/178-RqShzz4aJzZx7B436BdQagI8BT6yb>。
 - Drive 权重目录（目前为空）：<https://drive.google.com/drive/folders/1NVaimWqjE6a0uoGBh-kSxAJrivBEnqsm>。
@@ -12,7 +12,7 @@
 ## 「Qwen 全套」的边界
 
 Qwen 包含多代模型、Dense/MoE、Coder、VL、Embedding、Reranker、ASR、Omni、不同精度和大量衍生版本。
-不能把 \`catalog/qwen-research-models.json\` 的 **6 个优先研究 checkpoint** 当成全部 Qwen。
+不能把 `catalog/qwen-research-models.json` 的 **6 个优先研究 checkpoint** 当成全部 Qwen。
 先按官方组织持续检索：<https://huggingface.co/Qwen/models>，官方项目：<https://github.com/QwenLM/Qwen3.8>。
 同一模型的 BF16/FP8/GGUF 等不必全部备份；应按研究需求、许可和可用空间选择具体版本。
 
@@ -33,29 +33,29 @@ Qwen 包含多代模型、Dense/MoE、Coder、VL、Embedding、Reranker、ASR、
 
 ## 1. 生成官方模型清单
 
-\`\`\`bash
+```bash
 python3 tools/qwen_inventory.py --output build/qwen-offline.json
 python3 tools/qwen_inventory.py --online --output build/qwen-live-metadata.json
 python3 tools/qwen_inventory.py --online --only Qwen/Qwen3.6-27B
-\`\`\`
+```
 
-\`--online\` 会尝试从 Hugging Face 获取当前 revision、文件数量、许可声明与文件体积。
+`--online` 会尝试从 Hugging Face 获取当前 revision、文件数量、许可声明与文件体积。
 网络不可用、文件大小信息不完整时，状态必须保留为 error/unknown，不能凭估计宣称完成。
-\`build/\` 中数据仅是索引、不是权重。
+`build/` 中数据仅是索引、不是权重。
 
 ## 2. 单模型受控下载（在有足够磁盘与外网的工作站/服务器执行）
 
-\`\`\`bash
+```bash
 python3 -m pip install -U huggingface_hub
 python3 tools/download_qwen_snapshot.py --model-id Qwen/Qwen3-0.6B
 # 仅需要元数据：真正执行，但不下载权重
 python3 tools/download_qwen_snapshot.py --model-id Qwen/Qwen3-0.6B --execute --max-gb 3
 # 完整权重：明确打开开关，先核实磁盘容量、许可和网络
 python3 tools/download_qwen_snapshot.py --model-id Qwen/Qwen3-0.6B --execute --include-weights --max-gb 3
-\`\`\`
+```
 
-工具默认 dry-run；明确指定 \`--execute\` 才启动传输。执行时从官方 Hub 锁定 SHA revision，
-要求全部文件大小可核对，超出 \`--max-gb\` 则拒绝。完成后逐文件计算 SHA-256，并写 \`local-checksums.json\`。
+工具默认 dry-run；明确指定 `--execute` 才启动传输。执行时从官方 Hub 锁定 SHA revision，
+要求全部文件大小可核对，超出 `--max-gb` 则拒绝。完成后逐文件计算 SHA-256，并写 `local-checksums.json`。
 此 SHA-256 是**本地完整性记录**，不能单独证明与官方哈希一致；如果官方提供 LFS/Xet 校验数据还应逐项比对。
 下载日志要记录带宽/失败/重试、revision、license、总字节、验证结果。
 
@@ -63,25 +63,25 @@ python3 tools/download_qwen_snapshot.py --model-id Qwen/Qwen3-0.6B --execute --i
 
 运行上一步并验证本地快照后，才允许启动到 Drive 的上传。例如在已授权 rclone 的机器上：
 
-\`\`\`bash
+```bash
 # 此处 gdrive: 是你自己已配置好的 rclone remote；不要把 OAuth token 放进 GitHub。
 rclone copy "model-checkpoints/Qwen3-0.6B" \
   "gdrive:AI-Infra/Qwen/weights/Qwen3-0.6B" --dry-run
 # 核查 dry-run 后，再移除 --dry-run 执行真实上传
 rclone check "model-checkpoints/Qwen3-0.6B" \
   "gdrive:AI-Infra/Qwen/weights/Qwen3-0.6B"
-\`\`\`
+```
 
 示例远端路径**不等于当前已创建的 Drive 文件夹 ID**；实际配置必须指向本项目的真实目录。
 针对多 GB 文件应分批上传，必要时采用支持断点续传的方式，之后核验 Google Drive 远端字节、
-文件数量和适用的校验和。上传成功才更新模型状态为 \`uploaded_to_drive: true\`。
+文件数量和适用的校验和。上传成功才更新模型状态为 `uploaded_to_drive: true`。
 
 ## 4. 不同工作物的归档原则
 
 - GitHub：下载器、环境/版本锁、Benchmark、差异补丁、GitHub Actions；不存未经授权的原文镜像或大模型权重。
 - Notion：模型版本和 license、实验假设/结论、下一步和失败记录。
 - Drive：原始模型权重、tokenizer/配置、模型卡、profiling 大文件、实验报告。每模型独立文件夹包含固定 SHA revision 与校验清单。
-- 所有结果明确区分 \`article-reported\`、\`hypothesis\`、\`synthetic\` 与 \`measured\`。
+- 所有结果明确区分 `article-reported`、`hypothesis`、`synthetic` 与 `measured`。
 
 ## 5. 下一批性能研究
 
