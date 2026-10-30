@@ -9,7 +9,7 @@ on:
       - '.github/workflows/qwen-catalog.yml'
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   inventory:
@@ -32,3 +32,24 @@ jobs:
           path: build/qwen-official-inventory.json
           if-no-files-found: warn
           retention-days: 30
+      - name: Persist complete public model inventory to research branch
+        if: success() && github.event_name == 'push' && startsWith(github.ref, 'refs/heads/research/')
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p = Path("build/qwen-official-inventory.json")
+          x = json.loads(p.read_text(encoding="utf-8"))
+          if not x["complete"] or x["model_count"] < 1:
+              raise SystemExit("Refusing to commit partial or empty Qwen catalog")
+          Path("catalog").mkdir(exist_ok=True)
+          Path("catalog/qwen-official-inventory.json").write_bytes(p.read_bytes())
+          print(f"Complete public Qwen model manifest: {x['model_count']} entries")
+          PY
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add catalog/qwen-official-inventory.json
+          if ! git diff --cached --quiet; then
+            git commit -m "data: refresh complete official Qwen model inventory [skip ci]"
+            git push origin "HEAD:${GITHUB_REF#refs/heads/}"
+          fi
