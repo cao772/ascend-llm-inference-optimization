@@ -17,7 +17,11 @@ CASES_PATH = ROOT / "research" / "cases" / "qwen-optimization-cases-2026-10-30.j
 
 REQUIRED = ("id", "name", "model", "hardware", "engine", "workload",
             "stage", "evidence_status", "mechanisms", "operators", "source_urls")
-UNMEASURED = {"proposal_not_measurement", "open_source_benchmark_tool_not_measured_here"}
+UNMEASURED = {
+    "proposal_not_measurement",
+    "open_source_benchmark_tool_not_measured_here",
+    "open_source_method_no_benchmark",
+}
 
 
 def validate(payload):
@@ -51,6 +55,7 @@ def compare(payload, min_shared=2, include_proposals=False):
     cases = validate(payload)
     selected = [x for x in cases if include_proposals or x["evidence_status"] not in UNMEASURED]
     frequencies = Counter(tag for x in selected for tag in x["mechanisms"])
+    evidence_counts = Counter(x["evidence_status"] for x in cases)
     pairs = []
     for a, b in itertools.combinations(selected, 2):
         shared = sorted(set(a["mechanisms"]) & set(b["mechanisms"]))
@@ -70,6 +75,7 @@ def compare(payload, min_shared=2, include_proposals=False):
         "purpose": "shared technical mechanisms only (not performance ranking, prediction, or validated portability)",
         "included_cases": len(selected),
         "all_cases": len(cases),
+        "evidence_status_counts": dict(sorted(evidence_counts.items())),
         "include_proposals": include_proposals,
         "frequencies": dict(sorted(frequencies.items(), key=lambda x: (-x[1], x[0]))),
         "pairs": pairs,
