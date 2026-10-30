@@ -1,0 +1,286 @@
+{
+  "schema_version": "1.0",
+  "curated_date": "2026-10-30",
+  "description": "跨硬件 Qwen 推理优化案例：区分原作者自测、合入 PR、工具与提案；本仓库未运行任何硬件基准",
+  "no_local_benchmark": true,
+  "comparison_warning": "不同模型/硬件/负载/阶段绝不可直接比较性能百分比",
+  "mechanism_vocabulary": [
+    "fusion",
+    "communication",
+    "communication_overlap",
+    "host_dispatch",
+    "memory_traffic",
+    "graph_capture",
+    "state_cache",
+    "speculative",
+    "kernel_specialization",
+    "routing",
+    "quantization"
+  ],
+  "cases": [
+    {
+      "id": "QINF-001",
+      "name": "得物：昇腾 910C Qwen3.5-35B-A3B 低并发推理",
+      "team": "得物技术",
+      "model": "Qwen3.5-35B-A3B",
+      "hardware": "Ascend 910C / TP2 (文章包含 560t/752t 各阶段)",
+      "engine": "vLLM-Ascend v0.23.0 内部分支",
+      "workload": "online decode c=1/4/8; 1024 in / 512 out, random and business datasets differ by stage",
+      "stage": "decode",
+      "evidence_status": "author_reported_measurement_private_patch",
+      "outcome": "c=1 TPOT 14.22ms → 5.0ms in author's final setup (64.8% lower); not like-for-like across every intervening step",
+      "mechanisms": [
+        "fusion",
+        "communication_overlap",
+        "host_dispatch",
+        "memory_traffic",
+        "graph_capture",
+        "state_cache",
+        "speculative"
+      ],
+      "operators": [
+        "GDN",
+        "MoE",
+        "AllReduce",
+        "RMSNorm",
+        "sampling"
+      ],
+      "source_urls": [
+        "https://mp.weixin.qq.com/s/ML52pF8YyezpUDfIEV3IWQ",
+        "https://mp.weixin.qq.com/s/GXaZWhIZ25ifH07iaTxfZQ"
+      ],
+      "code_url": "https://github.com/vllm-project/vllm-ascend/tree/v0.23.0",
+      "reproduction_status": "no_local_hardware",
+      "notes": "原作者源码内部分支未确认公开；硬件版本/数据集在阶段间有变化；不能断言统一可复现 64.8%"
+    },
+    {
+      "id": "QINF-002",
+      "name": "SGLang Qwen3-Coder-Next：FlashInfer AllReduce 融合",
+      "team": "SGLang contributors",
+      "model": "Qwen3-Coder-Next",
+      "hardware": "4× NVIDIA H100 / TP4",
+      "engine": "SGLang",
+      "workload": "random 2048 input / 256 output; 128 prompts; max concurrency 32",
+      "stage": "prefill_and_decode",
+      "evidence_status": "merged_pr_with_author_benchmarks",
+      "outcome": "request throughput 5.49→9.41 req/s (+71.4%); mean TTFT 456.24→167.54ms; mean TPOT 50.41→25.49ms",
+      "mechanisms": [
+        "fusion",
+        "communication",
+        "memory_traffic"
+      ],
+      "operators": [
+        "AllReduce",
+        "RMSNorm"
+      ],
+      "source_urls": [
+        "https://github.com/sgl-project/sglang/pull/22664",
+        "https://github.com/sgl-project/sglang/pull/24629"
+      ],
+      "code_url": "https://github.com/sgl-project/sglang/pull/22664/files",
+      "reproduction_status": "upstream_report_only",
+      "notes": "后续确定性推理存在回归并有禁用融合的修复 PR #24629；不能直接移植到 Ascend"
+    },
+    {
+      "id": "QINF-003",
+      "name": "vLLM Qwen3.5-397B：QKNorm/RoPE/Post-Conv 融合",
+      "team": "vLLM community",
+      "model": "Qwen3.5-397B-A17B",
+      "hardware": "NVIDIA Blackwell Ultra (文章部署配置)",
+      "engine": "vLLM",
+      "workload": "reported concurrency=1 and concurrency=256, model-specific production workload",
+      "stage": "decode",
+      "evidence_status": "upstream_team_reported_measurement",
+      "outcome": "163 tok/s at c1; 6.69→7.33 req/s at c256 (+~10%) after combined tuning",
+      "mechanisms": [
+        "fusion",
+        "host_dispatch",
+        "memory_traffic",
+        "communication_overlap"
+      ],
+      "operators": [
+        "QKNorm",
+        "RoPE",
+        "GDN",
+        "RMSNorm",
+        "AllReduce"
+      ],
+      "source_urls": [
+        "https://vllm.ai/blog/2026-05-11-vllm-tops-artificial-analysis"
+      ],
+      "code_url": "https://github.com/vllm-project/vllm/pull/37813",
+      "reproduction_status": "upstream_report_only",
+      "notes": "多个改动叠加，整体吞吐提升不能归因到单一融合；不同模型形状适用性需检查"
+    },
+    {
+      "id": "QINF-004",
+      "name": "FlashInfer + vLLM：Qwen3.5 Blackwell GDN Prefill Kernel",
+      "team": "FlashInfer / vLLM",
+      "model": "Qwen3.5-397B-A17B-NVFP4",
+      "hardware": "8× NVIDIA B200",
+      "engine": "FlashInfer integrated with vLLM",
+      "workload": "prefill-only 8192 input / 1 output; varied shapes in microbench",
+      "stage": "prefill",
+      "evidence_status": "merged_kernel_and_upstream_team_benchmarks",
+      "outcome": "GDN kernel microbench up to 5.92×; end-to-end prefill throughput 1.13×; mean TTFT -12%",
+      "mechanisms": [
+        "kernel_specialization",
+        "memory_traffic"
+      ],
+      "operators": [
+        "GDN"
+      ],
+      "source_urls": [
+        "https://vllm.ai/blog/2026-08-06-qwen35-25k-tps",
+        "https://github.com/flashinfer-ai/flashinfer/pull/3001"
+      ],
+      "code_url": "https://github.com/flashinfer-ai/flashinfer/pull/3001",
+      "reproduction_status": "upstream_report_only",
+      "notes": "Kernel 微基准最高倍数≠整体推理倍数；基于 Blackwell/CUDA，不等于昇腾 AscendC 实现"
+    },
+    {
+      "id": "QINF-005",
+      "name": "腾讯 HPC-Ops × SGLang：Qwen3 Fused MoE",
+      "team": "Tencent Hunyuan / SGLang",
+      "model": "Qwen3 (benchmark shapes; not a single checkpoint)",
+      "hardware": "NVIDIA H200 (Qwen3 microbench); H20 for other deployments",
+      "engine": "HPC-Ops + SGLang",
+      "workload": "Qwen3/H200 microbenchmark, 8 tokens; Hy3 separately in online-serving workload",
+      "stage": "moe_kernel",
+      "evidence_status": "open_source_with_microbench",
+      "outcome": "Qwen3/H200 MoE kernel speedup up to 4.21× vs Triton at 8 tokens; Hy3 TPOT gains must not be attributed to Qwen3",
+      "mechanisms": [
+        "fusion",
+        "routing",
+        "kernel_specialization",
+        "memory_traffic"
+      ],
+      "operators": [
+        "MoE",
+        "Router GEMM"
+      ],
+      "source_urls": [
+        "https://www.lmsys.org/blog/2026-08-07-hpc-ops-sglang/",
+        "https://github.com/Tencent/hpc-ops/blob/main/benchmark/fused_moe/README.md"
+      ],
+      "code_url": "https://github.com/Tencent/hpc-ops",
+      "reproduction_status": "upstream_report_only",
+      "notes": "Qwen3 对比为算子级微基准；算子提升不能直接作为端到端 TPS 改善"
+    },
+    {
+      "id": "QINF-006",
+      "name": "Google Ironwood：Qwen3.5-397B 模块化算子优化",
+      "team": "Google",
+      "model": "Qwen3.5-397B-A17B",
+      "hardware": "Google TPU Ironwood (TPU7x)",
+      "engine": "JAX / Pallas and serving stack",
+      "workload": "prefill-heavy and decode-heavy; report uses concurrency 512",
+      "stage": "prefill_and_decode",
+      "evidence_status": "vendor_team_reported_measurement",
+      "outcome": "reported approximately 3.1× decode-heavy and 4.7× prefill-heavy throughput vs prior April baseline (June 2026, concurrency 512)",
+      "mechanisms": [
+        "kernel_specialization",
+        "routing",
+        "communication_overlap",
+        "memory_traffic"
+      ],
+      "operators": [
+        "GDN",
+        "Grouped GEMM",
+        "MoE"
+      ],
+      "source_urls": [
+        "https://developers.googleblog.com/systems-engineering-playbook-optimizing-qwen-35-397b-moe-on-ironwood-tpu7x/"
+      ],
+      "code_url": "https://github.com/vllm-project/vllm",
+      "reproduction_status": "upstream_report_only",
+      "notes": "模块化设计理念可借鉴，但 TPM/Pallas 内核不可直接移植到 AscendC；对照为跨月份持续迭代"
+    },
+    {
+      "id": "QINF-007",
+      "name": "MLX：Qwen3.6-35B-A3B Q4 Gate/Up 融合",
+      "team": "fbzz independent research",
+      "model": "Qwen3.6-35B-A3B-4bit",
+      "hardware": "Apple M4 Pro",
+      "engine": "MLX-LM / Metal",
+      "workload": "batch-one text decode, local frozen benchmark suite",
+      "stage": "decode",
+      "evidence_status": "open_source_with_self_reported_regression",
+      "outcome": "median decode +2.768%; some attempted fusions rejected because negative or numerical changes",
+      "mechanisms": [
+        "fusion",
+        "host_dispatch",
+        "memory_traffic",
+        "kernel_specialization"
+      ],
+      "operators": [
+        "MoE",
+        "gate_up"
+      ],
+      "source_urls": [
+        "https://github.com/fbzz/qwen3.6-mlx-inference"
+      ],
+      "code_url": "https://github.com/fbzz/qwen3.6-mlx-inference",
+      "reproduction_status": "upstream_report_only",
+      "notes": "社区小型研究，数据为作者自测；Metal Q4 与 910C BF16 实现不可直接互换"
+    },
+    {
+      "id": "QINF-008",
+      "name": "SGLang：Qwen3 MoE Triton 算子调优工具链",
+      "team": "SGLang contributors",
+      "model": "Qwen3 / Qwen3VL-related MoE benchmark support",
+      "hardware": "NVIDIA CUDA, TP/EP configurable",
+      "engine": "SGLang Triton",
+      "workload": "operator-level TP/EP tuning, no single benchmark shape asserted here",
+      "stage": "moe_kernel",
+      "evidence_status": "open_source_benchmark_tool_not_measured_here",
+      "outcome": null,
+      "mechanisms": [
+        "kernel_specialization",
+        "routing"
+      ],
+      "operators": [
+        "MoE",
+        "Grouped GEMM"
+      ],
+      "source_urls": [
+        "https://github.com/sgl-project/sglang/blob/main/benchmark/kernels/fused_moe_triton/README.md"
+      ],
+      "code_url": "https://github.com/sgl-project/sglang/tree/main/benchmark/kernels/fused_moe_triton",
+      "reproduction_status": "no_local_hardware",
+      "notes": "工具存在不等于性能结论，优先借鉴矩阵形状与测试用例"
+    },
+    {
+      "id": "QINF-009",
+      "name": "SGLang AMD MI300X Qwen3-Next 性能优化追踪提案",
+      "team": "SGLang community",
+      "model": "Qwen3-Next",
+      "hardware": "4× AMD MI300X / TP4 (proposal)",
+      "engine": "SGLang / AITER",
+      "workload": "proposed latency optimization",
+      "stage": "decode",
+      "evidence_status": "proposal_not_measurement",
+      "outcome": null,
+      "mechanisms": [
+        "fusion",
+        "communication",
+        "memory_traffic",
+        "kernel_specialization",
+        "quantization"
+      ],
+      "operators": [
+        "QKNorm",
+        "RoPE",
+        "RMSNorm",
+        "MoE",
+        "Attention"
+      ],
+      "source_urls": [
+        "https://github.com/sgl-project/sglang/issues/19196"
+      ],
+      "code_url": "https://github.com/sgl-project/sglang/issues/19196",
+      "reproduction_status": "proposal_only",
+      "notes": "文中若出现预期 15-20%、2x 等目标必须标为 proposed，绝非已测表现"
+    }
+  ]
+}
