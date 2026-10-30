@@ -38,7 +38,7 @@
       "architecture": "dense",
       "purpose": "user's deployed-model research",
       "priority": "P0",
-      "known_size_gb": null,
+      "known_size_gb": 55.6,
       "source": "https://huggingface.co/Qwen/Qwen3.6-27B/tree/main"
     },
     {
