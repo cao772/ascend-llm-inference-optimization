@@ -1,7 +1,7 @@
 {
-  "schema_version": "1.0",
+  "schema_version": "1.1",
   "curated_date": "2026-10-30",
-  "description": "跨硬件 Qwen 推理优化案例：区分原作者自测、合入 PR、工具与提案；本仓库未运行任何硬件基准",
+  "description": "15条跨硬件 Qwen 推理优化案例：严格分离实测/微基准/配置/提案，并保留输入形状、版本与数值限制。本研究无任何实机测量。",
   "no_local_benchmark": true,
   "comparison_warning": "不同模型/硬件/负载/阶段绝不可直接比较性能百分比",
   "mechanism_vocabulary": [
@@ -281,6 +281,177 @@
       "code_url": "https://github.com/sgl-project/sglang/issues/19196",
       "reproduction_status": "proposal_only",
       "notes": "文中若出现预期 15-20%、2x 等目标必须标为 proposed，绝非已测表现"
+    },
+    {
+      "id": "QINF-010",
+      "name": "TensorRT-LLM Qwen3.8-2.4T-A95B：MTP3 受控接受率试验",
+      "team": "NVIDIA TensorRT-LLM",
+      "model": "Qwen3.8-2.4T-A95B-FP8",
+      "hardware": "NVIDIA GB300; 16 GPUs; TP16/EP1 for latency; attention DP32/EP32 32 GPUs for throughput",
+      "engine": "TensorRT-LLM PyTorch backend (published deployment guide)",
+      "workload": "8192 input / 1024 output tokens; latency concurrency 1; MTP accepted-draft count fixed at 2.3",
+      "stage": "decode",
+      "evidence_status": "vendor_team_reported_measurement_with_controlled_acceptance",
+      "outcome": "Low-latency non-MTP 133.502 output tok/s/user (7.491ms median TPOT) versus MTP3 383.051 output tok/s/user (2.611ms); controlled accepted-draft count 2.3, not naturally sampled traffic",
+      "mechanisms": [
+        "speculative",
+        "graph_capture",
+        "memory_traffic"
+      ],
+      "operators": [
+        "MTP",
+        "MoE",
+        "GDN"
+      ],
+      "source_urls": [
+        "https://nvidia.github.io/TensorRT-LLM/latest/deployment-guide/deployment-guide-for-qwen3.8-qwen3.5-on-trtllm.html"
+      ],
+      "code_url": "https://github.com/NVIDIA/TensorRT-LLM",
+      "reproduction_status": "upstream_report_only",
+      "notes": "明确需要记录 synthetic/controlled acceptance，不能视为线上真实接受率；低延迟与高吞吐测试拓扑、并发不同，禁止合并计算倍数"
+    },
+    {
+      "id": "QINF-011",
+      "name": "TensorRT-LLM MoE Perf Guide：Qwen3.8 专家路由与微基准/线上落差",
+      "team": "NVIDIA TensorRT-LLM",
+      "model": "Qwen3.8 (MoE configuration: 512 experts, top-k=10)",
+      "hardware": "GB300/B300; other models also studied on GB200",
+      "engine": "TensorRT-LLM bench_moe v1.3.0rc26",
+      "workload": "module-level bench_moe with perfectly balanced expert routing; production routing may be skewed",
+      "stage": "moe_kernel",
+      "evidence_status": "open_source_benchmark_tool_not_measured_here",
+      "outcome": null,
+      "mechanisms": [
+        "routing",
+        "communication",
+        "kernel_specialization"
+      ],
+      "operators": [
+        "MoE",
+        "Grouped GEMM",
+        "dispatch",
+        "combine"
+      ],
+      "source_urls": [
+        "https://nvidia.github.io/TensorRT-LLM/latest/developer-guide/moe-perf-guide.html"
+      ],
+      "code_url": "https://github.com/NVIDIA/TensorRT-LLM",
+      "reproduction_status": "no_local_hardware",
+      "notes": "指南对其他模型的交叉验证发现真实路由不均可使完美路由微基准排名失效；不能将其统计直接归属 Qwen3.8；不宣称具体 Qwen3.8 加速百分比"
+    },
+    {
+      "id": "QINF-012",
+      "name": "TileOPs Qwen3 MoE：固定形状 30B/235B 算子微基准",
+      "team": "tile-ai TileOPs",
+      "model": "Qwen3-30B and Qwen3-235B benchmark shapes (not single end-to-end serving job)",
+      "hardware": "GPU test device not fixed in cited table; refer to benchmark calibration records",
+      "engine": "TileOPs benchmark suite",
+      "workload": "qwen3-30b-decode-b1 [T=1,H=2048,E=128] BF16; -b32 [T=32,H=2048,E=128]; Qwen3-235B prefill/decode separately",
+      "stage": "moe_kernel",
+      "evidence_status": "open_source_with_microbench",
+      "outcome": "FusedMoEFwd qwen3-30b-decode-b1 BF16 0.0396ms vs fastest listed vLLM 0.0413ms (~1.04x, site calls 0.95-1.05x level/noise); grouped GEMM qwen3-30b-ep8-decode 0.0213ms vs torch-grouped-mm 0.0320ms (1.51x); device-only times",
+      "mechanisms": [
+        "kernel_specialization",
+        "routing",
+        "memory_traffic"
+      ],
+      "operators": [
+        "Fused MoE",
+        "Grouped GEMM",
+        "routing"
+      ],
+      "source_urls": [
+        "https://tile-ai.github.io/TileOPs.github.io/benchmarks/moe/",
+        "https://tile-ai.github.io/TileOPs.github.io/benchmarks/reading/"
+      ],
+      "code_url": "https://github.com/tile-ai/TileOPs",
+      "reproduction_status": "upstream_report_only",
+      "notes": "网站把 1.04x 归为统计噪声范围而非显著收益；测试仅算子设备时长，不含 CPU 调度/在线请求，GPU 型号须从校准记录复核"
+    },
+    {
+      "id": "QINF-013",
+      "name": "vLLM Intel XPU：Qwen3.5 GDN/RMSNorm 优化规划及追踪",
+      "team": "vLLM XPU kernel maintainers",
+      "model": "Qwen3.5 and Qwen3-Next",
+      "hardware": "Intel XPU / SYCL (issue does not fix one model/hardware benchmark)",
+      "engine": "vllm-xpu-kernels",
+      "workload": "GDN l2norm, chunk_fwd_o, causal conv1d, grouped GEMM; roadmap items",
+      "stage": "gdn_kernel",
+      "evidence_status": "proposal_not_measurement",
+      "outcome": null,
+      "mechanisms": [
+        "fusion",
+        "kernel_specialization",
+        "memory_traffic"
+      ],
+      "operators": [
+        "GDN",
+        "L2Norm",
+        "causal_conv1d",
+        "RMSNorm"
+      ],
+      "source_urls": [
+        "https://github.com/vllm-project/vllm-xpu-kernels/issues/172"
+      ],
+      "code_url": "https://github.com/vllm-project/vllm-xpu-kernels",
+      "reproduction_status": "proposal_only",
+      "notes": "此 issue 为任务跟踪汇总，不表示所有子 PR 已合并或有端到端加速；各子 PR 要单独核查状态与 Benchmark"
+    },
+    {
+      "id": "QINF-014",
+      "name": "vLLM Speculators：Qwen3-Next/Qwen3.5 原生 MTP 的领域微调方法",
+      "team": "vLLM Speculators project",
+      "model": "Qwen3-Next / Qwen3.5 models with native MTP head",
+      "hardware": "hardware-independent training recipe; deployment hardware not measured here",
+      "engine": "vLLM Speculators",
+      "workload": "convert existing MTP head -> fine-tune on domain data -> stitch; no Qwen benchmark numbers cited in method page",
+      "stage": "speculative_training",
+      "evidence_status": "open_source_method_no_benchmark",
+      "outcome": null,
+      "mechanisms": [
+        "speculative",
+        "state_cache"
+      ],
+      "operators": [
+        "MTP",
+        "draft verifier",
+        "LM head"
+      ],
+      "source_urls": [
+        "https://docs.vllm.ai/projects/speculators/en/latest/user_guide/algorithms/mtp/"
+      ],
+      "code_url": "https://github.com/vllm-project/speculators",
+      "reproduction_status": "no_local_hardware",
+      "notes": "训练仅 MTP 层，冻结 embed_tokens 与 LM head；需要另测 acceptance length、TTFT、TPOT，方法说明不等于加速测量"
+    },
+    {
+      "id": "QINF-015",
+      "name": "TensorRT-LLM Qwen3.5：吞吐型部署参数配方与算子后端",
+      "team": "NVIDIA TensorRT-LLM",
+      "model": "Qwen3.5-397B-A17B-NVFP4",
+      "hardware": "4× NVIDIA B200 (reference config)",
+      "engine": "TensorRT-LLM PyTorch backend",
+      "workload": "high-throughput-oriented 4xB200, max batch 512, max_num_tokens 2048, TP4/EP4, attention DP",
+      "stage": "serving_configuration",
+      "evidence_status": "open_source_method_no_benchmark",
+      "outcome": null,
+      "mechanisms": [
+        "graph_capture",
+        "routing",
+        "quantization",
+        "memory_traffic"
+      ],
+      "operators": [
+        "MoE",
+        "KV Cache",
+        "CUDA Graph"
+      ],
+      "source_urls": [
+        "https://nvidia.github.io/TensorRT-LLM/deployment-guide/deployment-guide-for-qwen3.5-on-trtllm.html"
+      ],
+      "code_url": "https://github.com/NVIDIA/TensorRT-LLM",
+      "reproduction_status": "no_local_hardware",
+      "notes": "这是一份配置参考而非保证最优性能的测量；不同芯片、模型量化格式和负载不能直接沿用 batch/cache 配置"
     }
   ]
 }
