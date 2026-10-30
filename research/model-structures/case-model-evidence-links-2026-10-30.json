@@ -1,0 +1,42 @@
+{
+  "schema_version": "1.0",
+  "as_of": "2026-10-30",
+  "policy": "Links are editorial source-matched associations only; no assertion that kernels run on these models",
+  "links": [
+    {
+      "case_id": "QINF-001",
+      "model_id": "Qwen/Qwen3.5-35B-A3B",
+      "kind": "exact_model_mentioned",
+      "source": "https://mp.weixin.qq.com/s/GXaZWhIZ25ifH07iaTxfZQ",
+      "note": "Dewu 910C baseline model; private branch, no local measurement"
+    },
+    {
+      "case_id": "QINF-003",
+      "model_id": "Qwen/Qwen3.5-397B-A17B",
+      "kind": "exact_model_mentioned",
+      "source": "https://vllm.ai/blog/2026-05-11-vllm-tops-artificial-analysis",
+      "note": "Report model; individual CUDA config differs from other sources"
+    },
+    {
+      "case_id": "QINF-004",
+      "model_id": "Qwen/Qwen3.5-397B-A17B",
+      "kind": "quantized_derivative_structure_only",
+      "source": "https://vllm.ai/blog/2026-08-06-qwen35-25k-tps",
+      "note": "NVFP4 model, not bit-identical to BF16 official source checkpoint; mapping only approximate GDN structural family"
+    },
+    {
+      "case_id": "QINF-006",
+      "model_id": "Qwen/Qwen3.5-397B-A17B",
+      "kind": "exact_model_mentioned",
+      "source": "https://developers.googleblog.com/systems-engineering-playbook-optimizing-qwen-35-397b-moe-on-ironwood-tpu7x/",
+      "note": "Google TPU reference; code and backend not interchangeable with Ascend"
+    },
+    {
+      "case_id": "QINF-015",
+      "model_id": "Qwen/Qwen3.5-397B-A17B",
+      "kind": "quantized_derivative_structure_only",
+      "source": "https://nvidia.github.io/TensorRT-LLM/deployment-guide/deployment-guide-for-qwen3.5-on-trtllm.html",
+      "note": "NVFP4 deployment configuration; software version and inference backend differ from BF16 base"
+    }
+  ]
+}
