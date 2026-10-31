@@ -117,6 +117,11 @@ class EvidenceAtlasTests(unittest.TestCase):
     def test_bounded_result_and_invalid_radius(self):
         r = query_mod.retrieve(self.graph, "mechanism", "fusion", max_nodes=3)
         self.assertLessEqual(len(r["nodes"]), 3)
+        self.assertTrue(r["truncated_neighbors"])
+        self.assertFalse(r["truncated_anchors"])
+        r2 = query_mod.retrieve(self.graph, "failure_kind", "feature_removed", max_nodes=1)
+        self.assertEqual(len(r2["anchors_included"]), 1)
+        self.assertTrue(r2["truncated_anchors"])
         with self.assertRaisesRegex(ValueError, "radius"):
             query_mod.retrieve(self.graph, "mechanism", "fusion", radius=3)
 
