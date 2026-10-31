@@ -57,7 +57,7 @@ def build_atlas(cases, models, links, prs, failures):
     for e in base["edges"]:
         src = nodes[e["source"]]
         if e["relation"] in {"tagged_operator", "tagged_mechanism", "shares_tags"}:
-            urls = src.get("sources", [])
+            urls = list(src.get("sources", []))
             if e["relation"] == "shares_tags":
                 urls += nodes[e["target"]].get("sources", [])
                 lvl = "derived_tag_cooccurrence"
