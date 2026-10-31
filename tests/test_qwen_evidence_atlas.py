@@ -22,6 +22,29 @@ class EvidenceAtlasTests(unittest.TestCase):
         cls.failures = atlas_mod._load(atlas_mod.FAILURES_PATH)
         cls.graph = atlas_mod.build_atlas(cls.cases, cls.models, cls.links, cls.prs, cls.failures)
 
+    def test_schema_controls_nodes_relations_and_evidence_levels(self):
+        schema = json.loads(
+            (ROOT / "research/schemas/qwen-evidence-atlas.schema.json").read_text("utf-8")
+        )
+        self.assertEqual(schema["properties"]["project_hardware_measurements"]["const"], 0)
+        kinds = set(schema["properties"]["nodes"]["items"]["properties"]["kind"]["enum"])
+        relations = set(schema["properties"]["edges"]["items"]["properties"]["relation"]["enum"])
+        levels = set(schema["properties"]["edges"]["items"]["properties"]["evidence_level"]["enum"])
+        self.assertTrue({n["kind"] for n in self.graph["nodes"]} <= kinds)
+        self.assertTrue({e["relation"] for e in self.graph["edges"]} <= relations)
+        self.assertTrue({e["evidence_level"] for e in self.graph["edges"]} <= levels)
+        for e in self.graph["edges"]:
+            for field in schema["properties"]["edges"]["items"]["required"]:
+                self.assertIn(field, e)
+
+    def test_failure_nodes_always_stay_unreproduced_in_schema(self):
+        schema = json.loads(
+            (ROOT / "research/schemas/qwen-evidence-atlas.schema.json").read_text("utf-8")
+        )
+        self.assertTrue(schema["properties"]["nodes"]["items"]["properties"]["not_project_reproduced"]["const"])
+        self.assertTrue(all(n["not_project_reproduced"] for n in self.graph["nodes"]
+                            if n["kind"] == "failure_or_caveat"))
+
     def test_counts_and_not_local_benchmarks(self):
         g = self.graph
         self.assertEqual(g["project_hardware_measurements"], 0)
