@@ -9,6 +9,7 @@ on:
       - 'research/failures/**'
       - 'research/model-structures/**'
       - 'research/source-traces/**'
+      - 'research/schemas/**'
       - 'tools/build_qwen_evidence_atlas.py'
       - 'tools/query_qwen_evidence.py'
       - 'tools/build_qwen_model_case_graph.py'
@@ -37,6 +38,7 @@ jobs:
           python tools/query_qwen_evidence.py --model-id Qwen/Qwen3.6-27B --output build/qwen36-model-links.json
           python tools/query_qwen_evidence.py --failure-kind deadlock --output build/deadlock-rollback-evidence.json
           python tools/query_qwen_evidence.py --mechanism fusion --output build/fusion-cases-and-prs.json
+          cp research/schemas/qwen-evidence-atlas.schema.json build/qwen-evidence-atlas.schema.json
       - name: Verify graph and citations in output
         run: |
           python - <<'PY'
