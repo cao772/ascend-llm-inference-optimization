@@ -48,6 +48,7 @@ def retrieve(atlas, selector, value, radius=1, max_anchors=10, max_nodes=60):
     selected = set(anchor_ids)
     frontier = set(anchor_ids)
     seen_edges = {}
+    truncated_neighbors = False
     # An edge is selected only if it is incident to the previous frontier.
     # Bound total nodes to prevent a high-degree mechanism from filling output.
     for _ in range(radius):
@@ -58,6 +59,7 @@ def retrieve(atlas, selector, value, radius=1, max_anchors=10, max_nodes=60):
                 continue
             other = b if a in frontier else a
             if other not in selected and len(selected) >= max_nodes:
+                truncated_neighbors = True
                 continue
             key = (a, b, e["relation"])
             seen_edges[key] = e
@@ -72,7 +74,8 @@ def retrieve(atlas, selector, value, radius=1, max_anchors=10, max_nodes=60):
         "search_type": "exact_typed_or_literal_substring_only_not_semantic",
         "anchor_total": len(matched),
         "anchors_included": anchor_ids,
-        "truncated_anchors": len(matched) > max_anchors,
+        "truncated_anchors": len(matched) > min(max_anchors, max_nodes),
+        "truncated_neighbors": truncated_neighbors,
         "nodes": [nodes[k] for k in sorted(selected)],
         "edges": sorted(seen_edges.values(), key=lambda e: (e["relation"], e["source"], e["target"])),
         "portability_or_speedup_proven": False,
