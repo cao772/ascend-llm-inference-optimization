@@ -66,13 +66,19 @@ class QwenFullchainTests(unittest.TestCase):
         self.assertIn("H-06", ids)
         self.assertGreater(s["candidate_count"], 1)
 
-    def test_all_five_static_head_guard_exclusions(self):
+    def test_static_head_guard_exclusions_apply_to_decode_stage_only(self):
         for s in self.report["scenarios"]:
-            h = next(x for x in s["priority_actions"] if x["id"] == "H-08")
-            self.assertEqual(h["priority"], "BLOCK")
-            self.assertIsNone(h["speedup_pct"])
-            self.assertFalse(h["hardware_benchmark_observed"])
             self.assertFalse(s["static_model_facts"]["pr51674_8to1_shape_guard_satisfied"])
+            matching = [x for x in s["priority_actions"] if x["id"] == "H-08"]
+            if s["stage"] in {"decode", "mixed"}:
+                self.assertEqual(len(matching), 1)
+                h = matching[0]
+                self.assertEqual(h["priority"], "BLOCK")
+                self.assertIsNone(h["speedup_pct"])
+                self.assertFalse(h["hardware_benchmark_observed"])
+            else:
+                self.assertEqual(matching, [])
+                self.assertIn("H-08", s["not_applicable_hypotheses"])
 
     def test_old_ascend_path_blocked_cuda_reference_not_blocked(self):
         for name in ("ASCEND35-C1", "ASCEND35-C8", "ASCEND36-PREFILL", "ASCEND36-DECODE"):
