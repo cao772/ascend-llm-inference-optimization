@@ -44,7 +44,7 @@ def retrieve(atlas, selector, value, radius=1, max_anchors=10, max_nodes=60):
                      for k in ("trigger", "symptom", "mitigation", "hardware_scope"))))
 
     matched = [n for n in atlas["nodes"] if match(n)]
-    anchor_ids = sorted(n["id"] for n in matched)[:max_anchors]
+    anchor_ids = sorted(n["id"] for n in matched)[:min(max_anchors, max_nodes)]
     selected = set(anchor_ids)
     frontier = set(anchor_ids)
     seen_edges = {}
