@@ -79,8 +79,9 @@ dd{margin:3px 0;color:#d7e4f5;font-size:12px}.links{display:flex;gap:10px;flex-w
 .list li{margin:6px 0}.statusrows{display:grid;gap:8px}
 .statusrow{display:flex;justify-content:space-between;gap:18px;border-bottom:1px solid #223852;padding-bottom:8px;font-size:12px}
 .statusrow span:last-child{color:var(--amber);font-weight:700}
+.whatif{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:12px}.rangegroup{padding:12px 0}.rangegroup input{width:100%;accent-color:var(--teal)}.value{font-weight:700;color:var(--teal);float:right}.ideal{font-size:35px;font-weight:800;color:var(--teal);line-height:1.1}.barbg{background:#263a51;border-radius:12px;height:13px;margin:13px 0;overflow:hidden}.barfill{height:100%;background:linear-gradient(90deg,#47bbc3,#95eee4);transition:width .15s}.mathnote{font-size:12px;color:var(--dim)}
 @media(max-width:1080px){.pipeline{grid-template-columns:repeat(3,1fr)}.step:nth-child(3):after{content:none}.metrics{grid-template-columns:repeat(2,1fr)}}
-@media(max-width:720px){.wrap{padding:0 16px}.nav{display:none}.pipeline{grid-template-columns:repeat(2,1fr)}.step:after{content:none}.hero-grid,.two,.cards{grid-template-columns:1fr}.results{grid-template-columns:repeat(2,1fr)}.controlbar{align-items:stretch}.top .wrap{min-height:58px}}
+@media(max-width:720px){.whatif{grid-template-columns:1fr}.wrap{padding:0 16px}.nav{display:none}.pipeline{grid-template-columns:repeat(2,1fr)}.step:after{content:none}.hero-grid,.two,.cards{grid-template-columns:1fr}.results{grid-template-columns:repeat(2,1fr)}.controlbar{align-items:stretch}.top .wrap{min-height:58px}}
 @media print{.top,button,.filters{display:none!important}body{background:white;color:#111}.panel,.hcard,.metric,.step{background:#fff;color:#111;break-inside:avoid}.muted,.dimtext{color:#555}}
 </style></head>
 <body>
@@ -99,6 +100,17 @@ dd{margin:3px 0;color:#d7e4f5;font-size:12px}.links{display:flex;gap:10px;flex-w
 <div class="panel"><div class="eyebrow">VERIFICATION GATES</div><h3 style="margin-top:12px">离实际性能结论还有哪些证据门槛</h3><div class="statusrows" id="gates"></div><p class="smalltext" style="margin-top:12px">这些门槛是当前缺失证据，不是项目开发失败。</p></div></div>
 <h3 style="margin-top:24px">该情景的结果面板</h3><p class="sub">所有性能指标保持空值，防止静态推演被误认为跑分。</p><div class="results" id="results"></div>
 </section>
+<section id="whatif"><div class="eyebrow">WHAT-IF · THEORETICAL ONLY</div><h2>理论收益灵敏度演示</h2>
+<p class="sub">这里的输入仅是你手动设置的数学假设，并非当前 Qwen/910C 的测量或预测。公式用于解释为什么“Kernel 加速 2 倍”不等于“系统整体加速 2 倍”。</p>
+<div class="whatif"><div class="panel"><h3>选择假设参数</h3>
+<div class="rangegroup"><label for="fraction">被优化部分占总串行延迟的比例 <span class="value" id="fraction-value">30%</span></label><input id="fraction" type="range" min="0" max="100" value="30" step="5"></div>
+<div class="rangegroup"><label for="kernelGain">该部分自身的加速倍数 <span class="value" id="kernelGain-value">2.0×</span></label><input id="kernelGain" type="range" min="10" max="50" value="20" step="5"></div>
+<p class="mathnote">理想公式：整体加速 = 1 / ((1 − f) + f / s)。假设其余部分时间不变，且没有新的通信、编译、排队和回退成本。</p>
+</div>
+<div class="panel"><h3>理想端到端上界（非实测）</h3><div class="ideal" id="ideal-speed">1.18×</div><p id="ideal-reduction" class="dimtext">理论总延迟降低约 15.0%</p>
+<div class="barbg"><div id="afterbar" class="barfill" style="width:85%"></div></div>
+<p class="smalltext">横条表示理论优化后的剩余总耗时（基线＝100%）。这只是灵敏度演示，不表示该模型在任何硬件上将达到此收益。</p>
+</div></div></section>
 <section id="decisions"><div class="eyebrow">HYPOTHESIS & DECISION</div><h2>候选优化、明确排除和验证条件</h2><p class="sub">每条研究路径提供触发条件、来源链接、测量方法、可证伪验收标准与回退方案。</p><div class="filters" id="filters"></div><div class="cards" id="cards"></div></section>
 <section id="acceptance"><div class="eyebrow">ACCEPTANCE CONTRACT</div><h2>未来实机阶段应当怎么得出结论</h2><div class="two"><div class="panel"><h3>统一 A/B 实验合同</h3><ul class="list"><li>固定模型权重 revision、软件 SHA、CANN/驱动、TP/EP 和量化精度</li><li>同输入模板、相同采样设置、足够重复次数和稳定预热</li><li>区分 Prefill / Decode、算子 / 服务指标，报告 P50 与 P95</li><li>在相同业务语料下分别记录自然 MTP 接受率与受控接受率</li><li>检验数值正确性、确定性、超时、死锁、资源与回退能力</li><li>仅当性能超过统计噪声且正确性稳定，才升级为已验证优化</li></ul></div>
 <div class="panel"><h3>证据级别不能越级</h3><div class="statusrows"><div class="statusrow"><span>官方源码与模型结构</span><span>已整理</span></div><div class="statusrow"><span>与当前版本/硬件兼容</span><span>待核验</span></div><div class="statusrow"><span>真实 Profile 定位瓶颈</span><span>待实测</span></div><div class="statusrow"><span>算子运行时实际命中</span><span>待实测</span></div><div class="statusrow"><span>同条件 A/B 的性能改善</span><span>待实测</span></div><div class="statusrow"><span>正确性及回退通过</span><span>待实测</span></div></div><p class="smalltext">本页属于「源码事实 + 可证伪假设 + 预设计验证链路」，不是部署验收报告。</p></div></div></section>
@@ -127,6 +139,16 @@ function renderStatic(){
  const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download="qwen-fullchain-decision-v1.json";document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
  });
 }
+function updateWhatIf(){
+ const f=Number($("fraction").value)/100;
+ const gain=Number($("kernelGain").value)/10;
+ const remaining=(1-f)+f/gain, ideal=1/remaining;
+ $("fraction-value").textContent=(f*100).toFixed(0)+"%";
+ $("kernelGain-value").textContent=gain.toFixed(1)+"×";
+ $("ideal-speed").textContent=ideal.toFixed(2)+"×";
+ $("ideal-reduction").textContent="纯数学示例：理论总延迟降低约 "+((1-remaining)*100).toFixed(1)+"%（非实测）";
+ $("afterbar").style.width=(remaining*100).toFixed(1)+"%";
+}
 function sNow(){return DATA.scenarios.find(s=>s.id===state.scenario)||DATA.scenarios[0]}
 function renderScenario(){
  let s=sNow(),m=s.static_model_facts;
@@ -151,7 +173,7 @@ function renderDecisions(){
   return '<article class="hcard"><div class="headrow"><span class="pill '+statusClass[h.priority]+'">'+esc(statusLabels[h.priority])+'</span><span class="smalltext">'+esc(h.id)+' · '+esc(h.stage)+'</span><span class="pill pending">未实测</span></div><h3>'+esc(h.name)+'</h3><p class="why">'+esc(h.reason)+'</p><div class="prediction"><b>条件性推测：</b>'+esc(h.conditional_prediction)+'</div><details><summary>展开证据、测量方法、判定与回退</summary><dl><dt>证据和源码</dt><dd class="links">'+refs.join("")+'</dd><dt>需要采集</dt><dd>'+esc(h.measure)+'</dd><dt>验收/证伪标准</dt><dd>'+esc(h.acceptance)+'</dd><dt>不成立时如何回退</dt><dd>'+esc(h.rollback)+'</dd><dt>证据类型</dt><dd>'+esc(h.assessment_type)+'</dd><dt>特别限制</dt><dd>'+esc(h.flags.join(" / "))+'</dd></dl></details></article>';
  }).join(""):'<div class="no-results">当前情景没有这个类别的候选。请切换筛选项或研究情景。</div>';
 }
-renderStatic();renderScenario();
+renderStatic();renderScenario();for(const k of ["fraction","kernelGain"])$(k).addEventListener("input",updateWhatIf);updateWhatIf();
 </script></body></html>'''
 
 
