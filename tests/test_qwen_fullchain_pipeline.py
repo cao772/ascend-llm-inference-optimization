@@ -133,6 +133,10 @@ class QwenFullchainTests(unittest.TestCase):
         self.assertNotIn("__PAYLOAD__", h)
         self.assertIn("待实测", h)
         self.assertIn("application/json", h)
+        self.assertIn('id="fraction"', h)
+        self.assertIn('id="kernelGain"', h)
+        self.assertIn("理想端到端上界（非实测）", h)
+        self.assertIn("function updateWhatIf()", h)
         self.assertIn("不包含我方 NPU/GPU 性能数据", h)
 
     def test_renderer_refuses_nonnull_measured_values(self):
