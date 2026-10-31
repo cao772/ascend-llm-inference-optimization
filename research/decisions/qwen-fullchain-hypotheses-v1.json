@@ -302,7 +302,7 @@
       "topic": "graph",
       "stage": "decode",
       "applies_to": [
-        "all"
+        "ascend"
       ],
       "priority": "P1",
       "conclusion": "低并发下减少 Kernel launch 和 Host 调度间隙值得优先验证，但不是已测定的首要瓶颈。",
@@ -366,6 +366,7 @@
       "topic": "moe",
       "stage": "all",
       "applies_to": [
+        "ascend",
         "moe"
       ],
       "priority": "P1",
