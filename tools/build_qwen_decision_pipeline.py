@@ -104,6 +104,8 @@ def validate_input(rules, model_db, cases, prs, failures):
 def decide(rules, model_db, cases, prs, failures):
     validate_input(rules, model_db, cases, prs, failures)
     models = {m["id"]: m for m in model_db["models"]}
+    pr_urls = {p["id"]: p["url"] for p in prs["entries"]}
+    failure_urls = {f["id"]: list(f["source_urls"]) for f in failures["failures"]}
     all_scenarios = []
     for s in rules["scenarios"]:
         features = _model_features(models[s["model"]])
@@ -133,7 +135,11 @@ def decide(rules, model_db, cases, prs, failures):
                 "conditional_prediction": h["predict_if"],
                 "evidence": h["evidence"],
                 "related_pr_ids": h["related_pr_ids"],
+                "related_pr_urls": [pr_urls[key] for key in h["related_pr_ids"]],
                 "related_failure_ids": h["related_failure_ids"],
+                "related_failure_sources": [
+                    {"id": key, "sources": failure_urls[key]} for key in h["related_failure_ids"]
+                ],
                 "measure": h["measure"],
                 "acceptance": h["acceptance"],
                 "rollback": h["rollback"],
