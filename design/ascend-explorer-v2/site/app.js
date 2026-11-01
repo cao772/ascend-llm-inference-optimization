@@ -455,7 +455,7 @@ function renderExperimentHub(){
     const maxVal=Math.max(metric.before||0,metric.after||0,1e-9);
     const barBefore=100*(metric.before||0)/maxVal;
     const barAfter=100*(metric.after||0)/maxVal;
-    const staticTag=comparable?"同口径前后可比较":"仅原始报告数值 · 不证明因果";
+    const staticTag=comparable?"同口径前后可比较":"非隔离 A/B · 不证明因果";
     const role=metric.scope.replaceAll("_"," ");
     return '<div class="exp-metric"><div class="exp-metric-heading"><strong>'+esc(metric.label)+'</strong><span class="badge '+(comparable?"neutral":"warn")+'">'+staticTag+'</span></div>'+
       '<small>原始指标口径：'+esc(role)+'</small>'+
