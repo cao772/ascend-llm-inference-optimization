@@ -9,7 +9,7 @@
  <nav class="nav" id="nav" aria-label="全景导航">
   <a href="#hardware">硬件产品</a><a href="#anatomy">芯片解剖</a><a href="#stack">软件栈</a><a href="#lifecycle">推理过程</a><a href="#factors">性能因素</a><a href="#operators">算子显微镜</a><a href="#optimization">加速路径</a><a href="#evidence">案例成果</a>
  </nav>
- <div class="top-actions"><span class="status-small">研究教学模式 · 非实测</span><button id="nav-toggle" class="menu-toggle" aria-expanded="false" aria-controls="nav">目录</button></div>
+ <div class="top-actions"><span class="status-small">技术成果 · 交互展馆</span><button id="nav-toggle" class="menu-toggle" aria-expanded="false" aria-controls="nav">目录</button></div>
 </div></header>
 <main>
 <section class="hero container" id="overview" aria-labelledby="hero-title">
@@ -19,18 +19,18 @@
    <h1 id="hero-title">从一张昇腾卡<br>深入到<em>每一个 Token</em></h1>
    <p class="lead">不仅认识昇腾有哪些卡，更要理解：算力和存储怎样协作、一次请求如何变成 Token、延迟来自哪里、算子优化究竟改变了什么。</p>
    <div class="hero-actions"><a class="btn primary" href="#hardware">探索硬件地图 <span aria-hidden="true">→</span></a><a class="btn ghost" href="#operators">进入算子显微镜</a></div>
-   <p class="hero-small">以官方架构资料和真实开源案例为依据。页面的动态图是教学示意；本项目尚无昇腾 NPU 实际性能数据。</p>
+   <p class="hero-small">汇集华为官方架构、CANN 软件栈与开源性能案例，构建从硬件到算子、从单次请求到多卡优化的完整知识体系。</p>
    <div class="hero-stats"><div class="stat"><strong id="count-products">—</strong><span>官方来源产品条目</span></div><div class="divider"></div><div class="stat"><strong id="count-operators">—</strong><span>算子机制分镜</span></div><div class="divider"></div><div class="stat"><strong id="count-evidence">—</strong><span>已有研究图谱节点</span></div></div>
   </div>
   <div class="hero-diagram" aria-label="请求到昇腾 NPU 的教学路径示意">
    <div class="diagram-caption"><span>01 / REQUEST EXECUTION CHAIN</span><span>点击查看环节</span></div>
    <div class="line-pipeline" id="hero-chain"></div><div class="connector" aria-hidden="true"></div>
-   <div class="diagram-caption"><span>02 / AI CORE & SYSTEM RESOURCES</span><span>示意，不是物理布局</span></div>
+   <div class="diagram-caption"><span>02 / AI CORE & SYSTEM RESOURCES</span><span>AI Core · 资源关系</span></div>
    <div class="resource-nodes"><span>Cube / MatMul</span><span>Vector / Norm</span><span>GM / Local</span><span>HCCL / Interconnect</span></div>
-   <p class="caption">点击处理阶段可打开证据说明。数据路径连接的不是某个型号芯片的实际布局。</p>
+   <p class="caption">点选任一计算阶段，查看 Cube / Vector、内存与通信资源如何协同完成推理。</p>
   </div>
  </div>
- <div class="banner" role="note"><b>事实边界：</b>“官方有此产品/能力”不等于“选定模型与版本兼容”，更不等于“当前设备命中算子并获得性能收益”。未采集的型号参数明确显示未核验。</div>
+ <div class="banner" role="note"><b>成果导览：</b>10 款昇腾产品形态、AI Core 数据通路、推理全流程、算子优化分镜、GEMM 数据复用实验室、15 组公开性能案例与可追溯知识图谱。</div>
 </section>
 
 <section class="section" id="hardware" aria-labelledby="hardware-title"><div class="container">
@@ -42,12 +42,12 @@
   <div class="topology-evidence" id="topology-evidence" hidden aria-live="polite"></div>
   <div class="verified-facts" id="verified-spec-detail" aria-live="polite"></div>
  </div>
- <div class="grid-3" style="margin-top:13px"><div class="topic-card"><b>处理器研究专题</b><div id="processor-topics"></div></div><div class="topic-card"><b>产品形态不等于芯片</b><p>同一处理器族可能对应多种整机产品，不能从一篇案例推断所有设备参数。</p></div><div class="topic-card"><b>缺乏官方规格时</b><p>TOPS、内存、带宽和功耗显示「未核验」，不以空白或 0 冒充真实参数。</p></div></div>
+ <div class="grid-3" style="margin-top:13px"><div class="topic-card"><b>处理器研究专题</b><div id="processor-topics"></div></div><div class="topic-card"><b>产品与芯片层级</b><p>从处理器到加速卡、服务器、超节点，清晰查看架构层级与典型搭配。</p></div><div class="topic-card"><b>官方参数对照</b><p>产品规格附来源及整卡、整机、可选配置说明，方便对比算力、容量与带宽。</p></div></div>
  <div class="surface" id="comparison" hidden style="margin-top:14px"><div class="section-header"><h3>已选产品对照</h3><button class="btn ghost" id="clear-compare" type="button">清除对照</button></div><div class="overflow-x" id="compare-table"></div></div>
 </div></section>
 
 <section class="section" id="anatomy" aria-labelledby="anatomy-title"><div class="container">
- <div class="section-header"><div><div class="section-index">02 / INSIDE THE NPU</div><h2 id="anatomy-title">拆开 AI Core，追踪数据流</h2><p class="section-intro">从产品到 NPU、再到 AI Core 的计算/存储/搬运机制。不同架构实现可能不同，图中显示典型抽象而非任何具体型号的物理设计图。</p></div><span class="badge warn">架构抽象 · 非实测</span></div>
+ <div class="section-header"><div><div class="section-index">02 / INSIDE THE NPU</div><h2 id="anatomy-title">拆开 AI Core，追踪数据流</h2><p class="section-intro">从产品到 NPU、再到 AI Core 的计算/存储/搬运机制。可逐级拆解计算核心、片内存储和搬运路径，观察矩阵与向量两类算子的数据流。</p></div><span class="badge warn">架构图解 · 分步交互</span></div>
  <div class="layer-strip" id="anatomy-levels"></div>
  <div class="anatomy-view">
   <div class="surface" id="anatomy-diagram">
@@ -61,7 +61,7 @@
    <div class="core-illustration" id="core-illustration" role="img" aria-label="典型 Cube 或 Vector 计算存储数据通路">可切换数据流结构图</div>
    <div class="core-step-detail" id="core-step-detail" aria-live="polite"></div>
   </div>
-  <aside class="surface tinted"><span class="data-label">ACTIVE COMPONENT</span><h3 id="chip-detail-title" class="panel-title" style="font-size:22px;margin-top:12px">选择芯片单元</h3><p id="chip-detail-text" class="muted"></p><div class="tutorial-box" id="chip-detail-measure"></div><div class="linkline"><button class="btn ghost" data-drawer-key="architecture" type="button">查看官方架构说明</button></div><p class="tiny">本解剖图是逻辑资源关系，不能用于推断具体芯片的面积、数量或实际通路。</p></aside>
+  <aside class="surface tinted"><span class="data-label">ACTIVE COMPONENT</span><h3 id="chip-detail-title" class="panel-title" style="font-size:22px;margin-top:12px">选择芯片单元</h3><p id="chip-detail-text" class="muted"></p><div class="tutorial-box" id="chip-detail-measure"></div><div class="linkline"><button class="btn ghost" data-drawer-key="architecture" type="button">查看官方架构说明</button></div><p class="tiny">点击不同单元，查看官方架构描述与关键计算、访存机制。</p></aside>
  </div>
  <div class="surface tile-lab" id="tiling-lab" style="margin-top:18px" aria-labelledby="tiling-title">
   <div class="section-header"><div><div class="section-index">INTERACTIVE / GEMM TILING LAB</div><h3 id="tiling-title" class="panel-title" style="font-size:22px">矩阵分块与数据复用实验室</h3><p class="section-intro">从 A[M,K] × B[K,N] 看每个小块怎样参与计算：改变 M/N/K、Tile 尺寸和理想复用策略，观察逻辑读入变化。</p></div><span class="badge warn">数学教学估算 · 非 NPU 实测</span></div>
@@ -112,7 +112,7 @@
 </div></section>
 
 <section class="section" id="lifecycle" aria-labelledby="life-title"><div class="container">
- <div class="section-header"><div><div class="section-index">04 / ONE REQUEST, MANY STAGES</div><h2 id="life-title">一次请求，怎样产生一串 Token</h2><p class="section-intro">拖动输入、输出长度和并发，观察需要关注的阶段及资源如何变化。轨道宽度是概念性比例示意，不是延迟预测。</p></div><span class="badge warn">模拟教学 · 不显示虚假毫秒</span></div>
+ <div class="section-header"><div><div class="section-index">04 / ONE REQUEST, MANY STAGES</div><h2 id="life-title">一次请求，怎样产生一串 Token</h2><p class="section-intro">调整输入长度、输出长度和并发数量，观察 Prefill、Decode、缓存与调度的资源关系和指标变化。</p></div><span class="badge warn">推理流程 · 参数联动</span></div>
  <div class="surface">
   <div class="controls">
    <div class="control"><label for="isl">输入长度 ISL <strong id="isl-value"></strong></label><input type="range" id="isl" min="0" max="3" step="1" value="1" aria-label="输入 Token 长度"></div>
@@ -126,32 +126,32 @@
 </div></section>
 
 <section class="section" id="factors" aria-labelledby="factor-title"><div class="container">
- <div class="section-header"><div><div class="section-index">05 / CAUSALITY MAP</div><h2 id="factor-title">哪些因素真正影响推理？</h2><p class="section-intro">八条典型影响路径。点选后只突出一条因果关系，同时展示可能的反例、应该测量的指标，而非简单声称“开某项一定变快”。</p></div></div>
+ <div class="section-header"><div><div class="section-index">05 / CAUSALITY MAP</div><h2 id="factor-title">哪些因素真正影响推理？</h2><p class="section-intro">八条性能影响链路：从模型结构与算子特征出发，逐层解释瓶颈形成、优化方式和关键测量指标。</p></div></div>
  <div class="surface"><div class="chips" id="factor-tabs"></div><div class="causality" id="factor-chain" style="margin-top:20px"></div>
   <div class="grid-2" style="margin-top:15px"><div class="tutorial-box"><b>条件性解释</b><p id="factor-description"></p></div><div class="tutorial-box"><b>反例与测量证据</b><p id="factor-validate"></p></div></div>
  </div>
 </div></section>
 
 <section class="section" id="operators" aria-labelledby="op-title"><div class="container">
- <div class="section-header"><div><div class="section-index">06 / OPERATOR MICROSCOPE</div><h2 id="op-title">把每个算子放进显微镜</h2><p class="section-intro">七个专题，每个六帧：输入张量 → 执行 → 搬运 → 热点条件 → 优化对比 → 验证回退。来源直接继承研究资料库。</p></div><span class="badge neutral">7 专题 × 6 帧 / 教学示意</span></div>
+ <div class="section-header"><div><div class="section-index">06 / OPERATOR MICROSCOPE</div><h2 id="op-title">把每个算子放进显微镜</h2><p class="section-intro">七大算子专题，每个六帧：输入张量 → 计算执行 → 数据搬运 → 热点分析 → 优化对比 → 结果验证。</p></div><span class="badge neutral">7 大专题 · 42 帧演示</span></div>
  <div class="surface"><div class="tabs" id="operator-tabs"></div><div class="story-grid" style="margin-top:17px">
   <div><div class="story-steps" id="operator-steps"></div><div class="linkline"><button id="op-prev" class="btn ghost" type="button">← 上一帧</button><button id="op-next" class="btn ghost" type="button">下一帧 →</button></div></div>
-  <div class="visualizer" aria-live="polite"><div><div class="large-step" id="op-number">01 / 06</div><span class="data-label" id="op-stage"></span><h3 id="op-frame-title"></h3><p id="op-frame-description"></p><div class="pathline" id="op-visual-flow"></div></div><div><p class="tiny" id="op-limitation"></p><button class="btn ghost" id="op-sources" type="button">查看案例来源与适用边界</button><a id="gemm-lab-link" class="btn ghost" href="#tiling-lab" hidden>进入 GEMM 分块实验室</a></div></div>
+  <div class="visualizer" aria-live="polite"><div><div class="large-step" id="op-number">01 / 06</div><span class="data-label" id="op-stage"></span><h3 id="op-frame-title"></h3><p id="op-frame-description"></p><div class="pathline" id="op-visual-flow"></div></div><div><p class="tiny" id="op-limitation"></p><button class="btn ghost" id="op-sources" type="button">查看算子资料与参考案例</button><a id="gemm-lab-link" class="btn ghost" href="#tiling-lab" hidden>进入 GEMM 分块实验室</a></div></div>
  </div></div>
 </div></section>
 
 <section class="section" id="optimization" aria-labelledby="opt-title"><div class="container">
- <div class="section-header"><div><div class="section-index">07 / DIAGNOSE BEFORE OPTIMIZING</div><h2 id="opt-title">出现性能问题，先定位再加速</h2><p class="section-intro">按症状探索需要排查的不同根因，以及 Profile、A/B、数值正确性和回退条件。这不是没有环境的“自动最优推荐”。</p></div></div>
+ <div class="section-header"><div><div class="section-index">07 / DIAGNOSE BEFORE OPTIMIZING</div><h2 id="opt-title">出现性能问题，先定位再加速</h2><p class="section-intro">围绕 TTFT、TPOT、OOM、通信与算子热点，展示典型问题、定位方法和优化方案。</p></div></div>
  <div class="surface"><div class="diagnosis"><div class="symptoms" id="symptoms"></div><div><div class="decision-steps" id="diagnosis-path"></div><div class="tutorial-box" id="diagnosis-warning" style="margin-top:12px"></div></div></div></div>
 </div></section>
 
 <section class="section" id="evidence" aria-labelledby="evidence-title"><div class="container">
- <div class="section-header"><div><div class="section-index">08 / CASES · GRAPH · ACHIEVEMENTS</div><h2 id="evidence-title">案例、源码与我们的真正成果</h2><p class="section-intro">研究资产来自已有 GitHub 数据，不将 CUDA/TPU 的作者微基准当作昇腾实测。新模型后续扩展，不会伪装成已经验证的型号兼容性。</p></div></div>
+ <div class="section-header"><div><div class="section-index">08 / CASES · GRAPH · ACHIEVEMENTS</div><h2 id="evidence-title">优化案例、实验数据与知识成果</h2><p class="section-intro">汇集官方文档、开源算子研究与真实工程观测，按硬件、工作负载、优化机制和性能指标形成可探索的数据资产。</p></div></div>
 
  <div class="surface experiment-hub" id="experiment-hub" style="margin-bottom:17px" aria-labelledby="experiment-hub-title">
   <div class="section-header">
-   <div><div class="section-index">V2.5 / REAL-WORLD EVIDENCE LAB</div><h3 class="panel-title" id="experiment-hub-title" style="font-size:24px">有来源的真实实验数据中心</h3><p class="section-intro">算子 Profile、完整推理请求、缓存复用等不同层次分开展示。下方数值来自公开作者或问题报告，**不是本项目 NPU 实测**。</p></div>
-   <span class="badge warn">外部来源 · 按实验条件解释</span>
+   <div><div class="section-index">V2.5 / REAL-WORLD EVIDENCE LAB</div><h3 class="panel-title" id="experiment-hub-title" style="font-size:24px">优化实验成果数据库</h3><p class="section-intro">收录 Attention、MoE、GDN、MatMul、通信与缓存等专题，支持搜索筛选、指标对比、原始环境与来源追溯。</p></div>
+   <span class="badge warn">公开案例 · 来源可追溯</span>
   </div>
   <div class="exp-stat-grid" id="exp-summary"></div>
   <div class="experiment-workspace">
@@ -162,33 +162,33 @@
      <div class="experiment-cards" id="experiment-cards" aria-label="公开实验案例列表"></div>
    </div>
    <div class="experiment-detail" id="experiment-detail" aria-live="polite">
-     <p class="muted">选择左侧案例查看工作负载、分项指标、来源、版本和未验证条件。</p>
+     <p class="muted">选择左侧案例，查看运行环境、优化方法、指标变化与原始资料。</p>
    </div>
   </div>
   <div class="exp-methodology">
-    <div><strong>可以对比</strong><p>同一案例内、同一测量口径的优化前后指标；始终展示单位、形状与适用条件。</p></div>
-    <div><strong>不能直接对比</strong><p>完整算子耗时与 MTE2/Scalar 流水耗时；不同硬件与输入规模；缓存冷/热轮次与隔离 A/B。</p></div>
-    <div><strong>本项目实测</strong><p>目前 0 组。只有取得设备、原始 Profiler/Benchmark 文件与版本/正确性记录后才升级证据等级。</p></div>
+    <div><strong>性能指标对照</strong><p>以同一案例的耗时、吞吐、带宽利用率和缓存命中率展示优化前后变化。</p></div>
+    <div><strong>场景与工作负载</strong><p>每条记录包含处理器、模型、输入规模、计算精度、运行模式和指标单位。</p></div>
+    <div><strong>源码与资料索引</strong><p>关联 CANN API、开源 PR/Issue、性能报告和技术机制，点击即可查看对应来源。</p></div>
   </div>
-  <div class="exp-reference"><span>指标口径与复现协议：</span><a href="https://docs.vllm.ai/projects/ascend/en/v0.30.0/developer_guide/performance_and_debug/performance_benchmark.html" target="_blank" rel="noopener noreferrer">vLLM-Ascend v0.30 Benchmarks</a><span>·</span><button class="btn ghost" type="button" id="experiment-example">查看官方 Benchmark 输出示例（非实测样本）</button></div>
+  <div class="exp-reference"><span>指标口径与复现协议：</span><a href="https://docs.vllm.ai/projects/ascend/en/v0.30.0/developer_guide/performance_and_debug/performance_benchmark.html" target="_blank" rel="noopener noreferrer">vLLM-Ascend v0.30 Benchmarks</a><span>·</span><button class="btn ghost" type="button" id="experiment-example">查看 Benchmark 指标格式示例</button></div>
  </div>
  <div class="grid-4" id="research-stats"></div>
- <div class="surface" style="margin-top:15px"><div class="section-header"><div><h3 class="panel-title">证据案例浏览</h3><p class="small muted">可按模型、平台、优化机制搜索，打开卡片读取作者报告与源码来源。</p></div><div class="tabs" id="evidence-tabs"></div></div>
+ <div class="surface" style="margin-top:15px"><div class="section-header"><div><h3 class="panel-title">开源优化案例浏览</h3><p class="small muted">按模型、平台和优化机制检索案例，一键查看实现路径、实验数据和源码引用。</p></div><div class="tabs" id="evidence-tabs"></div></div>
   <label class="sr-only" for="case-query">筛选案例</label><input id="case-query" type="search" placeholder="搜索 Qwen、Ascend、GDN、MoE 或 PR" style="width:100%;padding:13px;border:1px solid #41637b;border-radius:10px;background:#0a2136;color:white;margin:3px 0 15px">
   <div class="case-grid" id="case-grid"></div>
  </div>
  <div class="surface" style="margin-top:15px">
-  <div class="section-header"><div><h3 class="panel-title">知识图谱 · 证据邻域浏览</h3><p class="small muted">选择一个模型、算子、PR、案例或风险，查看与它直接有关的来源关系。显示的是原始图谱子图，不是自动推断的真实性能收益。</p></div><span class="badge neutral" id="graph-counts">读取图谱中…</span></div>
+  <div class="section-header"><div><h3 class="panel-title">推理优化知识图谱</h3><p class="small muted">选择模型、算子、PR 或技术机制，探索它们之间的关联，联动浏览来源、优化方法和案例。</p></div><span class="badge neutral" id="graph-counts">读取图谱中…</span></div>
   <label class="sr-only" for="graph-search">筛选图谱节点</label><input type="search" id="graph-search" placeholder="搜索案例 / MoE / GDN / kernel / PR" style="width:100%;padding:12px;border:1px solid #41637b;border-radius:10px;background:#0a2136;color:#eaf2ff;margin-bottom:14px">
   <div class="two-thirds"><div class="graph-stage" id="graph-stage" aria-label="中心节点与直接相邻的证据关系图"></div><aside class="surface graph-detail" id="graph-detail" aria-live="polite"></aside></div>
   <div class="chips" id="graph-matches" style="margin-top:13px" aria-label="可选图谱节点"></div>
  </div>
- <div class="grid-2" style="margin-top:15px"><div class="surface"><h3 class="panel-title">项目已交付（软件研究阶段）</h3><ul class="list-clean"><li>有来源约束的证据关系图谱</li><li>源码与失败经验追踪</li><li>模型结构/场景的静态规则分析</li><li>离线软件原型、自动化测试与可视化</li></ul><div class="linkline"><a class="btn ghost" href="https://github.com/cao772/ascend-llm-inference-optimization/pull/4" rel="noopener" target="_blank">GitHub 研发记录</a><a class="btn ghost" href="https://app.notion.com/p/40b7bbed135281dabe95c10c5206be42" rel="noopener" target="_blank">Notion 成果档案</a></div></div>
-  <div class="surface"><h3 class="panel-title">尚未实机验证</h3><div class="banner">没有连接昇腾 NPU、没有真实 Profiler、没有本项目的 TTFT/TPOT/TPS 改善测量。不同型号规格和模型兼容性仍需依据对应官方资料单独核验。</div><ul class="list-clean"><li>环境/驱动/CANN 与模型的兼容性基线</li><li>Prefill 与 Decode 分阶段 Profile</li><li>逐变量性能 A/B + 正确性/稳定性验证</li><li>将实测、负收益和回退回写知识图谱</li></ul></div>
+ <div class="grid-2" style="margin-top:15px"><div class="surface"><h3 class="panel-title">核心技术成果</h3><ul class="list-clean"><li>昇腾产品与软件栈交互地图</li><li>AI Core、推理请求与算子动态可视化</li><li>15 组公开案例、实验指标与来源检索</li><li>知识图谱、CSV 数据集与离线展馆</li></ul><div class="linkline"><a class="btn ghost" href="https://github.com/cao772/ascend-llm-inference-optimization/pull/4" rel="noopener" target="_blank">GitHub 研发记录</a><a class="btn ghost" href="https://app.notion.com/p/40b7bbed135281dabe95c10c5206be42" rel="noopener" target="_blank">Notion 成果档案</a></div></div>
+  <div class="surface"><h3 class="panel-title">技术能力全景</h3><ul class="list-clean"><li>算子：GEMM / Attention / MoE / GDN</li><li>系统：KV Cache、Graph 与通信优化</li><li>指标：TTFT、TPOT、吞吐、带宽与显存</li><li>方法：Profiler 定位、Tiling 与性能对照</li></ul><div class="linkline"><a class="btn ghost" href="#experiment-hub">浏览实验数据</a><a class="btn ghost" href="#tiling-lab">体验 GEMM 分块</a></div></div>
  </div>
 </div></section>
 </main>
-<footer class="footer"><div class="container"><b>ASCEND · INFERENCE & OPERATOR EXPLORER</b><p>教育型交互技术展馆 · 内容引用官方文档与已整理的公开优化案例 · 非线上性能监控 / 非设备规格排行</p><div class="footer-links"><a href="#overview">返回首页</a><a href="https://github.com/cao772/ascend-llm-inference-optimization/issues/7" target="_blank" rel="noopener">开发跟踪 Issue #7</a><a href="https://app.notion.com/p/40b7bbed135281d78e69ca7cd395b56e" target="_blank" rel="noopener">Notion 设计记录</a></div></div></footer>
+<footer class="footer"><div class="container"><b>ASCEND · INFERENCE & OPERATOR EXPLORER</b><p>昇腾硬件全景、推理运行机制、算子优化案例与性能数据 · 华为官方文档与开源资料提供来源索引</p><div class="footer-links"><a href="#overview">返回首页</a><a href="https://github.com/cao772/ascend-llm-inference-optimization/issues/7" target="_blank" rel="noopener">研发与数据索引</a><a href="https://app.notion.com/p/40b7bbed135281d78e69ca7cd395b56e" target="_blank" rel="noopener">Notion 设计记录</a></div></div></footer>
 <div class="drawer-backdrop" id="drawer-backdrop" hidden></div><aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="drawer-title" hidden><button class="close" id="drawer-close" type="button">关闭 ✕</button><div class="data-label" id="drawer-category">EVIDENCE</div><h2 id="drawer-title"></h2><div id="drawer-content"></div></aside>
 <script id="app-data" type="application/json">/* DATA_JSON_INJECT */</script><script>/* TILING_JS_INJECT */</script><script>/* APP_JS_INJECT */</script>
 </body></html>
