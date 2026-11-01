@@ -58,6 +58,7 @@ Qwen 大模型推理优化往往散落在开源 Kernel、框架 PR、博客基�
 | 项目资产 | 位置 |
 |---|---|
 | 长期研究档案 | [Notion 研究总账](https://app.notion.com/p/4097bbed1352816fad17d3102052812e) |
+| 独立项目成果档案 | [Notion：个人项目成果（阶段一）](https://app.notion.com/p/40b7bbed135281dabe95c10c5206be42?pvs=204) |
 | 源码研发记录 | [Draft PR #4](https://github.com/cao772/ascend-llm-inference-optimization/pull/4) |
 | 完整链路研究报告 | [docs/qwen-end-to-end-inference-research-v1-2026-10-31.md](docs/qwen-end-to-end-inference-research-v1-2026-10-31.md) |
 | 完整证据图谱说明 | [docs/qwen-evidence-atlas-v2-guide-2026-10-31.md](docs/qwen-evidence-atlas-v2-guide-2026-10-31.md) |
