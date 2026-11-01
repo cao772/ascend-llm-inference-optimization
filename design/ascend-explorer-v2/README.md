@@ -1,5 +1,15 @@
 # Ascend Explorer V2 · 交互网页与详细设计
 
+## V2.6｜Attention、MoE、GDN 与多卡通信实证专题（2026-11-01）
+
+- [V2.6 专题来源 JSON](./content/cross-operator-evidence-v2.6.json)：**7 条新记录**，包括 Attention 的尚未合并 PR、MoE 量化 Scale 微基准和官方细粒度 TP 部署、GDN KV 缓存失败与投机推理、HCCL AllReduce 异常、GLM Prefill DCP 版本回退。7 组双端点数值也**没有认定为隔离 A/B**，另有 18 条原始单值/效果值。
+- [完整技术审计报告](./docs/cross-operator-source-analysis-v2.6.md)：保留完整模型/卡型/版本/工作负载、是否合并、源链接、正确性和反例。外部 issue/PR 不等于已发布功能，未给两个时间端点不能编造加速比。
+- [完整实验中心网页](./site/) 现在整合 V2.5 的 8 个旧案例与 V2.6 的 7 个新专题，合计 **15 个外部来源案例、31 组带两个原始数值的指标及 18 条单值来源记录**。新增 Attention、MoE、GDN、多卡通信筛选。全部均非本项目 NPU 实测。
+- [CSV 导出](./tools/export_cross_operator_csv.py)：新专题输出 7 条双端点记录 + 18 条单值记录，强制 `isolated_ab=false` / `project_measured=false`。V2.5 原来的 24 行 CSV 独立保留，不与不同口径粗暴合并。
+- [7 项来源结构检查](../../tests/test_ascend_cross_operator_evidence_v26.py)、[Chromium/WebKit 多尺寸浏览器验收](./site/browser_cross_engine.py)、独立离线网站构建与源码/CSV 证据打包均纳入 CI。
+
+**研发边界**：没有访问目标 NPU，也没有对软件源的 PR 性能做任何自主 A/B；这次补充的是可审核的**外部经验与测量记录**，不是自己的 7 个算子优化研发成果。仍保持 Draft，不合并 main。
+
 ## V2.5｜公开真实数据中心：算子、缓存与请求指标（2026-11-01）
 
 **目标**：将现有单篇 Matmul 案例升级为可检索、按原始指标口径查看、能读出实验条件与反例的独立成果展区。
