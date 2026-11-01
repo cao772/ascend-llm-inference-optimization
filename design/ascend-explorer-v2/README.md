@@ -1,5 +1,18 @@
 # Ascend Explorer V2 · 交互网页与详细设计
 
+## 成果总览｜昇腾大模型推理与算子优化
+
+这是一个面向技术交流、研发汇报与深度学习的**昇腾大模型推理与算子优化交互展馆**。采用深蓝企业视觉，按硬件、架构、算子、推理全链路、性能因素与优化案例组织展示。
+
+- **硬件与架构：** Atlas 产品谱系、AI Core 的 Cube/Vector/GM/L1/L0/UB 数据流、官方产品参数与软件栈版本。
+- **推理全过程：** 一次请求从 Host 调度到 Prefill、KV/状态缓存、Decode、Token 输出，以及 TTFT、TPOT、吞吐等关键指标。
+- **算子机制：** MatMul、Attention、GDN、MoE、KV Cache、Collective Communication、Graph/MTP 等七类专题，配合 42 帧算子分镜和 GEMM Tile 计算交互实验室。
+- **公开实验数据：** 15 个可查阅来源的算子/服务案例、31 组有前后端点的公开指标，以及其他补充测量。覆盖 MTE2、Scalar、分块复用、Attention Padding、MoE 显存、GDN 状态与多卡通信。
+- **知识与交付：** 75 节点、202 条来源关系的知识图谱，可搜索的实验案例，带硬件/工作负载/指标口径的 CSV、JSON 和可离线打开的完整网站。
+
+展示原则：**以技术机制、典型场景、真实公开数据与原始来源为核心**。公开性能案例在图表旁显示来源、运行环境及指标名称；动态图展示计算逻辑，帮助读者理解算子和推理链路。技术研究的内部验证字段继续保存在数据和工程记录中，不占用成果展示页面。
+
+
 ## V2.6｜Attention、MoE、GDN 与多卡通信实证专题（2026-11-01）
 
 - [V2.6 专题来源 JSON](./content/cross-operator-evidence-v2.6.json)：**7 条新记录**，包括 Attention 的尚未合并 PR、MoE 量化 Scale 微基准和官方细粒度 TP 部署、GDN KV 缓存失败与投机推理、HCCL AllReduce 异常、GLM Prefill DCP 版本回退。7 组双端点数值也**没有认定为隔离 A/B**，另有 18 条原始单值/效果值。
