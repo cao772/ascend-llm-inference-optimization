@@ -107,7 +107,7 @@ def exercise(browser, html, width, screenshots, errors):
     assert "10.62" in page.locator("#experiment-detail").inner_text()
     assert "7.87" in page.locator("#experiment-detail").inner_text()
     page.locator("#experiment-query").fill("")
-    page.locator("#experiment-tabs button",has_text="推理与缓存").click()
+    page.locator("#experiment-tabs button",has_text="服务与故障").click()
     assert page.locator("#experiment-cards .experiment-card").count()==7
     assert "非隔离 A/B" in page.locator("#experiment-detail").inner_text()
     assert "3990.14" in page.locator("#experiment-detail").inner_text() or "3,990.14" in page.locator("#experiment-detail").inner_text()
