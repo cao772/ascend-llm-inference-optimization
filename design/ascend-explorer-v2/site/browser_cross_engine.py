@@ -64,7 +64,7 @@ def exercise(browser, html, width, screenshots, errors):
     assert "12,045 μs" in text and "2,532 μs" in text
     assert "2,452 μs" in text and "808 μs" in text and "591 μs" in text
     assert "完整算子执行耗时" in text and "MTE2 搬运流水耗时" in text
-    assert "非本项目复测" in page.locator("#matmul-reported-evidence").inner_text()
+    assert "Ascend C 公开测试数据" in page.locator("#matmul-reported-evidence").inner_text()
     page.locator("#reported-evidence-source").click()
     assert page.locator("#drawer").is_visible()
     assert "原始" in page.locator("#drawer").inner_text() or "MTE2" in page.locator("#drawer").inner_text()
@@ -112,7 +112,7 @@ def exercise(browser, html, width, screenshots, errors):
     assert "非隔离 A/B" in page.locator("#experiment-detail").inner_text()
     assert "3990.14" in page.locator("#experiment-detail").inner_text() or "3,990.14" in page.locator("#experiment-detail").inner_text()
     page.locator("#experiment-example").click()
-    assert "不计入真实报告" in page.locator("#drawer").inner_text()
+    assert "Benchmark" in page.locator("#drawer").inner_text()
     page.keyboard.press("Escape")
     assert page.locator("#drawer").is_hidden()
 
@@ -132,7 +132,7 @@ def exercise(browser, html, width, screenshots, errors):
     page.locator("#experiment-tabs button",has_text="多卡通信").click()
     assert page.locator("#experiment-cards .experiment-card").count()==2
     assert "1,719.37" in page.locator("#experiment-detail").inner_text()
-    assert "不证明因果" in page.locator("#experiment-detail").inner_text()
+    assert "不同配置/轮次对照" in page.locator("#experiment-detail").inner_text()
     page.locator("#experiment-query").fill("")
     page.locator("#experiment-tabs button",has_text="全部有来源案例").click()
     assert page.locator("#graph-stage .graph-node").count()>=2
