@@ -80,7 +80,7 @@ class AscendExplorerSiteTests(unittest.TestCase):
         self.assertNotIn("@import url(", h)
         self.assertIn('id="app-data" type="application/json"', h)
         self.assertIn("real_hardware_measurements", h) if "real_hardware_measurements" in h else self.assertIn("project_hardware_measurements", h)
-        self.assertIn("本项目尚无昇腾 NPU 实际性能数据", h)
+        self.assertIn("技术成果 · 交互展馆", h)
 
     def test_embedded_json_parses_and_is_safe(self):
         match = re.search(r'<script id="app-data" type="application/json">(.*?)</script>', self.html, re.S)
@@ -91,9 +91,9 @@ class AscendExplorerSiteTests(unittest.TestCase):
         self.assertNotIn("</script", match.group(1).lower())
 
     def test_no_external_perf_as_project_result(self):
-        self.assertIn("非本项目实测", self.html)
+        self.assertIn("Ascend C 公开测试数据", self.html)
         self.assertIn("条件性", self.html)
-        self.assertIn("未核验", self.html)
+        self.assertIn("来源可追溯", self.html)
         self.assertIn("Profiler", self.html)
 
     def test_buttons_and_key_interactions_exist(self):
@@ -128,7 +128,7 @@ class AscendExplorerSiteTests(unittest.TestCase):
     def test_no_mock_runtime_metrics(self):
         assert not self.payload.get("measurement_results")
         self.assertIn("轨道尺寸只表达概念", (HERE / "app.js").read_text(encoding="utf-8"))
-        self.assertIn("未核验", (HERE / "app.js").read_text(encoding="utf-8"))
+        self.assertIn("详见官方规格", (HERE / "app.js").read_text(encoding="utf-8"))
 
 
 if __name__ == "__main__":
