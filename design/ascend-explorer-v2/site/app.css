@@ -49,3 +49,8 @@
 .topology-step b{display:block;color:var(--mint);font-size:11px}
 .topology-evidence p{font-size:12px;color:#c7dbe9}
 @media(max-width:760px){.topology-steps{grid-template-columns:repeat(2,minmax(0,1fr))}.family-rail{flex-wrap:nowrap;overflow-x:auto;padding-bottom:5px}.family-btn{white-space:nowrap}}
+
+/* 375px regression: long upstream model and PR names must wrap inside the evidence card,
+   instead of growing the CSS grid's automatic minimum width. Never hide page overflow. */
+.case-grid > *,.case-card,.case-card strong,.case-card .data-label,.case-card .chips{min-width:0;max-width:100%;overflow-wrap:anywhere;word-break:break-word}
+@media(max-width:620px){.case-grid{grid-template-columns:minmax(0,1fr)}}
