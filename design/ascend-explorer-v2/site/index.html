@@ -40,6 +40,7 @@
   <div class="two-thirds"><div><div class="product-grid" id="product-grid"></div><div class="linkline"><span class="badge neutral">可对比最多 3 个产品</span><button id="compare-products" class="btn ghost" type="button">比较所选产品</button></div></div>
   <aside class="surface hardware-detail" id="product-detail" aria-live="polite"><h3>选择产品查看详情</h3></aside></div>
   <div class="topology-evidence" id="topology-evidence" hidden aria-live="polite"></div>
+  <div class="verified-facts" id="verified-spec-detail" aria-live="polite"></div>
  </div>
  <div class="grid-3" style="margin-top:13px"><div class="topic-card"><b>处理器研究专题</b><div id="processor-topics"></div></div><div class="topic-card"><b>产品形态不等于芯片</b><p>同一处理器族可能对应多种整机产品，不能从一篇案例推断所有设备参数。</p></div><div class="topic-card"><b>缺乏官方规格时</b><p>TOPS、内存、带宽和功耗显示「未核验」，不以空白或 0 冒充真实参数。</p></div></div>
  <div class="surface" id="comparison" hidden style="margin-top:14px"><div class="section-header"><h3>已选产品对照</h3><button class="btn ghost" id="clear-compare" type="button">清除对照</button></div><div class="overflow-x" id="compare-table"></div></div>
@@ -57,6 +58,8 @@
    <div class="layer-display" id="anatomy-layer-display" hidden></div>
    <div class="linkline"><button id="path-gemm" class="btn" type="button">矩阵数据路径</button><button id="path-vector" class="btn ghost" type="button">向量数据路径</button><button id="path-next" class="btn ghost" type="button">下一步 →</button></div>
    <div class="pathline" id="memory-path" aria-live="polite"></div>
+   <div class="core-illustration" id="core-illustration" role="img" aria-label="典型 Cube 或 Vector 计算存储数据通路">可切换数据流结构图</div>
+   <div class="core-step-detail" id="core-step-detail" aria-live="polite"></div>
   </div>
   <aside class="surface tinted"><span class="data-label">ACTIVE COMPONENT</span><h3 id="chip-detail-title" class="panel-title" style="font-size:22px;margin-top:12px">选择芯片单元</h3><p id="chip-detail-text" class="muted"></p><div class="tutorial-box" id="chip-detail-measure"></div><div class="linkline"><button class="btn ghost" data-drawer-key="architecture" type="button">查看官方架构说明</button></div><p class="tiny">本解剖图是逻辑资源关系，不能用于推断具体芯片的面积、数量或实际通路。</p></aside>
  </div>
@@ -65,6 +68,13 @@
 <section class="section" id="stack" aria-labelledby="stack-title"><div class="container">
  <div class="section-header"><div><div class="section-index">03 / SOFTWARE STACK</div><h2 id="stack-title">软件栈从模型到 NPU 如何贯通</h2><p class="section-intro">下面是逻辑调用层次。框架实际执行路径、算子支持、CANN 和驱动版本必须依据对应软件版本单独核对。</p></div></div>
  <div class="two-thirds"><div class="surface"><div class="stack" id="stack-layers"></div></div><div class="surface tinted"><div class="data-label">SELECTED LAYER</div><h3 id="stack-detail-title" class="panel-title" style="margin-top:13px">点选层级查看工作机制</h3><p id="stack-detail-text" class="muted"></p><div class="tutorial-box" id="stack-detail-gate"></div><div class="linkline"><button class="btn ghost" data-drawer-key="framework" type="button">查看版本及官方说明</button></div></div></div>
+ <div class="surface compat-panel" id="software-compat" style="margin-top:16px">
+   <div class="section-header"><div><h3 class="panel-title">固定发布版本兼容性剖面</h3><p class="section-intro">只展示该发布文档标示的已验证软件组合和产品族；具体模型、量化与拓扑仍需逐项核查。</p></div><span class="badge neutral">vLLM-Ascend 0.30.0</span></div>
+   <div class="tabs" id="compat-family-tabs" aria-label="选择官方软件环境适配的硬件族"></div>
+   <div class="compat-view" id="compat-view" aria-live="polite"></div>
+   <div class="section-header" style="margin-top:16px"><h3 class="panel-title">跨模型支持示例（来自官方支持表）</h3><button type="button" class="btn ghost" id="compat-source">查看原始支持矩阵</button></div>
+   <div class="compat-models" id="compat-models"></div>
+ </div>
 </div></section>
 
 <section class="section" id="lifecycle" aria-labelledby="life-title"><div class="container">
