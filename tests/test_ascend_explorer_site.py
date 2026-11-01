@@ -50,6 +50,8 @@ class AscendExplorerSiteTests(unittest.TestCase):
         p = self.payload
         self.assertEqual(len(p["hardware"]["products"]), 10)
         self.assertEqual(len(p["hardware"]["processorResearchTopics"]), 2)
+        self.assertEqual(len(p["productLineage"]["families"]), 6)
+        self.assertEqual(len(p["productLineage"]["productProcessorMappings"]), 2)
         self.assertEqual(len(p["operators"]["stories"]), 7)
         self.assertEqual(sum(len(x["frames"]) for x in p["operators"]["stories"]), 42)
         self.assertEqual(len(p["cases"]["cases"]), 15)
@@ -91,7 +93,7 @@ class AscendExplorerSiteTests(unittest.TestCase):
         self.assertIn("Profiler", self.html)
 
     def test_buttons_and_key_interactions_exist(self):
-        for key in ("product-tabs", "chip-units", "anatomy-levels", "operator-tabs",
+        for key in ("product-tabs", "family-rail", "topology-evidence", "product-crumb", "chip-units", "anatomy-levels", "operator-tabs",
                     "operator-steps", "timeline-stages", "factor-tabs", "case-grid",
                     "symptoms", "graph-stage", "graph-detail", "graph-search",
                     "symptoms", "drawer-close", "drawer-backdrop", "nav-toggle"):
