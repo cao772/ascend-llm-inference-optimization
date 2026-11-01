@@ -1,5 +1,13 @@
 # Ascend Explorer V2 · 交互网页与详细设计
 
+## V2.4｜外部昇腾 Matmul 实测与官方接口约束的证据链（2026-11-01）
+
+- [公开实验数据与 API 证据链](./content/public-matmul-evidence-2026-11-01.json)：从 AscendC 开发预览文档整理 **Atlas A2 Matmul 算子**的不同口径数据：整算子 12,045→2,532 μs；MTE2 的 Tile 优化 2,452→808 μs；MTE2 的 CFG_MDL 大包搬运 808→591 μs。这些是**外部作者报告，非本项目 NPU 复测**。
+- [详细来源审计与反例边界](./docs/public-ascend-matmul-evidence-chain-2026-11-01.md)：6 份有来源的技术资料（包含 CANN 8.5.0 GetTiling、SetFixSplit、GetCoreMemSize、Profiler），8 条来源约束断言。SetFixSplit 必须满足 L0C 容量、baseKIn=-1 等规则。
+- [网页更新](./site/index.html)：在 V2.3 GEMM 分块教学演示下嵌入“公开案例实测证据”，整算子与搬运流水独立的成对对比柱条，保留原始链接和不确定性，**不拼接成最终 LLM 提速曲线**。
+- [证据测试](../../tests/test_ascend_public_matmul_evidence.py) + [Chromium/WebKit 浏览器检查](./site/browser_cross_engine.py)，明确源类型、测量口径和 `local_npu_profiling_count=0`。
+- 待后续有硬件时才可运行实际 `GetTiling`、读取平台真实内存大小、采集原始 Profiler 数据、验证模型级 TTFT/TPOT/TPS。外部开发预览页面本身也明确标记仅供参考，需与正式文档核对。
+
 ## V2.3｜GEMM 分块与理想化访存复用交互实验室（2026-11-01）
 
 - [研发记录 / 数学公式与来源](./docs/gemm-tiling-lab-v2.3.md)：基于官方 Ascend C Matmul Tiling/CopyIn-Compute-CopyOut 的机制，区分真实设备和教学模型。
