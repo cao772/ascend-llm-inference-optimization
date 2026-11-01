@@ -52,6 +52,8 @@ class AscendExplorerSiteTests(unittest.TestCase):
         self.assertEqual(len(p["hardware"]["processorResearchTopics"]), 2)
         self.assertEqual(len(p["productLineage"]["families"]), 6)
         self.assertEqual(len(p["productLineage"]["productProcessorMappings"]), 2)
+        self.assertEqual(p["tilingLab"]["kind"], "educational_analytical_model_not_hardware_benchmark")
+        self.assertEqual(len(p["tilingLab"]["presets"]), 3)
         self.assertEqual(len(p["operators"]["stories"]), 7)
         self.assertEqual(sum(len(x["frames"]) for x in p["operators"]["stories"]), 42)
         self.assertEqual(len(p["cases"]["cases"]), 15)
@@ -71,6 +73,8 @@ class AscendExplorerSiteTests(unittest.TestCase):
         h = self.html
         self.assertGreater(len(h), 120_000)
         self.assertNotIn("/* APP_", h)
+        self.assertNotIn("/* TILING_JS_INJECT */", h)
+        self.assertIn("AscendTilingMath", h)
         self.assertNotIn("<script src=", h)
         self.assertNotIn("<link rel=\"stylesheet\"", h)
         self.assertNotIn("@import url(", h)
@@ -96,6 +100,8 @@ class AscendExplorerSiteTests(unittest.TestCase):
         for key in ("product-tabs", "family-rail", "topology-evidence", "product-crumb", "chip-units", "anatomy-levels", "operator-tabs",
                     "operator-steps", "timeline-stages", "factor-tabs", "case-grid",
                     "symptoms", "graph-stage", "graph-detail", "graph-search",
+                    "tiling-lab", "tiling-presets", "tile-M", "tile-N", "tile-K", "tiling-matrices",
+                    "tiling-summary", "tiling-traffic", "tiling-step", "tiling-sources",
                     "symptoms", "drawer-close", "drawer-backdrop", "nav-toggle"):
             self.assertIn(key, self.parser.ids)
         self.assertIn("aria-pressed", self.html)
