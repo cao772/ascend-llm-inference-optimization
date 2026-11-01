@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>昇腾大模型推理与算子优化 · V2 交互设计预览</title>
+<style>
+:root{color-scheme:dark;--bg:#081321;--panel:#0f233a;--panel2:#142d48;--stroke:#294661;--text:#eaf2ff;--muted:#b1c4d8;--cyan:#68d6cf;--warn:#f2c984}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:radial-gradient(ellipse at 85% -20%,#1f4974 0%,transparent 48%),var(--bg);color:var(--text);font-family:Inter,-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;line-height:1.58}
+button{font:inherit;cursor:pointer}button:focus-visible,a:focus-visible{outline:3px solid #a8e7e2;outline-offset:3px}a{color:#9bc5ff}a:hover{color:#d5eaff}.shell{max-width:1280px;margin:auto;padding:0 24px}
+nav{position:sticky;top:0;z-index:6;background:#091523ea;backdrop-filter:blur(12px);border-bottom:1px solid var(--stroke)}nav .shell{display:flex;align-items:center;justify-content:space-between;gap:22px;min-height:64px}
+.brand{font-size:14px;font-weight:850;letter-spacing:.09em}.brand b{color:var(--cyan)}.menu{display:flex;gap:22px}.menu a{font-size:12px;color:#aec2d8;text-decoration:none}.top-meta{border:1px solid #3b6077;border-radius:100px;padding:5px 10px;font-size:11px;color:#b7dedc}
+.hero{padding:52px 0 30px}.eyebrow{letter-spacing:.16em;font-size:11px;font-weight:800;color:var(--cyan);text-transform:uppercase}
+h1{font-size:clamp(34px,4vw,56px);line-height:1.14;margin:14px 0 20px;letter-spacing:-.045em}h1 span{color:var(--cyan)}
+.subtitle{max-width:700px;color:var(--muted);font-size:15px;margin:0 0 24px}.hero-flex{display:grid;grid-template-columns:1fr 1.05fr;gap:32px;align-items:center}
+.pills{display:flex;gap:10px;flex-wrap:wrap}.pill{border-radius:8px;background:#15314a;border:1px solid #2c576a;padding:7px 10px;font-size:11px;color:#c8dae9}.pill.cyan{color:#80f5e7;border-color:#227d83}
+.hero-art{padding:20px;border-radius:20px;border:1px solid #356277;background:linear-gradient(145deg,#142d48,#0b1d30);box-shadow:0 22px 65px #020b1690;min-height:310px}
+.art-label{font-size:11px;color:#7ebebc;font-weight:800;letter-spacing:.11em;margin-bottom:15px}.pipeline{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.pipe-node{border:1px solid #37607d;background:#102841;border-radius:10px;text-align:center;padding:14px 8px;font-size:12px;font-weight:750;position:relative}.pipe-node.active{border-color:var(--cyan);box-shadow:inset 0 0 20px #248e8b21;color:#a2fff1}.pipe-node small{display:block;font-weight:400;font-size:10px;color:#a9bfd8;margin-top:4px}
+.processor{margin-top:16px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px}.unit{padding:15px 8px;border:1px solid #37637b;border-radius:9px;text-align:center;background:#1a3e55;font-size:11px}.unit b{display:block;font-size:14px;color:#e3faf7}.unit small{color:#b2cedb}
+.trace{height:3px;margin:15px 15px;background:linear-gradient(90deg,transparent,var(--cyan),#7098ed,transparent);border-radius:10px}
+.kicker{margin:0;padding:10px 14px;border:1px solid #4f5363;border-radius:8px;background:#3a31343d;color:#edd5a8;font-size:12px}
+section{padding:34px 0}h2{font-size:26px;letter-spacing:-.025em;margin:8px 0 8px}.section-lead{font-size:13px;color:var(--muted);margin:0 0 22px}
+.section-head{display:flex;justify-content:space-between;align-items:flex-end;gap:18px;flex-wrap:wrap}
+.card{border:1px solid var(--stroke);border-radius:16px;background:linear-gradient(145deg,#102740,#0c2035);padding:20px}.card h3{margin:0 0 7px;font-size:16px}.card p{font-size:13px;color:var(--muted)}
+.tabs{display:flex;gap:8px;flex-wrap:wrap}.tabs button{border:1px solid #31516f;background:#152d46;color:#bfcedc;border-radius:9px;padding:10px 14px;font-size:12px}
+.tabs button[aria-pressed="true"]{border-color:var(--cyan);background:#1b484d;color:#d5fff9}
+.explainer{display:grid;grid-template-columns:1fr 1.1fr;gap:14px}.hardware-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.hitem{padding:16px;background:#10253c;border:1px solid #2b4863;border-radius:12px;min-height:121px}
+.hitem span{display:block;color:var(--cyan);font-size:10px;letter-spacing:.1em}.hitem strong{display:block;font-size:16px;margin:6px 0}
+.hitem small{color:#a8bdd5}.hitem .unknown{color:#f7cf94}.source{font-size:11px;color:#8faabc;margin-top:12px}
+.chip-grid{display:grid;grid-template-columns:1.15fr 1fr;gap:14px}.chip-layers{border:1px solid #325873;border-radius:14px;padding:16px;background:#0b2137}
+.memory{background:linear-gradient(90deg,#173a54,#17414b);border:1px solid #3c8293;border-radius:9px;padding:12px;text-align:center;font-size:13px;margin-bottom:11px}
+.compute{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.compute button{border:1px solid #426078;border-radius:12px;background:#17324c;color:#e8f2ff;min-height:83px;text-align:left;padding:13px}
+.compute button b{display:block;font-size:17px}.compute button small{color:#a5bbd1;display:block;margin-top:2px}
+.compute button.sel{border-color:var(--cyan);background:#19494f}.legend{font-size:12px;color:#9ebdd0;margin:11px 0 0}
+.detail{border:1px solid #345673;background:#112b44;border-radius:12px;padding:19px;min-height:218px}
+.detail h3{color:#a1f1e6}.detail p{color:#bed0e1;font-size:13px}.detail .linkish{font-size:11px;color:var(--cyan)}
+.stageline{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}.stage{border:1px solid #2f5472;border-radius:10px;background:#102c46;padding:15px 11px;min-height:113px}
+.stage .index{font-size:10px;font-weight:800;color:var(--cyan)}.stage h3{font-size:13px;margin:7px 0 5px}.stage p{font-size:11px;color:#a6bed5;margin:0}
+.story{display:grid;grid-template-columns:.9fr 1.1fr;gap:16px}.story-steps{display:flex;flex-direction:column;gap:9px}.story-step{width:100%;text-align:left;border:1px solid #35506b;background:#122e48;border-radius:10px;color:#c5d7e9;padding:12px;display:flex;align-items:center;gap:11px}
+.story-step[aria-pressed="true"]{border-color:var(--cyan);background:#1b464c;color:#fff}.round{display:grid;place-items:center;border-radius:100%;height:28px;width:28px;background:#2b5066;font-size:11px;font-weight:bold}
+.readout{min-height:350px;display:flex;flex-direction:column;justify-content:space-between}
+.readout .number{font-size:54px;color:#63d5cb;font-weight:850;opacity:.35}.readout h3{font-size:24px}.readout p{max-width:480px}
+.foot{border-top:1px solid var(--stroke);padding:30px 0;color:#a0b5c9;font-size:12px;margin-top:30px}
+@media(max-width:950px){.hero-flex,.explainer,.chip-grid,.story{grid-template-columns:1fr}.hero-art{max-width:650px}.menu{display:none}}
+@media(max-width:560px){.shell{padding:0 16px}.hardware-list,.stageline{grid-template-columns:1fr 1fr}.pipeline{grid-template-columns:1fr 1fr}.hero{padding-top:30px}.hero-art{min-height:0}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
+</style></head>
+<body>
+<nav><div class="shell"><div class="brand"><b>ASCEND</b> / INFERENCE EXPLORER</div><div class="menu"><a href="#hardware">硬件产品</a><a href="#anatomy">芯片解剖</a><a href="#lifecycle">推理过程</a><a href="#operator">算子显微镜</a></div><div class="top-meta">V2 · 设计交互预览</div></div></nav>
+<main class="shell">
+<header class="hero"><div class="hero-flex"><div><div class="eyebrow">Hardware · Systems · Kernels · Evidence</div><h1>从一张卡到<br><span>每一个 Token</span></h1><p class="subtitle">理解昇腾大模型推理，不应停留在算力参数。沿着硬件资源、片内数据搬运、Prefill/Decode 和算子优化的因果链，逐层深入。</p>
+<div class="pills"><span class="pill cyan">项目：昇腾大模型推理与算子优化</span><span class="pill">硬件解剖</span><span class="pill">推理性能</span><span class="pill">知识图谱</span></div></div>
+<div class="hero-art"><div class="art-label">01 / SYSTEM PATHWAY · 教学示意</div><div class="pipeline"><div class="pipe-node">输入请求<small>Tokens</small></div><div class="pipe-node">调度<small>Scheduler</small></div><div class="pipe-node active">预填充<small>Prefill</small></div><div class="pipe-node">解码<small>Decode</small></div></div><div class="trace"></div><div class="art-label">02 / NPU EXECUTION RESOURCES</div><div class="processor"><div class="unit"><b>Cube</b><small>矩阵计算</small></div><div class="unit"><b>Vector</b><small>向量计算</small></div><div class="unit"><b>Memory</b><small>数据驻留/搬运</small></div></div><div class="source">不对应某一个真实 SKU 的内部物理布局；按官方 Ascend C 架构概念教学。</div></div></div>
+<p class="kicker" style="margin-top:28px">设计预览，非最终上线页面。所有交互仅帮助审阅信息层级和视觉风格；没有硬件规格和真实推理测量。</p></header>
+
+<section id="hardware"><div class="section-head"><div><div class="eyebrow">02 / PRODUCT ATLAS</div><h2>昇腾不是只有一张“卡”</h2><p class="section-lead">先区分产品形态、实际 SKU 和处理器代际，再谈内存与互联。</p></div><div class="tabs" id="hardware-tabs"></div></div>
+<div class="card"><div class="hardware-list" id="hardware-cards"></div><div class="source">官方来源：<a target="_blank" rel="noopener" href="https://www.hiascend.com/doc_center/source/zh/mind-sdk/600/description/productform/hardwaredesc_0001.html">昇腾产品形态说明</a>。精确 TOPS、容量与带宽等尚未逐产品核验，故预览中不显示。</div></div></section>
+
+<section id="anatomy"><div class="eyebrow">03 / INSIDE THE AI CORE</div><h2>进入 NPU：计算单元如何协作</h2><p class="section-lead">点击组件深入了解 Cube、Vector、Scalar、片内缓存和数据搬运。下面是硬件架构的教学抽象，而非统一芯片的物理拓扑图。</p>
+<div class="chip-grid"><div class="chip-layers"><div class="memory">GLOBAL MEMORY <small>· 外部可访问存储</small></div><div class="compute" id="compute"></div><p class="legend">典型 GEMM：GM → L1 → L0A/B → Cube → L0C → GM。不同架构数据通路可能不同。</p></div>
+<div class="detail" id="detail" aria-live="polite"></div></div></section>
+
+<section id="lifecycle"><div class="eyebrow">04 / ONE REQUEST, MANY STAGES</div><h2>一个 Token 从哪里来</h2><p class="section-lead">请求全链路拆为排队、Prefill、缓存建立、Decode 和流式输出。时间长度为结构示意，并非实测时长。</p>
+<div class="stageline"><div class="stage"><div class="index">01</div><h3>请求排队</h3><p>Tokenizer / Scheduler、并发、Batch</p></div><div class="stage"><div class="index">02</div><h3>Prefill</h3><p>输入 token、Attention / GDN</p></div><div class="stage"><div class="index">03</div><h3>KV / State</h3><p>存储复用、缓存容量与分配</p></div><div class="stage"><div class="index">04</div><h3>Decode</h3><p>逐 token 生成、Host Gap、MTP</p></div><div class="stage"><div class="index">05</div><h3>流式响应</h3><p>TTFT / TPOT / P95 / TPS 验收</p></div></div></section>
+
+<section id="operator"><div class="eyebrow">05 / OPERATOR MICROSCOPE</div><h2>算子为什么慢，怎么可能更快</h2><p class="section-lead">选一个专题，按输入→计算→数据搬运→瓶颈→优化→验证逐帧讲解。正式版每个专题有独立结构化数据与来源。</p>
+<div class="tabs" id="op-tabs" style="margin-bottom:14px"></div><div class="story"><div class="card story-steps" id="steps"></div><div class="card readout"><div><div class="number" id="frame-number">01</div><h3 id="frame-title"></h3><p id="frame-copy"></p></div><p class="source" id="frame-caveat"></p></div></div></section>
+</main><footer class="foot"><div class="shell">V2 DESIGN REVIEW · 2026-11-01 · 详细数据/42 帧分镜、设计接口与验证脚本保存在 GitHub。当前未进行真实昇腾推理性能测试。</div></footer>
+<script>
+"use strict";
+const hw = {
+ "模块/边缘":[["Atlas 200I A2","加速模块"],["Atlas 500 A2","智能小站"]],
+ "推理卡":[["Atlas 300I Pro","推理加速卡"],["Atlas 300I Duo","推理加速卡"]],
+ "服务器":[["Atlas 800I A2","推理服务器"],["Atlas 800T A2","训练服务器"]],
+ "超节点":[["Atlas 900 A2 PoD","集群基础单元"],["Atlas 900 A3 SuperPoD","超节点系统"]]
+};
+const chip={
+ cube:["Cube / 矩阵单元","矩阵乘（GEMM）类操作的关键计算资源。大模型 MLP、部分 Attention、MoE Experts 可映射到此类计算。分块与数据重用关系比表面峰值算力更值得研究。"],
+ vector:["Vector / 向量单元","承担归一化、激活、逐元素操作等。可以与 Cube 相邻，但片内数据如何搬运、实际核利用率取决于硬件架构与 Kernel 实现。"],
+ scalar:["Scalar / 控制单元","用于地址计算、循环与指令控制。调度碎片和同步可能产生 Host 与 Device 空隙，但必须经 Profiling 才能证明热点。"],
+ local:["Local Memory / 片内存储","包括 UB、L1、L0A/B/C 等架构相关片内存储。减少重复读取 GM、提高 Tile 复用是一类常见优化机制，但各代路径不同。"],
+ mte:["MTE / 搬运单元","DMA 与 MTE 管理多层存储间的数据传输。访存和数据格式转换经常限制算子端到端收益，不能只看计算指令。"],
+ gm:["GM / 全局存储","全局内存保存模型权重、部分中间结果或缓存，实际物理实现需按具体芯片型号核验，不能一律用 HBM 容量代替。"]
+};
+const stories={
+ "GEMM":[["输入张量","M/N/K 矩阵布局与精度先决定工作量。"],["计算","Cube 以 tile 分块执行矩阵运算。"],["访存","GM/L1/L0 的数据流与复用直接影响效率。"],["瓶颈","小矩阵、Tile 不匹配、搬运大于计算。"],["优化","调整 Tile/布局、融合相邻操作或减少写回。"],["验证","先固定形状、数值正确性，再用真实 Profiler 和端到端 A/B 验证。"]],
+ "GDN":[["输入","区分 Full Attention 的 KV 与 GDN recurrent state。"],["计算","Prefill 与 Decode 使用不同形状/状态更新路径。"],["访存","观察 state 读写、门控与布局转换。"],["瓶颈","只有真实模型和阶段 Trace 能证明热点。"],["优化","可能减少布局搬运或融合门控，但非通用实现。"],["验证","特定 CUDA MTP Kernel 存在 8:1 头比例 guard；不能推给所有 GDN。"]],
+ "MoE":[["输入","Router logits、TopK 与 experts。"],["计算","Dispatch → Grouped GEMM → Combine。"],["访存","专家权重、Token 分配和跨卡传输。"],["瓶颈","负载偏斜、小矩阵和通信等待。"],["优化","路由分组/通信重叠/合适的 EP 拓扑。"],["验证","真实专家 Token 直方图优先于均匀微基准。"]]
+};
+const $=id=>document.getElementById(id);
+function activateTabs(target,keys,current,callback){$(target).innerHTML=keys.map(k=>'<button type="button" data-k="'+k+'" aria-pressed="'+String(k===current)+'">'+k+'</button>').join("");$(target).querySelectorAll("button").forEach(b=>b.addEventListener("click",()=>callback(b.dataset.k)))}
+let currentHW="推理卡";function renderHW(){activateTabs("hardware-tabs",Object.keys(hw),currentHW,k=>{currentHW=k;renderHW()});$("hardware-cards").innerHTML=hw[currentHW].map(([name,kind])=>'<div class="hitem"><span>PRODUCT FAMILY · '+currentHW+'</span><strong>'+name+'</strong><small>'+kind+' · 官方产品名</small><div class="source unknown">参数与模型兼容：未逐项核验</div></div>').join("")}
+let currentChip="cube";function renderChip(){const names={cube:"Cube",vector:"Vector",scalar:"Scalar",local:"Local Memory",mte:"MTE/DMA",gm:"Global Memory"};$("compute").innerHTML=Object.keys(chip).map(k=>'<button type="button" data-k="'+k+'" class="'+(k===currentChip?"sel":"")+'" aria-pressed="'+String(k===currentChip)+'"><b>'+names[k]+'</b><small>点击查看作用</small></button>').join("");$("compute").querySelectorAll("button").forEach(b=>b.addEventListener("click",()=>{currentChip=b.dataset.k;renderChip()}));$("detail").innerHTML='<div class="eyebrow">COMPONENT EXPLANATION</div><h3>'+chip[currentChip][0]+'</h3><p>'+chip[currentChip][1]+'</p><div class="linkish">来源：Ascend C 硬件抽象 · 官方架构说明</div>'}
+let currentOp="GEMM",currentFrame=0;function renderStory(){activateTabs("op-tabs",Object.keys(stories),currentOp,k=>{currentOp=k;currentFrame=0;renderStory()});$("steps").innerHTML=stories[currentOp].map((f,i)=>'<button type="button" class="story-step" data-i="'+i+'" aria-pressed="'+String(i===currentFrame)+'"><span class="round">'+(i+1)+'</span><span>'+f[0]+'</span></button>').join("");$("steps").querySelectorAll("button").forEach(b=>b.addEventListener("click",()=>{currentFrame=Number(b.dataset.i);renderStory()}));let frame=stories[currentOp][currentFrame];$("frame-number").textContent=String(currentFrame+1).padStart(2,"0");$("frame-title").textContent=currentOp+" · "+frame[0];$("frame-copy").textContent=frame[1];$("frame-caveat").textContent="机制讲解，非实机 Profiling / 性能提升。正式版共七专题、每专题六帧，须逐条挂原始证据。"}
+renderHW();renderChip();renderStory();
+</script></body></html>
