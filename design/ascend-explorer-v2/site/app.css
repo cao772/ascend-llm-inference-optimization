@@ -17,3 +17,15 @@
 @media(max-width:950px){.nav{display:none;position:absolute;top:69px;left:0;right:0;flex-direction:column;align-items:stretch;background:#10253a;padding:20px 28px;border-bottom:1px solid var(--line)}.nav.open{display:flex}.menu-toggle{display:block}.hero-grid,.two-thirds,.anatomy-view,.grid-2{grid-template-columns:1fr}.hero{padding-top:38px}.hero-diagram{max-width:760px}}
 @media(max-width:620px){.container{padding:0 15px}.brand-caption{display:none}.status-small{display:none}.hero{padding:38px 0}.section{padding:45px 0}.product-grid,.case-grid,.metric-grid,.grid-3{grid-template-columns:1fr}.timeline{grid-template-columns:repeat(2,1fr)}.stage{min-height:110px}.causality{grid-template-columns:1fr 1fr}.causal-node::after{content:none}.story-grid,.diagnosis{grid-template-columns:1fr}.story-steps{grid-template-columns:repeat(3,1fr)}.resource-nodes{grid-template-columns:repeat(2,1fr)}.line-pipeline{grid-template-columns:repeat(2,1fr)}.chip-cores{grid-template-columns:repeat(2,1fr)}.grid-4{grid-template-columns:1fr}.stack-layer{flex-wrap:wrap;gap:7px}.stack-layer b{min-width:0}.divider{display:none}.host-tracks{grid-template-columns:55px 1fr}.topbar-inner{min-height:62px}.nav{top:62px}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
+
+/* Evidence graph: a readable one-hop star, not a tangled whole-graph hairball. */
+.graph-stage{position:relative;height:380px;overflow:hidden;border:1px solid #31536d;border-radius:14px;background:radial-gradient(circle at 50% 50%,#1b4f57 0%,#102940 38%,#0b2037 100%)}
+.graph-lines{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:0}
+.graph-node{position:absolute;z-index:1;transform:translate(-50%,-50%);width:118px;max-width:26%;min-height:54px;padding:7px 9px;font-size:10px;line-height:1.35;overflow-wrap:anywhere;color:#d5eafa;background:#17344c;border:1px solid #47748b;border-radius:11px;text-align:center}
+.graph-node.primary{width:136px;max-width:30%;min-height:70px;background:#1d5558;border-color:#83ebe0;font-size:11px;font-weight:800;color:white;box-shadow:0 0 26px #60cdc42b}
+.graph-node:hover,.graph-node:focus-visible{border-color:#a9ffff}
+.graph-detail{max-height:380px;overflow:auto;min-height:380px}
+.graph-detail strong{display:block;color:#d4f8f3;overflow-wrap:anywhere;margin:7px 0}
+.graph-detail .rel{padding:9px 0;border-bottom:1px solid #2d4861;font-size:12px}
+.graph-detail .rel small{display:block;color:#9bb7ca}
+@media(max-width:620px){.graph-stage{height:370px}.graph-node{font-size:9px;width:96px;min-height:56px;padding:6px}.graph-node.primary{width:120px;font-size:10px}}
