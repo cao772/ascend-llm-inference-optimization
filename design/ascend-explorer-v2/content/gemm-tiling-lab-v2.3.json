@@ -1,0 +1,86 @@
+{
+  "schemaVersion": "2.3-education",
+  "asOf": "2026-11-01",
+  "kind": "educational_analytical_model_not_hardware_benchmark",
+  "title": "GEMM 分块与数据复用实验室",
+  "formula": "C[M,N] = A[M,K] × B[K,N]",
+  "source": {
+    "url": "https://www.hiascend.com/document/detail/en/canncommercial/850/API/ascendcopapi/atlasascendc_api_07_0671.html",
+    "title": "Ascend C Matmul Tiling Usage Instructions",
+    "release": "CANN 8.5.0 API documentation",
+    "sourceSecond": "https://www.hiascend.com/document/detail/zh/canncommercial/80RC3/developmentguide/opdevg/Ascendcopdevg/atlas_ascendc_10_0042.html"
+  },
+  "presets": [
+    {
+      "id": "decode-thin",
+      "label": "Decode 细 M 形状",
+      "M": 32,
+      "N": 256,
+      "K": 256,
+      "tm": 32,
+      "tn": 64,
+      "tk": 64,
+      "description": "只示意小 M 的矩阵分块；不代表某模型的真实调度/算子配置"
+    },
+    {
+      "id": "prefill-square",
+      "label": "Prefill 方形练习",
+      "M": 256,
+      "N": 256,
+      "K": 256,
+      "tm": 64,
+      "tn": 64,
+      "tk": 64,
+      "description": "对照输入与权重分块重复载入的逻辑计数"
+    },
+    {
+      "id": "ragged",
+      "label": "非整除边界",
+      "M": 144,
+      "N": 112,
+      "K": 80,
+      "tm": 64,
+      "tn": 64,
+      "tk": 32,
+      "description": "最后一行/列/累加轮次有不足一个 tile 的边界块"
+    }
+  ],
+  "methods": [
+    {
+      "id": "none",
+      "label": "无跨输出 Tile 复用",
+      "assumption": "每个输出 Tile 对每个 K 分块分别读取所需 A/B"
+    },
+    {
+      "id": "reuseA",
+      "label": "理想复用 A",
+      "assumption": "相同 M/K 的 A 分块跨不同 N 输出 Tile 保留，B 不保留"
+    },
+    {
+      "id": "reuseB",
+      "label": "理想复用 B",
+      "assumption": "相同 K/N 的 B 分块跨不同 M 输出 Tile 保留，A 不保留"
+    },
+    {
+      "id": "both",
+      "label": "理论输入读取下界",
+      "assumption": "A 与 B 全局各只读取一遍，未考虑容量、Cache 淘汰、核间通信；不宣称可实现"
+    }
+  ],
+  "evidenceScope": "跨平台矩阵分块数学机制 + Ascend C Tiling 文档，不代表某款昇腾设备的 Kernel Dispatch，也没有 Profiler 数据",
+  "metrics": [
+    "输出分块数",
+    "K 轴累加轮次",
+    "逻辑 Tile 任务数",
+    "局部工作集算术估计",
+    "理想化逻辑读取量（元素）",
+    "算术 FLOPs 约定"
+  ],
+  "neverAssert": [
+    "实测 HBM/GM 流量",
+    "实际 Tile 排布",
+    "NPU 利用率",
+    "真实 TTFT/TPOT/TPS",
+    "预计加速倍数"
+  ]
+}
