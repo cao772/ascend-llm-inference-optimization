@@ -29,3 +29,23 @@
 .graph-detail .rel{padding:9px 0;border-bottom:1px solid #2d4861;font-size:12px}
 .graph-detail .rel small{display:block;color:#9bb7ca}
 @media(max-width:620px){.graph-stage{height:370px}.graph-node{font-size:9px;width:96px;min-height:56px;padding:6px}.graph-node.primary{width:120px;font-size:10px}}
+
+/* V2.1 four-tier hardware navigator and verified product-scoped topology */
+.family-rail{display:flex;flex-wrap:wrap;gap:7px;margin-top:14px;align-items:center}
+.family-btn{border-radius:9px;border:1px solid #3f5f78;background:#112c42;color:#c7dbeb;padding:8px 11px;font-size:12px;min-height:39px}
+.family-btn[aria-pressed=true]{border-color:var(--mint);background:#20565b;color:#fff}
+.family-btn small{font-size:10px;color:#8ebabb;margin-left:6px}
+.breadcrumb{display:flex;flex-wrap:wrap;align-items:center;gap:5px;padding:10px 0 3px}
+.crumb-btn{border:1px solid #36566e;background:#0e2a41;color:#aec9d8;padding:5px 9px;border-radius:7px;font-size:11px}
+.crumb-btn[aria-current=step]{color:#d4fff4;border-color:#4b9a97}
+.crumb-arrow{font-size:12px;color:#79a2b7}
+.processor-proof{margin:12px 0;padding:12px;border:1px dashed #548083;background:#12353b;border-radius:9px}
+.processor-proof strong{font-size:13px;color:#b0f9e7}
+.processor-proof p{font-size:12px;line-height:1.6;margin:4px 0;color:#c5dcd9}
+.processor-proof .proof-note{font-size:11px;color:#a4c8c4}
+.topology-evidence{padding:17px;border:1px solid #3a677d;background:linear-gradient(115deg,#15344b,#0f263a);border-radius:14px;margin-top:15px}
+.topology-steps{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:9px;margin:10px 0 13px}
+.topology-step{padding:13px 10px;border-radius:11px;border:1px solid #3c687b;background:#183b51;min-height:82px;color:#d9e9f2;font-size:11px;line-height:1.5}
+.topology-step b{display:block;color:var(--mint);font-size:11px}
+.topology-evidence p{font-size:12px;color:#c7dbe9}
+@media(max-width:760px){.topology-steps{grid-template-columns:repeat(2,minmax(0,1fr))}.family-rail{flex-wrap:nowrap;overflow-x:auto;padding-bottom:5px}.family-btn{white-space:nowrap}}
