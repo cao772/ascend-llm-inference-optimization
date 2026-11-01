@@ -10,6 +10,7 @@
 
 - [作者报告的 Atlas A2 Matmul 案例：Matmul 算子优化 Tiling 策略](https://asc.gitcode.com/guide/operator_practice/best_practices/matmul_tuning_cases/matmul_tiling_strategy.html)
 - [华为官方 CANN 8.5.0 Matmul Tiling API 使用说明](https://www.hiascend.com/document/detail/en/canncommercial/850/API/ascendcopapi/atlasascendc_api_07_0671.html)
+- [华为官方 SetFixSplit（CANN 8.5.0）](https://www.hiascend.com/document/detail/en/CANNCommunityEdition/850/API/ascendcopapi/atlasascendc_api_07_0681.html)
 - [华为官方 GetCoreMemSize（CANN 8.5.0）](https://www.hiascend.com/document/detail/en/canncommercial/850/API/ascendcopapi/atlasascendc_api_07_1034.html)
 - [华为官方 msopprof 用户指南（CANN 9.1.X）](https://www.hiascend.com/document/detail/zh/CANNCommunityEdition/910/devaids/optool/docs/zh/user_guide/msopprof_user_guide.md)
 - [华为 351x 架构版本的存储对齐规范（只能适用于该架构）](https://www.hiascend.com/document/detail/zh/CANNCommunityEdition/900beta2/opdevg/Ascendcopdevg/atlas_ascendc_10_00065.html)
@@ -41,6 +42,7 @@
 原文比较过 `[128, 256, 64]` 与 `[128,128,128]` 两组 Tile 的数据读取量，在同样近似 Cube 运算周期下前者读取的 A/B 输入数据更少，且处理 FP32 ND 输出写回时有地址对齐约束。它利用 `SetFixSplit(baseM,baseN,-1)` 固定 M、N，平台 Tiling 选出 K 分块（案例为 64）。
 
 官方 CANN 8.5.0 文档明确：
+- 独立的 [SetFixSplit 说明](https://www.hiascend.com/document/detail/en/CANNCommunityEdition/850/API/ascendcopapi/atlasascendc_api_07_0681.html) 对当前版本明确约束：`baseKIn` 只能是 `-1`，`baseM×baseN×sizeof(C_TYPE) ≤ L0CSize`，且分片维度需满足针对 dtype/单核形状的对齐/范围。**手工模型无法取代这些限制检查。**
 - 通过 `SetAType/SetBType/SetCType` 指定 tensor 位置、layout 和 dtype；
 - `SetShape` 和 `SetOrgShape` 说明当前计算和原始布局；
 - `GetTiling(optiling::TCubeTiling&)` 返回芯片/约束相关的 Tiling 数据（失败值需检查）。
@@ -80,7 +82,7 @@
 
 ## 4. 数据与网页交付
 
-- [结构化公开实测与 API 证据链 JSON](../content/public-matmul-evidence-2026-11-01.json)，含 5 个原始资料、7 个来源明确的断言，严格标注 `public_author_reported_not_independently_reproduced` 和 `local_npu_profiling_count=0`。
+- [结构化公开实测与 API 证据链 JSON](../content/public-matmul-evidence-2026-11-01.json)，含 6 个原始资料、8 个来源明确的断言，严格标注 `public_author_reported_not_independently_reproduced` 和 `local_npu_profiling_count=0`。
 - [网站交互源码](../site/app.js)：新增“公开案例：Atlas A2 上 Matmul 算子性能实测”，按**整算子**和**MTE2**分别展示前后柱条，支持进入源链接及完整适用性说明，明确不做混口径合并。
 - [验证脚本](../../../tests/test_ascend_public_matmul_evidence.py) + [真实浏览器校验](../site/browser_cross_engine.py)：检验证据类型、单位、数值端点、网页的明确免责声明以及来源抽屉。
 - [GitHub CI](https://github.com/cao772/ascend-llm-inference-optimization/actions/workflows/ascend-explorer-site.yml) 构建离线 HTML 和测试截图。
