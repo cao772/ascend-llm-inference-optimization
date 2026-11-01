@@ -207,6 +207,7 @@ function renderOperator(){
  tabs($("operator-tabs"),D.operators.stories.map(x=>({id:x.id,label:x.title})),opId,id=>{opId=id;opFrame=0;renderOperator()});
  const story=selectedOp();$("operator-steps").innerHTML=story.frames.map((f,i)=>'<button type="button" class="stepbtn" data-i="'+i+'" aria-pressed="'+String(i===opFrame)+'">0'+(i+1)+' · '+esc(["输入/形状","执行步骤","访存与通信","潜在热点","优化逻辑","验证/回退"][i])+'</button>').join("");
  $("operator-steps").querySelectorAll("button").forEach(b=>b.addEventListener("click",()=>{opFrame=+b.dataset.i;renderOperator()}));
+ $("gemm-lab-link").hidden=story.id!=="gemm";
  const f=story.frames[opFrame];$("op-number").textContent=String(opFrame+1).padStart(2,"0")+" / 06";$("op-stage").textContent=story.title+" · "+f.slug.toUpperCase();$("op-frame-title").textContent=f.label;$("op-frame-description").textContent=opFrame===5?"这是验证任务，不是已经取得性能收益；需要准确的设备/软件版本和 Profiler 证据。":"该帧是计算或访存机制解释，仅描述可能发生的路径，不代表具体芯片执行时长。";
  const flows={
 gemm:["GM","L1","Cube","Output"],rmsnorm:["Tensor","Reduce","Vector","Writeback"],"attention-gdn":["QKV / State","Prefill / Decode","Cache","Output"],"kv-cache":["Page mapping","KV store","Lookup","Reuse"],moe:["Router","TopK","Experts","Combine"],collectives:["TP ranks","AllReduce","Overlap","Sync"],"graph-mtp":["Host","Capture / Draft","Verify","Next token"]
