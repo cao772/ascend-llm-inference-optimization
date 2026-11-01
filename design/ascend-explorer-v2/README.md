@@ -1,5 +1,17 @@
 # Ascend Explorer V2 · 交互网页与详细设计
 
+## V2.5｜公开真实数据中心：算子、缓存与请求指标（2026-11-01）
+
+**目标**：将现有单篇 Matmul 案例升级为可检索、按原始指标口径查看、能读出实验条件与反例的独立成果展区。
+
+- [真实外部来源数据 JSON](./content/experiment-evidence-v2.5.json)：**8 个公开报告案例、24 组具有前后数值的指标**；6 组 Ascend C 算子、2 组 A2/A3 长上下文服务请求观测；作者报告不等于本项目实测。
+- [逐案例中文技术分析与可复现实验规范](./docs/empirical-evidence-center-v2.5.md)：型号/Kernel shape/dtype/版本、指标含义、优化改变、错误解释与限制、原始报告链接；1 个 vLLM Benchmark 文档输出示例明确隔离、不计入真实案例数。
+- [交互式证据中心](./site/)：按“算子 Profile / 服务缓存观测”分类、搜索 MTE2/Scalar/TTFT、每个指标配对图形、适用条件、来源链接与不可比较警告，保留原九大展区。
+- [Python 证据真实性测试](../../tests/test_ascend_experiment_evidence_v25.py) + [真实浏览器测试](./site/browser_cross_engine.py)，涵盖分类、筛选、数值、隔离 A/B 标记、手机适配。
+- [CSV 审计导出器](./tools/export_evidence_csv.py) 把 JSON 展开为逐指标 CSV（来源、指标范围、单位、条件、是否隔离 A/B、是否本项目硬件复现），并纳入 GitHub Actions 网页交付包。
+
+**重点**：这里的“24 组”是多篇报告内的**指标对数**，不是 24 场独立实验；缓存两轮不是单变量 A/B。**本项目 NPU 原始实测仍为 0**。若后续有机器，才依据正式版接口和原始 Profile 提升证据等级。
+
 ## V2.4｜外部昇腾 Matmul 实测与官方接口约束的证据链（2026-11-01）
 
 - [公开实验数据与 API 证据链](./content/public-matmul-evidence-2026-11-01.json)：从 AscendC 开发预览文档整理 **Atlas A2 Matmul 算子**的不同口径数据：整算子 12,045→2,532 μs；MTE2 的 Tile 优化 2,452→808 μs；MTE2 的 CFG_MDL 大包搬运 808→591 μs。这些是**外部作者报告，非本项目 NPU 复测**。
