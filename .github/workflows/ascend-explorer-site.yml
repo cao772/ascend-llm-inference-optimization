@@ -8,6 +8,7 @@ on:
       - 'design/ascend-explorer-v2/content/**'
       - 'design/ascend-explorer-v2/src/**'
       - 'tests/test_ascend_explorer_site.py'
+      - 'design/ascend-explorer-v2/site/browser_smoke.py'
       - '.github/workflows/ascend-explorer-site.yml'
 permissions:
   contents: read
@@ -52,6 +53,13 @@ jobs:
           assert "/* APP_" not in raw
           print("Offline V2 site ready:",p.stat().st_size,"bytes, 9 sections, 7 operator stories")
           PY
+      - name: Install browser test tools
+        run: |
+          python3 -m pip install playwright==1.56.0
+          python3 -m playwright install --with-deps chromium
+      - name: Test real browser interactions and mobile layout
+        run: |
+          python3 design/ascend-explorer-v2/site/browser_smoke.py build/ascend-explorer-v2/ascend-explorer-v2.html --screenshots build/ascend-explorer-v2
       - name: Publish verified offline site and design handoff
         uses: actions/upload-artifact@v4
         with:
