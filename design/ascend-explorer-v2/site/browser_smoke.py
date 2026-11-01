@@ -68,6 +68,14 @@ def run(html_path: Path, screenshots: Path | None = None):
         page.locator("#case-grid .case-card button").first.click()
         assert page.locator("#drawer").is_visible()
         page.keyboard.press("Escape")
+        page.locator("#graph-search").fill("GDN")
+        assert page.locator("#graph-matches button").count() > 0
+        page.locator("#graph-matches button").first.click()
+        assert page.locator("#graph-stage .graph-node").count() >= 2
+        assert page.locator("#graph-detail .rel").count() >= 1
+        page.locator("#graph-detail button[data-edge]").first.click()
+        assert page.locator("#drawer").is_visible()
+        page.keyboard.press("Escape")
         # Desktop screenshot for documentation (not screenshot-based implementation).
         if screenshots:
             screenshots.mkdir(parents=True, exist_ok=True)
