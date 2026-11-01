@@ -113,7 +113,23 @@ gm:{title:"Global Memory",hint:"模型参数、激活与缓存可能依赖外部
 local:{title:"Local Memory：UB/L1/L0",hint:"片内分层数据暂存与复用。不同代际 L0/UB 组织和路径可能不同。",measure:"Tile 命中、重复读写 GM、布局与占用率；与准确硬件架构对应。"},
 mte:{title:"MTE / DMA / 数据搬运",hint:"在 GM、片内存储与计算单元间移动张量。搬运不与计算重叠时可能产生等待。",measure:"搬运/计算重叠、待机、布局变换开销和实际调度 trace。"}};
 let currentLevel="core",currentUnit="cube",pathType="gemm",pathIndex=0;
-const paths={gemm:["GM","L1","L0A / L0B","Cube","L0C","GM / 下一层"],vector:["GM","UB","Vector","UB / Output","GM"]};
+const paths=Object.fromEntries(D.architecturePaths.paths.map(p=>[p.id,p.steps.map(x=>x.name)]));
+
+function renderCoreFlowSvg(){
+ const chapter=D.architecturePaths.paths.find(x=>x.id===pathType);
+ const steps=chapter.steps;const count=steps.length;
+ const boxWidth=count===7?105:137,gap=count===7?22:38,start=22,midY=91;
+ const positions=steps.map((_,i)=>start+i*(boxWidth+gap));
+ const total=positions[positions.length-1]+boxWidth+22;
+ const defs='<defs><marker id="flow-arr" markerWidth="7" markerHeight="7" refX="5" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7 z" fill="#79bfcd"/></marker></defs>';
+ const segments=steps.slice(1).map((st,i)=>{const a=positions[i]+boxWidth+3,b=positions[i+1]-6;return'<path class="flow-edge '+(pathIndex===i+1?'is-current':'')+'" d="M'+a+' '+midY+' L'+b+' '+midY+'" marker-end="url(#flow-arr)"/>'}).join("");
+ const blocks=steps.map((st,i)=>{const x=positions[i],on=i===pathIndex;return'<g><rect class="flow-rect '+(on?'is-current':'')+'" x="'+x+'" y="50" rx="11" width="'+boxWidth+'" height="82"/><text x="'+(x+boxWidth/2)+'" y="83">'+esc(st.name)+'</text><text class="svg-sub" x="'+(x+boxWidth/2)+'" y="110">'+esc(pathType==='gemm'&&i===3?'矩阵计算':pathType==='vector'&&i===2?'向量计算':i===0?'输入/读取':i===count-1?'写回':'局部数据')+'</text></g>'}).join("");
+ $("core-illustration").setAttribute("aria-label",chapter.label+"："+steps.map(x=>x.name).join(" → ")+"。正在讲解 "+steps[pathIndex].name);
+ $("core-illustration").innerHTML='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '+total+' 174" aria-hidden="true">'+defs+'<text x="20" y="19" style="text-anchor:start;fill:#94e7df;font-size:12px">'+esc(chapter.engine+' / 官方架构的典型教学通路')+'</text>'+segments+blocks+'<text x="'+(total/2)+'" y="155" class="svg-sub">节点和箭头仅表示先后关系，不对应实测时间或硬件物理距离</text></svg>';
+ const st=steps[pathIndex];
+ $("core-step-detail").textContent="第 "+(pathIndex+1)+"/"+count+" 步："+st.detail+" 可能瓶颈："+st.question+" 如何验证："+st.verify;
+}
+
 function renderAnatomy(){
  tabs($("anatomy-levels"),levels.map(x=>({id:x.id,label:x.label})),currentLevel,x=>{currentLevel=x;renderAnatomy()});
  const show=currentLevel==="core"||currentLevel==="flow";$("chip-shell").hidden=!show;$("anatomy-layer-display").hidden=show;$("memory-path").hidden=currentLevel!=="flow";$("path-next").disabled=currentLevel!=="flow";
@@ -123,6 +139,7 @@ function renderAnatomy(){
  const u=chip[currentUnit];$("chip-detail-title").textContent=u.title;$("chip-detail-text").textContent=u.hint;$("chip-detail-measure").textContent="怎么验证： "+u.measure;
  $("memory-path").innerHTML=paths[pathType].map((x,i)=>(i?'<i aria-hidden="true">→</i>':'')+'<span class="'+(i===pathIndex?"on":"")+'">'+esc(x)+'</span>').join("");
  $("path-gemm").className="btn "+(pathType==="gemm"?"":"ghost");$("path-vector").className="btn "+(pathType==="vector"?"":"ghost");
+ renderCoreFlowSvg();
 }
 $("path-gemm").addEventListener("click",()=>{pathType="gemm";currentLevel="flow";pathIndex=0;renderAnatomy()});
 $("path-vector").addEventListener("click",()=>{pathType="vector";currentLevel="flow";pathIndex=0;renderAnatomy()});
@@ -139,6 +156,17 @@ const stack=[
  $("stack-layers").querySelectorAll("button").forEach(b=>b.addEventListener("click",()=>{stackIndex=Number(b.dataset.i);renderStack()}));
  let s=stack[stackIndex];$("stack-detail-title").textContent=s[0];$("stack-detail-text").textContent=s[2];$("stack-detail-gate").textContent="工程核验： "+s[3];
 }
+
+const compatibility=D.softwareCompat;
+let compatFamilyId="A2";
+function renderCompatibility(){
+ tabs($("compat-family-tabs"),compatibility.hardwareFamilies.map(f=>({id:f.id,label:f.label})),compatFamilyId,x=>{compatFamilyId=x;renderCompatibility()});
+ const family=compatibility.hardwareFamilies.find(f=>f.id===compatFamilyId);
+ $("compat-view").innerHTML='<div class="data-label">'+esc(compatibility.release+' / 已验证的软件组合')+'</div><p class="small muted">已列举的设备：'+esc(family.examples.join("、"))+'。'+esc(family.note||"")+'</p><div class="compat-slice">'+compatibility.components.map(c=>{const supported=c.appliesTo.includes(compatFamilyId);return'<div class="compat-item"><b>'+esc(c.layer)+'</b><strong>'+esc(supported?c.version:"不适用此组件")+'</strong><small>'+esc(c.role)+'</small></div>'}).join("")+'</div><p class="tiny">版本属于同一官方验证组合，不能任意混搭。Triton Ascend 并非在 300I DUO / 200I Pro 上按该表使用。</p>';
+ $("compat-models").innerHTML=compatibility.modelExamples.rows.map(m=>'<div class="compat-model"><span class="badge '+(compatFamilyId==="300I DUO"||compatFamilyId==="950DT"?"warn":"neutral")+'">官方支持表 · '+esc(m.documentedStatus)+'</span><strong>'+esc(m.model)+'</strong><small>文档列示硬件：'+esc(m.documentedHardware)+'</small><p>'+esc((compatFamilyId==="A2"||compatFamilyId==="A3")?m.interpretation:"此示例的文档硬件范围不包含所选系列；不可推定支持。")+'</p></div>').join("");
+}
+$("compat-source").addEventListener("click",()=>drawer({title:"vLLM-Ascend 0.30.0 软件与模型兼容快照",category:"OFFICIAL RELEASE-SCOPED MATRIX",body:"整套依赖版本按固定安装文档采集，模型支持按官方模型矩阵引用。这里只说明文档记载范围，不保证当前用户的具体型号部署已经成功。",items:compatibility.caveats,urls:[compatibility.sourceUrl,compatibility.modelExamples.sourceUrl]}));
+
 const lengths=[32,512,1024,4096],outputs=[16,64,128,512],concurrencies=[1,4,8,32];
 const lifecycle=[["排队 / 调度","Host Batch","业务负载、排队与 tokenization 可能影响首 Token 延迟。"],
 ["Prefill","Input tokens","长输入常增加预填充工作，可能涉及注意力/GDN、通信和内存搬运。"],
@@ -254,5 +282,5 @@ function researchSummary(){
  $("count-products").textContent=D.hardware.products.length;$("count-operators").textContent=D.operators.stories.length*D.operators.frameContract.length;$("count-evidence").textContent=atlas.counts.nodes;
 }
 $("case-query").addEventListener("input",renderEvidence);
-renderHero();initGenericEvidence();renderProducts();renderAnatomy();renderStack();renderMetrics();renderLife();renderFactors();renderOperator();renderDiagnosis();researchSummary();renderEvidence();renderGraph();
+renderHero();initGenericEvidence();renderProducts();renderAnatomy();renderStack();renderMetrics();renderLife();renderFactors();renderOperator();renderDiagnosis();researchSummary();renderEvidence();renderGraph();renderCompatibility();
 })();
