@@ -10,6 +10,7 @@ on:
       - 'tests/test_ascend_explorer_site.py'
       - 'tests/test_ascend_product_lineage.py'
       - 'tests/test_ascend_verified_specs_v22.py'
+      - 'tests/test_ascend_tiling_math.cjs'
       - 'design/ascend-explorer-v2/site/browser_smoke.py'
       - 'design/ascend-explorer-v2/site/browser_cross_engine.py'
       - '.github/workflows/ascend-explorer-site.yml'
@@ -34,6 +35,8 @@ jobs:
           python3 -m unittest discover -s tests -p 'test_ascend_product_lineage.py' -v
           python3 -m unittest discover -s tests -p 'test_ascend_verified_specs_v22.py' -v
           node --check design/ascend-explorer-v2/site/app.js
+          node --check design/ascend-explorer-v2/site/tiling_math.js
+          node --test tests/test_ascend_tiling_math.cjs
       - name: Build fully standalone offline website
         run: |
           mkdir -p build/ascend-explorer-v2
@@ -59,6 +62,7 @@ jobs:
           assert len(d["verifiedSpecs"]["products"])==2
           assert d["softwareCompat"]["release"]=="vLLM-Ascend 0.30.0"
           assert len(d["architecturePaths"]["paths"])==2
+          assert d["tilingLab"]["kind"]=="educational_analytical_model_not_hardware_benchmark"
           assert all(not v for h in d["hardware"]["products"] for v in h["quantitative"].values())
           assert "/* APP_" not in raw
           print("Offline V2 site ready:",p.stat().st_size,"bytes, 9 sections, 7 operator stories")
