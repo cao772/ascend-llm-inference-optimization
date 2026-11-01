@@ -8,14 +8,16 @@ on:
       - 'design/ascend-explorer-v2/content/**'
       - 'design/ascend-explorer-v2/src/**'
       - 'tests/test_ascend_explorer_site.py'
+      - 'tests/test_ascend_product_lineage.py'
       - 'design/ascend-explorer-v2/site/browser_smoke.py'
+      - 'design/ascend-explorer-v2/site/browser_cross_engine.py'
       - '.github/workflows/ascend-explorer-site.yml'
 permissions:
   contents: read
 jobs:
   build-and-validate:
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    timeout-minutes: 18
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -28,6 +30,7 @@ jobs:
         run: |
           python3 -m unittest discover -s tests -p 'test_ascend_explorer_design.py' -v
           python3 -m unittest discover -s tests -p 'test_ascend_explorer_site.py' -v
+          python3 -m unittest discover -s tests -p 'test_ascend_product_lineage.py' -v
           node --check design/ascend-explorer-v2/site/app.js
       - name: Build fully standalone offline website
         run: |
@@ -49,6 +52,8 @@ jobs:
           assert d["atlas"]["project_hardware_measurements"]==0
           assert d["atlas"]["counts"]["nodes"]==75
           assert len(d["operators"]["stories"])==7
+          assert len(d["productLineage"]["families"])==6
+          assert len(d["productLineage"]["productProcessorMappings"])==2
           assert all(not v for h in d["hardware"]["products"] for v in h["quantitative"].values())
           assert "/* APP_" not in raw
           print("Offline V2 site ready:",p.stat().st_size,"bytes, 9 sections, 7 operator stories")
@@ -56,10 +61,11 @@ jobs:
       - name: Install browser test tools
         run: |
           python3 -m pip install playwright==1.56.0
-          python3 -m playwright install --with-deps chromium
+          python3 -m playwright install --with-deps chromium webkit
       - name: Test real browser interactions and mobile layout
         run: |
           python3 design/ascend-explorer-v2/site/browser_smoke.py build/ascend-explorer-v2/ascend-explorer-v2.html --screenshots build/ascend-explorer-v2
+          python3 design/ascend-explorer-v2/site/browser_cross_engine.py build/ascend-explorer-v2/ascend-explorer-v2.html --screenshots build/ascend-explorer-v2
       - name: Publish verified offline site and design handoff
         uses: actions/upload-artifact@v4
         with:
