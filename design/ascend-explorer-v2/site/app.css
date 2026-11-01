@@ -54,3 +54,33 @@
    instead of growing the CSS grid's automatic minimum width. Never hide page overflow. */
 .case-grid > *,.case-card,.case-card strong,.case-card .data-label,.case-card .chips{min-width:0;max-width:100%;overflow-wrap:anywhere;word-break:break-word}
 @media(max-width:620px){.case-grid{grid-template-columns:minmax(0,1fr)}}
+
+/* V2.2: sourced hardware figures, pinned software versions, AIC/AIV visual. */
+.verified-facts{margin-top:14px;padding:17px;background:linear-gradient(145deg,#15334b,#0f283e);border:1px solid #3d637d;border-radius:14px}
+.verified-pending{padding:12px;color:#e6cc9d;font-size:13px;border:1px dashed #87734f;border-radius:11px}
+.spec-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:9px}
+.spec-tile{background:#092438;border:1px solid #31536b;border-radius:11px;padding:13px;min-width:0}
+.spec-tile strong{display:block;margin:7px 0;color:#d4fff8;font-size:21px;overflow-wrap:anywhere}
+.spec-tile small{display:block;font-size:11px;line-height:1.45;color:#b3c9d6}
+.compat-view{margin:13px 0;border:1px solid #33556f;border-radius:13px;padding:15px;background:#0d283d}
+.compat-slice{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+.compat-item{border-radius:10px;border:1px solid #35576e;background:#17334a;padding:11px;min-width:0}
+.compat-item b{display:block;font-size:12px;overflow-wrap:anywhere}
+.compat-item strong{display:block;color:#89eee3;font-size:17px;margin:4px 0}
+.compat-item small{font-size:11px;color:#a8c6d8}
+.compat-models{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}
+.compat-model{padding:13px;border:1px solid #37546b;background:#122f46;border-radius:11px;min-width:0}
+.compat-model strong{display:block;font-size:13px;overflow-wrap:anywhere}
+.compat-model small{display:block;font-size:11px;color:#a9bdcc;margin-top:5px}
+.compat-model p{font-size:11px;line-height:1.5;color:#d0dfec}
+.core-illustration{overflow-x:auto;overflow-y:hidden;background:radial-gradient(ellipse at center,#173d50,#0b2539);border:1px solid #36657b;border-radius:13px;padding:8px;margin:9px 0}
+.core-illustration svg{display:block;width:100%;min-width:600px;height:auto;max-height:270px}
+.core-illustration .flow-rect{stroke:#4a8196;stroke-width:1.4;fill:#1b3e53}
+.core-illustration .flow-rect.is-current{stroke:#88f4e6;stroke-width:2.3;fill:#245c5d}
+.core-illustration text{font-family:Inter,"PingFang SC","Microsoft YaHei",sans-serif;fill:#e5f5ff;font-size:15px;text-anchor:middle;dominant-baseline:middle}
+.core-illustration .svg-sub{fill:#9ab8c9;font-size:11px}
+.core-illustration .flow-edge{stroke:#64b5c0;stroke-width:2.3;fill:none}
+.core-illustration .flow-edge.is-current{stroke:#92fff0;stroke-width:3.3}
+.core-step-detail{padding:12px;border-radius:9px;background:#103a45;border-left:3px solid #69dfd2;color:#d3ede8;font-size:12px;min-height:72px}
+@media(max-width:1150px){.spec-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.compat-models{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:620px){.spec-grid,.compat-slice,.compat-models{grid-template-columns:1fr}.core-illustration svg{width:720px}.compat-view{padding:10px}}
