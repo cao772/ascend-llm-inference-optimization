@@ -27,6 +27,7 @@ def build_payload():
         "as_of": "2026-11-01",
         "mode": "educational_demo_not_npu_benchmark",
         "hardware": json_read(base / "content/hardware-catalog.json"),
+        "productLineage": json_read(base / "content/product-lineage-v2.json"),
         "operators": json_read(base / "content/operator-stories.json"),
         "modules": json_read(base / "content/modules.json"),
         "cases": json_read(ROOT / "research/cases/qwen-optimization-cases-2026-10-30.json"),
