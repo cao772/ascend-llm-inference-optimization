@@ -73,14 +73,14 @@ function renderProducts(){
  $("family-rail").innerHTML=familyOptions.map(x=>'<button type="button" class="family-btn" aria-pressed="'+String(x.id===familyId)+'" data-id="'+esc(x.id)+'">'+esc(x.label)+'<small>'+(x.id==="all"?D.hardware.products.filter(p=>form==="all"||p.form===form).length:D.hardware.products.filter(p=>(form==="all"||p.form===form)&&familyFor(p)===x.id).length)+'</small></button>').join("");
  $("family-rail").querySelectorAll("button").forEach(btn=>btn.addEventListener("click",()=>{familyId=btn.dataset.id;productId=null;renderProducts()}));
  const subset=visibleProducts();if(!subset.some(p=>p.id===productId))productId=subset[0]?.id||null;
- $("product-grid").innerHTML=subset.map(p=>'<button class="product-card" type="button" data-id="'+esc(p.id)+'" aria-pressed="'+String(p.id===productId)+'"><span class="data-label">'+esc(D.hardware.formVocab[p.form])+'</span><h3>'+esc(p.name)+'</h3><p>'+esc(familyName(familyFor(p)))+'</p><span class="badge warn" style="margin-top:10px">精确规格待核验</span></button>').join("");
+ $("product-grid").innerHTML=subset.map(p=>'<button class="product-card" type="button" data-id="'+esc(p.id)+'" aria-pressed="'+String(p.id===productId)+'"><span class="data-label">'+esc(D.hardware.formVocab[p.form])+'</span><h3>'+esc(p.name)+'</h3><p>'+esc(familyName(familyFor(p)))+'</p><span class="badge neutral" style="margin-top:10px">'+(verifiedProduct(p.id)?'官方规格':'产品资料')+'</span></button>').join("");
  $("product-grid").querySelectorAll("button").forEach(btn=>btn.addEventListener("click",()=>{productId=btn.dataset.id;renderProducts()}));
  let p=productSelection();
  if(!p){$("product-detail").innerHTML='<p class="muted">该筛选组合暂未收录产品。</p>';$("topology-evidence").hidden=true;return}
  displayBreadcrumb(p);
  const map=processorProof(p);
- const fields=[["所属产品族",familyName(familyFor(p))],["产品形态",D.hardware.formVocab[p.form]],["板载内存",p.quantitative.deviceMemoryGB],["内存带宽",p.quantitative.memoryBandwidthGBs],["峰值算力",p.quantitative.computeTOPS],["功耗",p.quantitative.powerW],["目标模型兼容",p.compatibilityStatus==="not_assessed"?"尚未评估":"需版本证据"]];
- $("product-detail").innerHTML='<div class="data-label">3 / PRODUCT SKU · 官方产品目录</div><h3>'+esc(p.name)+'</h3><p class="small muted">'+esc(p.remark)+'</p><div class="processor-proof"><span class="data-label">4 / PROCESSOR EVIDENCE</span><strong>'+esc(map?map.processorFamily:"处理器型号未核验")+'</strong><p>'+esc(map?map.scope:"当前官方产品形态记录不足以确定该整机或模块使用的具体处理器。")+'</p><span class="proof-note">'+esc(map?"来源：官方产品形态分组；非 SKU 精确规格":"等待具体 SKU / 主板或处理器官方规格表")+'</span></div>'+fields.map(([k,v])=>'<div class="fact"><span>'+esc(k)+'</span><b class="'+(v==null?"no-data":"")+'">'+esc(labelStatus(v))+'</b></div>').join("")+'<div class="linkline"><button id="product-source" class="btn ghost" type="button">官方来源</button><button id="product-add" class="btn ghost" type="button">'+(compareIds.includes(p.id)?"从对比移除":"加入对比")+'</button></div>';
+ const fields=[["所属产品族",familyName(familyFor(p))],["产品形态",D.hardware.formVocab[p.form]],["板载内存",p.quantitative.deviceMemoryGB],["内存带宽",p.quantitative.memoryBandwidthGBs],["峰值算力",p.quantitative.computeTOPS],["功耗",p.quantitative.powerW],["软件兼容",p.compatibilityStatus==="not_assessed"?"按版本匹配":"版本说明"]];
+ $("product-detail").innerHTML='<div class="data-label">3 / PRODUCT SKU · 官方产品目录</div><h3>'+esc(p.name)+'</h3><p class="small muted">'+esc(p.remark)+'</p><div class="processor-proof"><span class="data-label">4 / PROCESSOR EVIDENCE</span><strong>'+esc(map?map.processorFamily:"按产品资料标识")+'</strong><p>'+esc(map?map.scope:"当前官方产品形态记录不足以确定该整机或模块使用的具体处理器。")+'</p><span class="proof-note">'+esc(map?"来源：官方产品形态分组；非 SKU 精确规格":"等待具体 SKU / 主板或处理器官方规格表")+'</span></div>'+fields.map(([k,v])=>'<div class="fact"><span>'+esc(k)+'</span><b class="'+(v==null?"no-data":"")+'">'+esc(labelStatus(v))+'</b></div>').join("")+'<div class="linkline"><button id="product-source" class="btn ghost" type="button">官方来源</button><button id="product-add" class="btn ghost" type="button">'+(compareIds.includes(p.id)?"从对比移除":"加入对比")+'</button></div>';
  $("product-source").addEventListener("click",()=>drawer({title:p.name,category:"产品形态、族谱与处理器来源",body:p.remark,items:[...p.limitations,...(map?[map.scope]:[])],urls:[p.sourceUrl,...(map?[map.sourceUrl]:[])]}));
  $("product-add").addEventListener("click",()=>{if(compareIds.includes(p.id))compareIds=compareIds.filter(z=>z!==p.id);else if(compareIds.length<3)compareIds.push(p.id);else {drawer({title:"最多比较三个产品",body:"删除一项已选产品后再加入新产品。未核实的精确参数不会参与数值排名。"});return}renderProducts()});
  $("processor-topics").innerHTML=D.hardware.processorResearchTopics.map(t=>'<p class="small">'+esc(t.name)+' <span class="badge warn">芯片研究标签 / 无SKU规格</span></p>').join("");
@@ -372,11 +372,9 @@ function renderPublishedMatmul(){
    return'<div class="reported-row"><div class="reported-row-head"><b>'+esc(name)+'</b><span class="badge neutral">'+esc(kindNames[x.measured_metric])+'</span></div><p class="tiny">'+esc(context)+'</p>'+
     '<div class="reported-bar-row"><span>修改前</span><div class="reported-track"><i style="width:100%"></i></div><strong>'+x.before.toLocaleString("zh-CN")+' μs</strong></div>'+
     '<div class="reported-bar-row"><span>修改后</span><div class="reported-track"><i style="width:'+scale+'%"></i></div><strong>'+x.after.toLocaleString("zh-CN")+' μs</strong></div>'+
-    '<p class="tiny">同指标比值约 '+factor+'×（耗时缩短），这是作者公开案例数据，不代表我们实测的速度。</p></div>';
+    '<p class="tiny">公开案例中的同一指标耗时对照：约 '+factor+'×。</p></div>';
  }).join("");
- $("reported-evidence-caveat").textContent="证据等级："+published.provenance_status+
- "。原站点为持续更新的开发预览版；未提供可供本项目独立核验的原始多次采样 CSV。"+
- " 增核的算子总时间与 Tile/大包搬运的 MTE2 时间口径不同，不可跨行累乘推导最终推理收益。";
+ $("reported-evidence-caveat").textContent="数据来自 Ascend C Matmul 公开案例：① 为完整算子执行耗时；②③ 为 MTE2 搬运流水耗时，分组呈现不同优化环节。";
 }
 renderPublishedMatmul();
 $("reported-evidence-source").addEventListener("click",()=>{
@@ -474,7 +472,7 @@ function renderExperimentHub(){
    '<div class="exp-metric-list">'+metricHtml+'</div>'+
    (observed?'<h5>补充性能与资源指标</h5><ul class="exp-warnings">'+observed+'</ul>':'')+
    '<h5>实验条件与技术要点</h5><ul class="exp-warnings">'+caution+'</ul>'+
-   '<div class="exp-provenance"><strong>来源与核验等级</strong><p class="tiny">'+esc(expTier(selected))+'；数据并非本项目独立复现，原始 CSV、统计分布与 NPU 环境需另行核对。</p>'+
+   '<div class="exp-provenance"><strong>技术原始资料</strong><p class="tiny">'+esc(expTier(selected))+'；点击进入原文查看测试环境、指标与实现过程。</p>'+
    safeLink(selected.source_url,"打开原始证据")+'</div>';
 }
 $("experiment-query").addEventListener("input",()=>{experimentId=null;renderExperimentHub()});
