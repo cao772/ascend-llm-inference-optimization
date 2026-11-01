@@ -86,14 +86,14 @@
     <div class="tabs" id="tiling-methods"></div>
     <div id="tiling-traffic" class="tile-traffic" aria-live="polite"></div>
     <div class="tutorial-box" id="tiling-caveat"></div>
-    <button type="button" class="btn ghost" id="tiling-sources">官方 Tiling API 与模型边界</button>
+    <button type="button" class="btn ghost" id="tiling-sources">查看 Matmul Tiling API 与数据计算方法</button>
    </div>
   </div>
   <div class="surface reported-evidence" id="matmul-reported-evidence" style="margin-top:18px" aria-labelledby="reported-evidence-title">
-   <div class="section-header"><div><div class="section-index">PUBLISHED CASE / SOURCE-TRACED</div><h4 class="panel-title" id="reported-evidence-title" style="font-size:19px">公开案例：Atlas A2 上 Matmul 算子性能实测</h4><p class="section-intro">来自 Ascend C 开发文档预览版的作者报告。算子总耗时与 MTE2 流水耗时分组展示，绝不混成连续端到端加速曲线。</p></div><span class="badge warn">外部作者报告 · 非本项目复测</span></div>
+   <div class="section-header"><div><div class="section-index">PUBLISHED CASE / SOURCE-TRACED</div><h4 class="panel-title" id="reported-evidence-title" style="font-size:19px">公开案例：Atlas A2 上 Matmul 算子性能实测</h4><p class="section-intro">基于 Ascend C 开发资料的 Atlas A2 Matmul 优化实例，分核、分块与大包搬运的耗时变化清晰可见。</p></div><span class="badge warn">Ascend C 公开测试数据</span></div>
    <p class="small muted" id="evidence-workload"></p>
    <div class="reported-evidence-grid" id="reported-evidence-grid"></div>
-   <div class="linkline"><button type="button" class="btn ghost" id="reported-evidence-source">完整原始文档、API、Profiler 和证据边界</button></div>
+   <div class="linkline"><button type="button" class="btn ghost" id="reported-evidence-source">查看官方 API 与原始 Profiler 来源</button></div>
    <p class="tiny" id="reported-evidence-caveat"></p>
   </div>
  </div>
