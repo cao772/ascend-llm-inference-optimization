@@ -350,5 +350,51 @@ $("tiling-next").addEventListener("click",()=>{const d=TMath.derive(Object.fromE
 $("tiling-reset").addEventListener("click",()=>{tilingStep=0;renderTiling()});
 $("tiling-sources").addEventListener("click",()=>drawer({title:"GEMM Tiling：数学模型与昇腾官方实现的区别",category:"TEACHING ONLY · NOT NPU TRACE",body:tilingContent.evidenceScope,items:[...TMath.derive({M:64,N:64,K:64,tm:32,tn:32,tk:32}).disclaimers,...tilingContent.neverAssert.map(x=>"不提供："+x)],urls:[tilingContent.source.url,tilingContent.source.sourceSecond]}));
 
+
+/* Externally published NPU result, strictly distinct from the educational
+   GEMM loop model and this project's zero local hardware measurements. */
+const published=D.publicMatmulEvidence;
+function renderPublishedMatmul(){
+ const c=published.case,kindNames={
+  operator_execution_duration_us:"完整算子执行耗时",
+  MTE2_pipeline_duration_us:"仅 MTE2 搬运流水耗时"
+ };
+ const stages=[c.first_experiment,c.second_experiment,c.third_experiment];
+ $("evidence-workload").textContent="原文环境："+c.hardware+"；M="+c.matrix.M+" / N="+c.matrix.N+" / K="+c.matrix.K+
+  "；"+c.matrix.inputs+" 输入，"+c.matrix.output+" 输出。具体 A2 SKU 原文未指明。";
+ $("reported-evidence-grid").innerHTML=stages.map((x,i)=>{
+   const scale=(x.after/x.before*100).toFixed(1);
+   const factor=(x.before/x.after).toFixed(2);
+   const name=["① 增加参与计算的核数","② 调整基础 Tile 与对齐","③ 启用大包搬运"][i];
+   const context=[c.first_experiment.launcher_cube_cores_before+" → "+c.first_experiment.launcher_cube_cores_after+" 个计算核",
+    "["+Object.values(c.second_experiment.tile_before).join(", ")+"] → ["+Object.values(c.second_experiment.tile_after).join(", ")+"]",
+    "Matmul 模板配置 CFG_MDL"][i];
+   return'<div class="reported-row"><div class="reported-row-head"><b>'+esc(name)+'</b><span class="badge neutral">'+esc(kindNames[x.measured_metric])+'</span></div><p class="tiny">'+esc(context)+'</p>'+
+    '<div class="reported-bar-row"><span>修改前</span><div class="reported-track"><i style="width:100%"></i></div><strong>'+x.before.toLocaleString("zh-CN")+' μs</strong></div>'+
+    '<div class="reported-bar-row"><span>修改后</span><div class="reported-track"><i style="width:'+scale+'%"></i></div><strong>'+x.after.toLocaleString("zh-CN")+' μs</strong></div>'+
+    '<p class="tiny">同指标比值约 '+factor+'×（耗时缩短），这是作者公开案例数据，不代表我们实测的速度。</p></div>';
+ }).join("");
+ $("reported-evidence-caveat").textContent="证据等级："+published.provenance_status+
+ "。原站点为持续更新的开发预览版；未提供可供本项目独立核验的原始多次采样 CSV。"+
+ " 增核的算子总时间与 Tile/大包搬运的 MTE2 时间口径不同，不可跨行累乘推导最终推理收益。";
+}
+renderPublishedMatmul();
+$("reported-evidence-source").addEventListener("click",()=>{
+ const c=published.case;
+ drawer({title:"Atlas A2 Matmul 优化：公开实测和可检验的代码证据",
+  category:"AUTHOR REPORTED · NOT REPRODUCED HERE",
+  body:c.scope_warning,
+  items:[
+   "任务：FP16 输入、FP32 输出，M=4096/N=5120/K=4096",
+   "算子总耗时：12,045 → 2,532 μs，示例 4→20 Cube 核",
+   "MTE2 流水：2,452 → 808 μs，基础块 [64,64,256] → [128,256,64]",
+   "MTE2 流水：808 → 591 μs，模板启用 CFG_MDL",
+   "缺失："+c.not_available.join("、"),
+   "官方 GetTiling 是接口证据，实际是否适用要基于目标 SKU、CANN 和 Profiling 单独检查。"
+  ],
+  urls:published.sources.map(x=>x.url)
+ });
+});
+
 renderHero();initGenericEvidence();renderProducts();renderAnatomy();renderStack();renderMetrics();renderLife();renderFactors();renderOperator();renderDiagnosis();researchSummary();renderEvidence();renderGraph();renderCompatibility();
 })();
