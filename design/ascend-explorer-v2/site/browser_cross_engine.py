@@ -51,7 +51,9 @@ def exercise(browser, html, width, screenshots, errors):
         page.locator('#nav a[href="#operators"]').click()
         assert page.locator("#nav").is_hidden()
     overflow=page.evaluate("document.documentElement.scrollWidth-document.documentElement.clientWidth")
-    assert overflow<=3, f"Horizontal overflow on {browser.browser_type.name} {width}: {overflow}px"
+    if overflow>3:
+        offenders=page.evaluate("""Array.from(document.querySelectorAll("*")).map(e=>({tag:e.tagName,id:e.id,cls:String(e.className).slice(0,80),left:Math.round(e.getBoundingClientRect().left),right:Math.round(e.getBoundingClientRect().right)})).filter(x=>x.right>document.documentElement.clientWidth+3||x.left < -3).slice(0,18)""")
+        raise AssertionError(f"Horizontal overflow on {browser.browser_type.name} {width}: {overflow}px; offenders={offenders}")
     if screenshots and width in {375,1440}:
         screenshots.mkdir(parents=True,exist_ok=True)
         page.screenshot(path=str(screenshots/f"ascend-v2-{browser.browser_type.name}-{width}.png"),full_page=True)
