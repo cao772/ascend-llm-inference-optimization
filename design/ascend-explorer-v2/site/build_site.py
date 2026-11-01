@@ -34,6 +34,7 @@ def build_payload():
         "tilingLab": json_read(base / "content/gemm-tiling-lab-v2.3.json"),
         "publicMatmulEvidence": json_read(base / "content/public-matmul-evidence-2026-11-01.json"),
         "experimentEvidence": json_read(base / "content/experiment-evidence-v2.5.json"),
+        "crossOperatorEvidence": json_read(base / "content/cross-operator-evidence-v2.6.json"),
         "operators": json_read(base / "content/operator-stories.json"),
         "modules": json_read(base / "content/modules.json"),
         "cases": json_read(ROOT / "research/cases/qwen-optimization-cases-2026-10-30.json"),
