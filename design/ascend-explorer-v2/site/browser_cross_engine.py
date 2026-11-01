@@ -21,12 +21,23 @@ def exercise(browser, html, width, screenshots, errors):
     assert page.locator("#product-grid .product-card").count()==2
     page.locator("#product-grid .product-card",has_text="Atlas 300I Duo").click()
     assert "Ascend 310P" in page.locator("#product-detail").inner_text()
+    assert "140 TFLOPS" in page.locator("#verified-spec-detail").inner_text()
+    assert "48 / 96 GB" in page.locator("#verified-spec-detail").inner_text()
+    page.locator("#verified-source").click()
+    assert "整卡" in page.locator("#drawer").inner_text()
+    page.keyboard.press("Escape")
+
     page.locator('#product-crumb button[data-level="processor"]').click()
     assert page.locator("#drawer").is_visible()
     assert "310P" in page.locator("#drawer").inner_text()
     page.keyboard.press("Escape")
     assert page.locator("#drawer").is_hidden()
     # Product-specific topology should appear only for the official A3 scope.
+
+    page.locator("#product-tabs button",has_text="推理服务器").click()
+    page.locator("#product-grid .product-card",has_text="Atlas 800I A2").click()
+    assert "392 GB/s" in page.locator("#verified-spec-detail").inner_text()
+    assert "可选" in page.locator("#verified-spec-detail").inner_text()
     page.locator("#product-tabs button",has_text="超节点").click()
     page.locator("#product-grid .product-card",has_text="Atlas 900 A3").click()
     assert page.locator("#topology-evidence").is_visible()
@@ -37,7 +48,22 @@ def exercise(browser, html, width, screenshots, errors):
     page.locator("#product-tabs button",has_text="推理卡").click()
     assert page.locator("#topology-evidence").is_hidden()
     # Core modules remain functional while navigating a scoped product.
+
+    page.locator("#path-gemm").click()
+    assert page.locator("#core-illustration svg").count()==1
+    assert "FixPipe" in page.locator("#core-illustration").inner_text()
+    assert "第 1/7 步" in page.locator("#core-step-detail").inner_text()
+    page.locator("#path-next").click()
+    assert "第 2/7 步" in page.locator("#core-step-detail").inner_text()
     page.locator("#path-vector").click()
+    assert "Vector" in page.locator("#core-illustration").inner_text()
+    assert "第 1/5 步" in page.locator("#core-step-detail").inner_text()
+    page.locator("#compat-family-tabs button",has_text="Atlas 推理系列").click()
+    assert "不适用此组件" in page.locator("#compat-view").inner_text()
+    page.locator("#compat-family-tabs button",has_text="Atlas A3").click()
+    assert "CANN Toolkit" in page.locator("#compat-view").inner_text()
+    assert "GLM" in page.locator("#compat-models").inner_text()
+
     assert page.locator("#memory-path span").count()==5
     page.locator("#operator-tabs button",has_text="MoE").click()
     assert page.locator("#operator-steps button").count()==6
