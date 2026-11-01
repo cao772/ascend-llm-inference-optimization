@@ -24,7 +24,8 @@ class PublicMatmulEvidenceTests(unittest.TestCase):
         e=self.e
         ids={s["id"] for s in e["sources"]}
         self.assertEqual(len(ids),len(e["sources"]))
-        self.assertEqual(len(ids),5)
+        self.assertEqual(len(ids),6)
+        self.assertEqual(len(e["evidence_chain"]),8)
         self.assertEqual(e["case"]["source_id"],"SRC-ATLAS-A2-CASE")
         self.assertTrue(all(s["url"].startswith("https://") for s in e["sources"]))
         self.assertTrue(all(set(x["source_ids"]).issubset(ids) for x in e["evidence_chain"]))
@@ -53,6 +54,9 @@ class PublicMatmulEvidenceTests(unittest.TestCase):
         e=self.e
         s=next(s for s in e["sources"] if s["id"]=="SRC-CORE-MEM")
         self.assertIn("GetCoreMemSize",s["title"])
+        constraint=next(x for x in e["evidence_chain"] if x["id"]=="E02B")
+        self.assertIn("baseM*baseN*sizeof(C_TYPE)",constraint["claim"])
+        self.assertIn("SRC-CANN-SETFIXSPLIT",constraint["source_ids"])
         self.assertIsNone(e["case"]["gpu_or_chip_exact_sku"])
         self.assertFalse(e["validation_status"]["full_raw_profile_available"])
     def test_bundled_site_preserves_evidence_tier(self):
