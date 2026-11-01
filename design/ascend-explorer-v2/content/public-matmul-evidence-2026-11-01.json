@@ -1,0 +1,179 @@
+{
+  "schema_version": "1.0",
+  "checked_date": "2026-11-01",
+  "topic": "Ascend C GEMM tiling optimisation: public evidence chain",
+  "provenance_status": "public_author_reported_not_independently_reproduced",
+  "local_npu_profiling_count": 0,
+  "sources": [
+    {
+      "id": "SRC-ATLAS-A2-CASE",
+      "kind": "developer_preview_case",
+      "title": "Matmul算子优化Tiling策略",
+      "url": "https://asc.gitcode.com/guide/operator_practice/best_practices/matmul_tuning_cases/matmul_tiling_strategy.html",
+      "publisher": "AscendC asc-devkit developer documentation preview",
+      "note": "页面自述 master 持续开发，可能有缺陷；带图示和作者报告数据，非本项目重新实测"
+    },
+    {
+      "id": "SRC-CANN-GETTILING",
+      "kind": "official_api",
+      "title": "Matmul Tiling Usage Instructions, CANN 8.5.0",
+      "url": "https://www.hiascend.com/document/detail/en/canncommercial/850/API/ascendcopapi/atlasascendc_api_07_0671.html",
+      "publisher": "Huawei Ascend",
+      "note": "GetTiling(TCubeTiling)、SetShape/SetOrgShape、数据类型/位置、单核与多核接口"
+    },
+    {
+      "id": "SRC-CORE-MEM",
+      "kind": "official_api",
+      "title": "PlatformAscendC GetCoreMemSize, CANN 8.5.0",
+      "url": "https://www.hiascend.com/document/detail/en/canncommercial/850/API/ascendcopapi/atlasascendc_api_07_1034.html",
+      "publisher": "Huawei Ascend",
+      "note": "L0A/L0B/L0C/L1/L2/UB 等存储类型和读取字节数；不提供可无条件跨卡套用的固定容量"
+    },
+    {
+      "id": "SRC-PROFILING",
+      "kind": "official_profiling",
+      "title": "msopprof模式用户指南, CANN 9.1.X",
+      "url": "https://www.hiascend.com/document/detail/zh/CANNCommunityEdition/910/devaids/optool/docs/zh/user_guide/msopprof_user_guide.md",
+      "publisher": "Huawei Ascend",
+      "note": "Profiling 模式可分析 Roofline、Cube/Vector 和 MTE 等；不同硬件族有不支持的视图"
+    },
+    {
+      "id": "SRC-HW-ALIGNMENT",
+      "kind": "official_version_scoped_architecture",
+      "title": "NPU架构版本351x, CANN 9.0 beta2",
+      "url": "https://www.hiascend.com/document/detail/zh/CANNCommunityEdition/900beta2/opdevg/Ascendcopdevg/atlas_ascendc_10_00065.html",
+      "publisher": "Huawei Ascend",
+      "note": "351x 版本的 L1 32B, L0A/L0B 512B, L0C 64B 等对齐限制；不得泛化至 Atlas A2 测试案例或全部芯片"
+    }
+  ],
+  "case": {
+    "id": "PUBLIC-ASCEND-MATMUL-A2-001",
+    "publisher": "asc-devkit documentation preview",
+    "source_id": "SRC-ATLAS-A2-CASE",
+    "hardware": "Atlas A2 series product",
+    "gpu_or_chip_exact_sku": null,
+    "matrix": {
+      "M": 4096,
+      "N": 5120,
+      "K": 4096,
+      "inputs": "half (FP16)",
+      "output": "float (FP32)",
+      "output_format": "ND"
+    },
+    "first_experiment": {
+      "label": "increase core utilization",
+      "launcher_cube_cores_before": 4,
+      "launcher_cube_cores_after": 20,
+      "tiling_used_core_num_before": 8,
+      "tiling_used_core_num_after": 40,
+      "reason": "this case's 1 Cube : 2 Vector mapping; not a universal configuration",
+      "measured_metric": "operator_execution_duration_us",
+      "before": 12045,
+      "after": 2532,
+      "source_claim_speedup": "4.75x",
+      "independent_ratio": 4.757109004739337
+    },
+    "second_experiment": {
+      "label": "change base tile",
+      "tile_before": {
+        "baseM": 64,
+        "baseN": 64,
+        "baseK": 256
+      },
+      "tile_after": {
+        "baseM": 128,
+        "baseN": 256,
+        "baseK": 64
+      },
+      "code_mechanism": "MultiCoreMatmulTiling.SetFixSplit(128, 256, -1) reports baseK 64 in this example",
+      "measured_metric": "MTE2_pipeline_duration_us",
+      "before": 2452,
+      "after": 808,
+      "independent_ratio": 3.0346534653465347,
+      "source_claim": "MTE2 about 3x; alignment and arithmetic intensity matter"
+    },
+    "third_experiment": {
+      "label": "enable bulk transfer",
+      "code_mechanism": "Matmul template CFG_MDL",
+      "measured_metric": "MTE2_pipeline_duration_us",
+      "before": 808,
+      "after": 591,
+      "independent_ratio": 1.3671742808798646,
+      "source_claim": "MTE2 >25% improvement; source reports Cube utilization >80% after change"
+    },
+    "not_available": [
+      "raw per-iteration profiling csv",
+      "independent hardware reproduction",
+      "full repeated-run variance and confidence interval",
+      "LLM TTFT / TPOT / tokens per second",
+      "cross-SKU transfer guarantee"
+    ],
+    "scope_warning": "First experiment reports operator duration; second/third report MTE2 pipeline time. Do not sum or directly compare as a single series or claim final operator duration. Results are author reports from development-preview documentation."
+  },
+  "evidence_chain": [
+    {
+      "id": "E01",
+      "level": "official_api_definition",
+      "source_ids": [
+        "SRC-CANN-GETTILING"
+      ],
+      "claim": "Tiling computed from tensor dtype/layout/shape and optional buffer settings using GetTiling; hand-written TM/TN/TK examples are not device-generated TCubeTiling."
+    },
+    {
+      "id": "E02",
+      "level": "official_hardware_api_definition",
+      "source_ids": [
+        "SRC-CORE-MEM"
+      ],
+      "claim": "Host Tiling can query available L1/L0/UB memory using PlatformAscendC.GetCoreMemSize; physical resource sizes are device/version specific."
+    },
+    {
+      "id": "E03",
+      "level": "author_reported_profiler",
+      "source_ids": [
+        "SRC-ATLAS-A2-CASE"
+      ],
+      "claim": "On a specified Atlas A2 Matmul workload, increasing Cube cores 4 to 20 was associated with operator time 12045 -> 2532 microseconds."
+    },
+    {
+      "id": "E04",
+      "level": "author_reported_profiler",
+      "source_ids": [
+        "SRC-ATLAS-A2-CASE"
+      ],
+      "claim": "Changing base tile 64x64x256 to 128x256x64 was associated with MTE2 time 2452 -> 808 microseconds."
+    },
+    {
+      "id": "E05",
+      "level": "author_reported_profiler",
+      "source_ids": [
+        "SRC-ATLAS-A2-CASE"
+      ],
+      "claim": "CFG_MDL bulk transfer was associated with MTE2 time 808 -> 591 microseconds."
+    },
+    {
+      "id": "E06",
+      "level": "official_tool_documentation",
+      "source_ids": [
+        "SRC-PROFILING"
+      ],
+      "claim": "msopprof reports pipeline and roofline diagnostic output; measurement columns and applicability depend on product/version."
+    },
+    {
+      "id": "E07",
+      "level": "version_specific_not_general",
+      "source_ids": [
+        "SRC-HW-ALIGNMENT"
+      ],
+      "claim": "Version 351x architecture documents specific alignment values; using them as generic A2/910B/310P limits is ungrounded."
+    }
+  ],
+  "validation_status": {
+    "official_api_docs_checked": true,
+    "public_author_reported_case_checked": true,
+    "full_raw_profile_available": false,
+    "project_npu_reproduction": false,
+    "proof_of_llm_speedup": false
+  },
+  "applicability": "Research evidence to upgrade educational web exposition, not a claim of already optimized user's own LLM."
+}
