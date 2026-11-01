@@ -96,6 +96,26 @@ def exercise(browser, html, width, screenshots, errors):
     assert page.locator("#operator-steps button").count()==6
     page.locator("#operator-steps button").nth(5).click()
     assert "06 / 06" in page.locator("#op-number").inner_text()
+    # V2.5 empirical archive: filter, inspect published profiler, examine cache two rounds.
+    assert page.locator("#exp-summary .exp-summary-tile").count()==4
+    assert "24" in page.locator("#exp-summary").inner_text()
+    assert page.locator("#experiment-cards .experiment-card").count()==8
+    page.locator("#experiment-tabs button",has_text="算子 Profile").click()
+    assert page.locator("#experiment-cards .experiment-card").count()==6
+    page.locator("#experiment-query").fill("Scalar")
+    assert page.locator("#experiment-cards .experiment-card").count()>=1
+    assert "10.62" in page.locator("#experiment-detail").inner_text()
+    assert "7.87" in page.locator("#experiment-detail").inner_text()
+    page.locator("#experiment-query").fill("")
+    page.locator("#experiment-tabs button",has_text="推理与缓存").click()
+    assert page.locator("#experiment-cards .experiment-card").count()==2
+    assert "非隔离 A/B" in page.locator("#experiment-detail").inner_text()
+    assert "3990.14" in page.locator("#experiment-detail").inner_text() or "3,990.14" in page.locator("#experiment-detail").inner_text()
+    page.locator("#experiment-example").click()
+    assert "不计入真实报告" in page.locator("#drawer").inner_text()
+    page.keyboard.press("Escape")
+    assert page.locator("#drawer").is_hidden()
+    page.locator("#experiment-tabs button",has_text="全部真实报告").click()
     assert page.locator("#graph-stage .graph-node").count()>=2
     if width<=950:
         page.locator("#nav-toggle").click()
