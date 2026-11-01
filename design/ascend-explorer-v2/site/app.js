@@ -52,7 +52,7 @@ function processorProof(p){return lineage.productProcessorMappings.find(m=>m.pro
 function visibleProducts(){return D.hardware.products.filter(p=>(form==="all"||p.form===form)&&(familyId==="all"||familyFor(p)===familyId))}
 function productSelection(){const items=visibleProducts();const p=items.find(p=>p.id===productId)||items[0]||null;productId=p?.id||null;return p}
 function displayBreadcrumb(p){
- const items=[{title:"形态："+(form==="all"?"全部":D.hardware.formVocab[form]),level:"form"},{title:"产品族："+(familyId==="all"?"全部":familyName(familyId)),level:"family"},{title:"产品："+p.name,level:"product"},{title:"处理器："+(processorProof(p)?.processorFamily||"待核验"),level:"processor"}];
+ const items=[{title:"形态："+(form==="all"?"全部":D.hardware.formVocab[form]),level:"form"},{title:"产品族："+(familyId==="all"?"全部":familyName(familyId)),level:"family"},{title:"产品："+p.name,level:"product"},{title:"处理器："+(processorProof(p)?.processorFamily||"型号资料"),level:"processor"}];
  $("product-crumb").innerHTML=items.map((i,n)=>(n?'<span class="crumb-arrow" aria-hidden="true">›</span>':"")+'<button class="crumb-btn" type="button" data-level="'+i.level+'" aria-current="'+(n===3?"step":"false")+'">'+esc(i.title)+'</button>').join("");
  $("product-crumb").querySelectorAll("button").forEach(btn=>btn.addEventListener("click",()=>{
    const lv=btn.dataset.level;
