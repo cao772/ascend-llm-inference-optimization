@@ -13,6 +13,7 @@ on:
       - 'tests/test_ascend_tiling_math.cjs'
       - 'tests/test_ascend_public_matmul_evidence.py'
       - 'tests/test_ascend_experiment_evidence_v25.py'
+      - 'design/ascend-explorer-v2/tools/export_evidence_csv.py'
       - 'design/ascend-explorer-v2/site/browser_smoke.py'
       - 'design/ascend-explorer-v2/site/browser_cross_engine.py'
       - '.github/workflows/ascend-explorer-site.yml'
@@ -47,6 +48,9 @@ jobs:
           python3 design/ascend-explorer-v2/site/build_site.py --output build/ascend-explorer-v2/ascend-explorer-v2.html
           cp design/ascend-explorer-v2/DESIGN.md build/ascend-explorer-v2/DESIGN.md
           cp design/ascend-explorer-v2/content/modules.json build/ascend-explorer-v2/modules.json
+          python3 design/ascend-explorer-v2/tools/export_evidence_csv.py --output build/ascend-explorer-v2/v25-public-evidence.csv
+          cp design/ascend-explorer-v2/content/experiment-evidence-v2.5.json build/ascend-explorer-v2/experiment-evidence-v2.5.json
+          cp design/ascend-explorer-v2/docs/empirical-evidence-center-v2.5.md build/ascend-explorer-v2/RESEARCH-V2.5.md
       - name: Check bundled factual integrity and offline markers
         run: |
           python3 - <<'PY'
@@ -71,6 +75,11 @@ jobs:
           assert d["experimentEvidence"]["project_own_hardware_measurements"] == 0
           assert d["experimentEvidence"]["collection"]["public_case_count"] == 8
           assert d["experimentEvidence"]["collection"]["metric_pairs"] == 24
+          import csv
+          with open("build/ascend-explorer-v2/v25-public-evidence.csv", encoding="utf-8-sig", newline="") as f:
+              rows = list(csv.DictReader(f))
+          assert len(rows) == 24
+          assert all(x["project_hardware_reproduction"] == "false" for x in rows)
           assert d["publicMatmulEvidence"]["case"]["first_experiment"]["measured_metric"]=="operator_execution_duration_us"
           assert d["publicMatmulEvidence"]["case"]["second_experiment"]["measured_metric"]=="MTE2_pipeline_duration_us"
           assert all(not v for h in d["hardware"]["products"] for v in h["quantitative"].values())
