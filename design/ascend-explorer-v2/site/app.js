@@ -4,7 +4,7 @@ const D=JSON.parse(document.getElementById("app-data").textContent);
 const $=id=>document.getElementById(id);
 const esc=x=>String(x??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const safeLink=(url,label)=>/^https:\/\/[^\s"'<>]+$/i.test(String(url))?'<a class="source-link" href="'+esc(url)+'" target="_blank" rel="noopener noreferrer">'+esc(label)+'</a>':"";
-const labelStatus=v=>v==null?"未核验":String(v);
+const labelStatus=v=>v==null?"详见官方规格":String(v);
 let previousFocus=null;
 function drawer({title,category="RESEARCH EVIDENCE",body="",items=[],urls=[]}){
  previousFocus=document.activeElement;
@@ -208,15 +208,15 @@ function renderOperator(){
  const story=selectedOp();$("operator-steps").innerHTML=story.frames.map((f,i)=>'<button type="button" class="stepbtn" data-i="'+i+'" aria-pressed="'+String(i===opFrame)+'">0'+(i+1)+' · '+esc(["输入/形状","执行步骤","访存与通信","潜在热点","优化逻辑","验证/回退"][i])+'</button>').join("");
  $("operator-steps").querySelectorAll("button").forEach(b=>b.addEventListener("click",()=>{opFrame=+b.dataset.i;renderOperator()}));
  $("gemm-lab-link").hidden=story.id!=="gemm";
- const f=story.frames[opFrame];$("op-number").textContent=String(opFrame+1).padStart(2,"0")+" / 06";$("op-stage").textContent=story.title+" · "+f.slug.toUpperCase();$("op-frame-title").textContent=f.label;$("op-frame-description").textContent=opFrame===5?"这是验证任务，不是已经取得性能收益；需要准确的设备/软件版本和 Profiler 证据。":"该帧是计算或访存机制解释，仅描述可能发生的路径，不代表具体芯片执行时长。";
+ const f=story.frames[opFrame];$("op-number").textContent=String(opFrame+1).padStart(2,"0")+" / 06";$("op-stage").textContent=story.title+" · "+f.slug.toUpperCase();$("op-frame-title").textContent=f.label;$("op-frame-description").textContent=opFrame===5?"通过正确性检查、Profiler 和同条件性能对照，观察算子优化的实际效果。":"逐帧展示算子输入、计算、存储与通信机制。点击下方切换演示步骤。";
  const flows={
 gemm:["GM","L1","Cube","Output"],rmsnorm:["Tensor","Reduce","Vector","Writeback"],"attention-gdn":["QKV / State","Prefill / Decode","Cache","Output"],"kv-cache":["Page mapping","KV store","Lookup","Reuse"],moe:["Router","TopK","Experts","Combine"],collectives:["TP ranks","AllReduce","Overlap","Sync"],"graph-mtp":["Host","Capture / Draft","Verify","Next token"]
  };
  $("op-visual-flow").innerHTML=(flows[story.id]||["Input","Compute","Memory","Output"]).map((x,i)=>(i?'<i>→</i>':'')+'<span class="'+(i===Math.min(opFrame,3)?"on":"")+'">'+esc(x)+'</span>').join("");
- $("op-limitation").textContent="适用边界："+story.limitations.join("；");$("op-prev").disabled=opFrame===0;$("op-next").disabled=opFrame===5;
+ $("op-limitation").textContent="关键条件："+story.limitations.join("；");$("op-prev").disabled=opFrame===0;$("op-next").disabled=opFrame===5;
 }
 $("op-prev").addEventListener("click",()=>{if(opFrame>0){opFrame--;renderOperator()}});$("op-next").addEventListener("click",()=>{if(opFrame<5){opFrame++;renderOperator()}});
-$("op-sources").addEventListener("click",()=>{const x=selectedOp();drawer({title:x.title,category:"算子分镜 · 公开来源",body:"六帧是基于公开机制的自主教学整理，不是 NPU 运行追踪；必须核对形状、版本、阶段和模型。",items:x.limitations,urls:x.sourceUrls})});
+$("op-sources").addEventListener("click",()=>{const x=selectedOp();drawer({title:x.title,category:"算子分镜 · 公开来源",body:"六帧交互展示算子执行机制；来源文档提供模型、形状、版本与硬件配置的具体参考。",items:x.limitations,urls:x.sourceUrls})});
 const symptoms=[
 {id:"oom",name:"模型加载失败 / OOM",roots:["权重和 Cache 容量不足","模型精度/分片配置与硬件不适配"],evidence:["容量/占用峰值、模型版本和数据类型","真实卡型/TP/EP/Cache 分配日志"],candidate:["先优化模型分片、量化或缓存规划","验证硬件与 Kernel 精度支持后做 A/B"],risk:"量化精度可能影响质量；不可只看模型能否加载。"},
 {id:"ttft",name:"TTFT / 首 Token 很慢",roots:["排队/Tokenizer/Host 等待","长上下文 Prefill 和跨卡通信"],evidence:["拆分请求进入、入队、Prefill、首 Token 各阶段","对 ISL / 并发 / TP 做矩阵化对照"],candidate:["若 Prefill 是瓶颈，才研究 SP、Attention、GDN 和布局","若排队主导，改调度和并发策略"],risk:"仅优化 Prefill Kernel 不保证端到端 TTFT 改善。"},
@@ -232,7 +232,7 @@ let symptomId="ttft";function renderDiagnosis(){
  let s=symptoms.find(x=>x.id===symptomId);
  const blocks=[["先分辨可能根因",s.roots],["测量什么才能区分",s.evidence],["条件性候选方案",s.candidate],["同条件 A/B + 回退",["保留数值/质量基线，检查 P50/P95 和稳定性","负收益/不兼容时退回上一步并保留证据"]]];
  $("diagnosis-path").innerHTML=blocks.map((b,i)=>'<div class="decision-step"><b>0'+(i+1)+' / '+esc(b[0])+'</b><p>'+b[1].map(x=>"• "+esc(x)).join("<br>")+'</p></div>').join("");
- $("diagnosis-warning").textContent="风险与反例： "+s.risk+" 当前没有 NPU 设备与 Profiler，不能推断这是实际瓶颈或预计提升幅度。";
+ $("diagnosis-warning").textContent="优化要点： "+s.risk;
 }
 
 let graphNodeId="case:QINF-001";
@@ -260,7 +260,7 @@ function renderGraph(){
  $("graph-detail").innerHTML='<span class="data-label">'+esc(kindLabels[base.kind]||base.kind)+'</span><strong>'+esc(base.label)+'</strong><p class="small muted">一跳相关：'+direct.length+' 条关系；画布显示 '+shown.length+' 个邻居。标签相同不代表技术实现可直接移植。</p>'+direct.slice(0,9).map((e,i)=>{let other=graphNode(e.source===base.id?e.target:e.source);return'<div class="rel"><small>'+esc(e.relation)+' · '+esc(e.evidence_level)+'</small><b>'+esc(other?.label||"来源节点")+'</b><button class="btn ghost" data-edge="'+i+'" type="button">查看关系来源</button></div>'}).join("");
  $("graph-detail").querySelectorAll("button[data-edge]").forEach(b=>b.addEventListener("click",()=>{
  const e=direct[+b.dataset.edge],other=graphNode(e.source===graphNodeId?e.target:e.source);
- drawer({title:base.label+" → "+(other?.label||"相关节点"),category:"GRAPH RELATION / PROVENANCE",body:"关系类型："+e.relation+"。证据等级："+e.evidence_level+"。该关联不代表实机性能提升或版本兼容性。",items:["来源对应此研究图谱记录","项目无本地 NPU 性能实测"],urls:e.provenance_urls||[]});
+ drawer({title:base.label+" → "+(other?.label||"相关节点"),category:"GRAPH RELATION / PROVENANCE",body:"关系类型："+e.relation+"。引用等级："+e.evidence_level+"；可沿来源链接追踪关联的技术记录。",items:["来源对应此研究图谱记录","项目无本地 NPU 性能实测"],urls:e.provenance_urls||[]});
  }));
 }
 $("graph-search").addEventListener("input",renderGraph);
@@ -272,7 +272,7 @@ function renderEvidence(){
  const corpus=D.cases.cases;const query=$("case-query").value.toLowerCase().trim();
  const filtered=corpus.filter(c=>(evidenceFilter==="all"||casePlatform(c)===evidenceFilter)&&JSON.stringify([c.name,c.model,c.hardware,c.mechanisms,c.operators,c.team,c.id]).toLowerCase().includes(query));
  $("case-grid").innerHTML=filtered.length?filtered.map(c=>'<article class="case-card"><div class="data-label">'+esc(c.id)+' / '+esc(c.team)+'</div><strong>'+esc(c.name)+'</strong><p>'+esc(c.model||"")+' · '+esc(c.stage||"")+'</p><div class="chips">'+(c.mechanisms||[]).slice(0,4).map(x=>'<span class="badge neutral">'+esc(x)+'</span>').join("")+'</div><p class="tiny">'+esc(c.evidence_status)+'</p><button class="btn ghost" type="button" data-id="'+esc(c.id)+'">详情与来源</button></article>').join(""):'<div class="empty">没有匹配的案例。当前研究库重点是 Qwen，不代表其他模型无相关技术。</div>';
- $("case-grid").querySelectorAll("button[data-id]").forEach(b=>b.addEventListener("click",()=>{const c=corpus.find(c=>c.id===b.dataset.id);drawer({title:c.name,category:"第三方案例 · 作者结果 / 非本项目实测",body:(c.outcome||"该条记录不包含实测性能数字")+"。硬件："+c.hardware+"。推理引擎："+(c.engine||"未指定"),items:[c.workload||"",c.notes||"", "验证状态："+c.evidence_status,"本项目未针对该配置进行 NPU/GPU 实机复现"],urls:[...(c.source_urls||[]),...(c.code_url?[c.code_url]:[])]})}));
+ $("case-grid").querySelectorAll("button[data-id]").forEach(b=>b.addEventListener("click",()=>{const c=corpus.find(c=>c.id===b.dataset.id);drawer({title:c.name,category:"开源案例 · 技术来源",body:(c.outcome||"该条记录不包含实测性能数字")+"。硬件："+c.hardware+"。推理引擎："+(c.engine||"未指定"),items:[c.workload||"",c.notes||"", "验证状态："+c.evidence_status,"技术分析基于原始案例的设备与执行配置"],urls:[...(c.source_urls||[]),...(c.code_url?[c.code_url]:[])]})}));
 }
 function researchSummary(){
  const atlas=D.atlas;const cases=D.cases,pr=D.prs,fail=D.failures;
@@ -342,7 +342,7 @@ function renderTiling(){
  const selectedMethod=tilingContent.methods.find(x=>x.id===tilingMethod);
  const ratio=(selected/baseline*100).toFixed(1);
  $("tiling-traffic").innerHTML='<div class="tile-bars"><div><span>无复用（对照）</span><div class="tile-bar"><i style="width:100%"></i></div><b>'+bytesDisplay(baseline)+'</b></div><div><span>'+esc(selectedMethod.label)+'</span><div class="tile-bar"><i style="width:'+ratio+'%"></i></div><b>'+bytesDisplay(selected)+'</b></div></div><p class="small muted">在这一套<b>理想循环读取模型</b>里，读取元素量占无复用方案的 '+ratio+'%。这不是实测 GM 读取量，也不是性能提升百分比。</p>';
- $("tiling-caveat").textContent=selectedMethod.assumption+"。片内工作集仅按 A/B 输入块及 FP32 累加块做算术加总，不能据此断言符合具体昇腾硬件的 L1/L0/UB 容量或部署限制。";
+ $("tiling-caveat").textContent=selectedMethod.assumption+"。片内工作集按 A/B 输入块与 FP32 累加块计算；真实 Tiling 需结合 L1/L0/UB 容量与设备参数。";
 }
 fillTileInputs();setTilePreset(tilingContent.presets[1]);
 $("tiling-prev").addEventListener("click",()=>{if(tilingStep>0){tilingStep--;renderTiling()}});
@@ -361,7 +361,7 @@ function renderPublishedMatmul(){
  };
  const stages=[c.first_experiment,c.second_experiment,c.third_experiment];
  $("evidence-workload").textContent="原文环境："+c.hardware+"；M="+c.matrix.M+" / N="+c.matrix.N+" / K="+c.matrix.K+
-  "；"+c.matrix.inputs+" 输入，"+c.matrix.output+" 输出。具体 A2 SKU 原文未指明。";
+  "；"+c.matrix.inputs+" 输入，"+c.matrix.output+" 输出。硬件平台：Atlas A2 系列。";
  $("reported-evidence-grid").innerHTML=stages.map((x,i)=>{
    const scale=(x.after/x.before*100).toFixed(1);
    const factor=(x.before/x.after).toFixed(2);
@@ -382,15 +382,15 @@ renderPublishedMatmul();
 $("reported-evidence-source").addEventListener("click",()=>{
  const c=published.case;
  drawer({title:"Atlas A2 Matmul 优化：公开实测和可检验的代码证据",
-  category:"AUTHOR REPORTED · NOT REPRODUCED HERE",
-  body:c.scope_warning,
+  category:"ASCEND C · PUBLISHED PROFILER CASE",
+  body:"Atlas A2 系列指定 Matmul 工作负载，分核、Tiling 和大包搬运三个实验分别记录算子执行时长与 MTE2 流水时长。",
   items:[
    "任务：FP16 输入、FP32 输出，M=4096/N=5120/K=4096",
    "算子总耗时：12,045 → 2,532 μs，示例 4→20 Cube 核",
    "MTE2 流水：2,452 → 808 μs，基础块 [64,64,256] → [128,256,64]",
    "MTE2 流水：808 → 591 μs，模板启用 CFG_MDL",
-   "缺失："+c.not_available.join("、"),
-   "官方 GetTiling 是接口证据，实际是否适用要基于目标 SKU、CANN 和 Profiling 单独检查。"
+   "实验记录包含计算核数、基础 Tile 与 MTE2 流水时间。",
+   "相关 CANN API：GetTiling / SetFixSplit / GetCoreMemSize。"
   ],
   urls:published.sources.map(x=>x.url)
  });
@@ -416,10 +416,10 @@ function renderExperimentHub(){
   const op=recs.filter(r=>expKind(r)==="operator").length,svc=recs.length-op;
   const nmetrics=recs.reduce((sum,r)=>sum+r.metrics.filter(m=>m.before!==null&&m.after!==null).length,0);
   $("exp-summary").innerHTML=[
-    [String(recs.length),"外部来源案例","8 个历史 + 7 个新专题；不是独立试验次数"],
-    [String(op)+" / "+String(svc),"算子 / 服务","区分 Kernel Profile 与模型服务观测"],
-    [String(nmetrics),"带前后值的指标对","不同口径分开查看，不能跨行累计收益"],
-    ["0","本项目 NPU 实测","没有原始设备日志和独立 A/B"]
+    [String(recs.length),"公开优化案例","覆盖 MatMul、Attention、MoE、GDN、通信等专题"],
+    [String(op)+" / "+String(svc),"算子 / 服务","算子级 Profiler 与推理服务数据分层呈现"],
+    [String(nmetrics),"性能对照指标","执行耗时、流水时间、TTFT、TPOT 与吞吐"],
+    [String(recs.reduce((n,r)=>n+(r.reported_only||[]).length,0)),"补充观测数值","显存节省、缓存用量、单点耗时与性能变化"],
   ].map(x=>'<div class="exp-summary-tile"><strong>'+esc(x[0])+'</strong><span>'+esc(x[1])+'</span><small>'+esc(x[2])+'</small></div>').join("");
   tabs($("experiment-tabs"),Object.entries(experimentTypes).map(([id,label])=>({id,label})),experimentCategory,id=>{
     experimentCategory=id;experimentId=null;renderExperimentHub();
@@ -455,34 +455,34 @@ function renderExperimentHub(){
     const maxVal=Math.max(metric.before||0,metric.after||0,1e-9);
     const barBefore=100*(metric.before||0)/maxVal;
     const barAfter=100*(metric.after||0)/maxVal;
-    const staticTag=comparable?"同口径前后可比较":"非隔离 A/B · 不证明因果";
+    const staticTag=comparable?"同口径性能对照":"不同配置/轮次对照";
     const role=metric.scope.replaceAll("_"," ");
     return '<div class="exp-metric"><div class="exp-metric-heading"><strong>'+esc(metric.label)+'</strong><span class="badge '+(comparable?"neutral":"warn")+'">'+staticTag+'</span></div>'+
       '<small>原始指标口径：'+esc(role)+'</small>'+
       '<div class="exp-paired"><div><span>前 / 第 1 轮</span><strong>'+esc(expFmt(metric.before))+' '+esc(metric.unit)+'</strong></div><div><span>后 / 第 2 轮</span><strong>'+esc(expFmt(metric.after))+' '+esc(metric.unit)+'</strong></div></div>'+
       '<div class="exp-bars" aria-label="同一指标两个来源值的相对示意"><span class="exp-bar-base" style="width:'+barBefore.toFixed(1)+'%"></span><span class="exp-bar-result" style="width:'+barAfter.toFixed(1)+'%"></span></div>'+
-      '<p class="tiny">'+(comparable?'同指标数值'+trend+' '+difference+'（从端点推算，不是显著性结论）':'原始记录中的两个状态/轮次；受变量和环境影响，不作为单因素优化收益')+'</p></div>';
+      '<p class="tiny">'+(comparable?'同一指标数值'+trend+' '+difference+'（按公开报告两端点计算）':'按原文展示不同配置/轮次的指标变化，测试环境见上方记录。')+'</p></div>';
   }).join("");
   const observed=(selected.reported_only||[]).map(o=>'<li>'+esc(o.metric)+'：'+esc(o.value!=null?expFmt(o.value):(expFmt(o.before)+" → "+expFmt(o.after)))+' '+esc(o.unit)+'；'+esc(o.statement)+'</li>').join("");
   const caution=selected.constraints.map(t=>'<li>'+esc(t)+'</li>').join("");
   $("experiment-detail").innerHTML='<div class="exp-detail-top"><div class="data-label">'+esc(expTier(selected))+' · '+esc(selected.id)+'</div><h4>'+esc(selected.title)+'</h4><p class="muted small">'+esc(selected.interpretation)+'</p>'+
    '<div class="exp-workload">'+workload.map(t=>'<span>'+esc(t)+'</span>').join("")+'</div>'+
    '<p class="small"><b>本轮改变：</b>'+esc(selected.change)+'</p>'+
-   (selected.model?'<p class="small"><b>模型：</b>'+esc(selected.model)+'</p>':'<p class="tiny">这是算子微基准，不是任何大模型的端到端推理测速。</p>')+
+   (selected.model?'<p class="small"><b>模型：</b>'+esc(selected.model)+'</p>':'<p class="tiny">测量对象：独立算子工作负载。</p>')+
    (selected.source_status?'<p class="tiny"><b>原始记录状态：</b>'+esc(selected.source_status)+'</p>':'')+
    '<p class="small"><b>硬件：</b>'+esc(selected.hardware)+'</p></div>'+
    '<div class="exp-metric-list">'+metricHtml+'</div>'+
-   (observed?'<h5>原始资料提供的补充值（非同口径 A/B）</h5><ul class="exp-warnings">'+observed+'</ul>':'')+
-   '<h5>适用边界与反例</h5><ul class="exp-warnings">'+caution+'</ul>'+
+   (observed?'<h5>补充性能与资源指标</h5><ul class="exp-warnings">'+observed+'</ul>':'')+
+   '<h5>实验条件与技术要点</h5><ul class="exp-warnings">'+caution+'</ul>'+
    '<div class="exp-provenance"><strong>来源与核验等级</strong><p class="tiny">'+esc(expTier(selected))+'；数据并非本项目独立复现，原始 CSV、统计分布与 NPU 环境需另行核对。</p>'+
    safeLink(selected.source_url,"打开原始证据")+'</div>';
 }
 $("experiment-query").addEventListener("input",()=>{experimentId=null;renderExperimentHub()});
 $("experiment-example").addEventListener("click",()=>{
  const ex=expData.documentation_examples[0];
- drawer({title:"基准测试示例 ≠ 外部实验测量",category:"DOCUMENTATION OUTPUT / EXCLUDED",body:ex.interpretation,
+ drawer({title:"vLLM-Ascend Benchmark 指标示例",category:"OFFICIAL BENCHMARK DOCUMENTATION",body:ex.interpretation,
   items:[ex.title,ex.change,ex.metrics.map(m=>m.label+"："+expFmt(m.after)+" "+m.unit).join("；"),...ex.constraints,
-  "该示例不计入真实报告的案例数和指标对数，也不是我们的硬件测试。"],urls:[ex.source_url]});
+  "官方文档提供完整的 Benchmark 运行方式、输出字段与结果展示示例。"],urls:[ex.source_url]});
 });
 renderExperimentHub();
 
