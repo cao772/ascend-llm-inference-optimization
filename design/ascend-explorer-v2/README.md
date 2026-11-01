@@ -1,5 +1,15 @@
 # Ascend Explorer V2 · 交互网页与详细设计
 
+## V2.2｜官方规格 + 固定版本兼容 + AI Core 逐帧 SVG（2026-11-01）
+
+- [V2.2 来源与技术审计](./docs/official-hardware-and-ai-core-v2.2.md)：将 Atlas 300I Duo 整卡 FP16/INT8、LPDDR4X 48/96 GB、408 GB/s 与 Atlas 800I A2 整机 4U、8 模组、可选互联 392 GB/s 分开标注，防止把整机互联误称为单芯片显存带宽。
+- [经核实的产品数字](./content/verified-product-specs-v2.2.json)：只收录已找到厂商产品页证据的两个具体产品，其余数值保持未核验。
+- [vLLM-Ascend 0.30.0 固定兼容版本](./content/software-compat-v2.2.json)：列出驱动/CANN/TorchNPU/vLLM 共同验证的整套发布环境与四个模型族示例；不同硬件族的 Triton 使用范围分别显示。
+- [AIC Cube / AIV Vector 数据路径](./content/architecture-paths-v2.2.json)：典型矩阵计算七帧与向量计算五帧，SVG 随步骤高亮，每一步给出数据搬运、可能的代价和如何用 Profiler 证伪。
+- [6 项新增测试](../../tests/test_ascend_verified_specs_v22.py) + [Chromium/WebKit 375/768/1440 回归](./site/browser_cross_engine.py)；修复了新增宽幅芯片 SVG 引起的移动端 Grid 最小宽度溢出。
+
+**注意**：型号规格为厂商标称值，不是本项目实测性能。官方模型支持矩阵不意味着任意卡型/并行拓扑已验证；本轮未实际拥有 NPU、未进行真实推理或算子性能 A/B。
+
 ## V2.1 产品谱系与多浏览器验收（2026-11-01）
 
 - [产品形态→产品族→SKU→处理器四级钻取及依据](./docs/hardware-lineage-v2.1.md)：6 官方产品系列、10 个代表产品；对 Atlas 300I Pro/Duo 提供 310P 产品族映射，含来源与作用范围。
