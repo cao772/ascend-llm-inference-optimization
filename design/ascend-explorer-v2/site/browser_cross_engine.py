@@ -58,6 +58,19 @@ def exercise(browser, html, width, screenshots, errors):
     page.locator("#path-vector").click()
     assert "Vector" in page.locator("#core-illustration").text_content()
     assert "第 1/5 步" in page.locator("#core-step-detail").inner_text()
+    # V2.3 interactive GEMM: real arithmetic, ragged boundaries, idealized reads.
+    assert page.locator("#tiling-summary .tile-stat").count()==6
+    page.locator("#tiling-presets button",has_text="非整除").click()
+    assert "18" in page.locator("#tiling-summary").inner_text()
+    assert page.locator("#tiling-matrices .matrix-mini").count()==3
+    page.locator("#tiling-next").click()
+    assert "2 / 18" in page.locator("#tiling-step").inner_text()
+    page.locator("#tiling-methods button",has_text="理想复用 B").click()
+    assert "不是实测 GM" in page.locator("#tiling-traffic").inner_text()
+    page.locator("#tiling-sources").click()
+    assert "NPU" in page.locator("#drawer").inner_text()
+    page.keyboard.press("Escape")
+    assert page.locator("#drawer").is_hidden()
     page.locator("#compat-family-tabs button",has_text="Atlas 推理系列").click()
     assert "不适用此组件" in page.locator("#compat-view").inner_text()
     page.locator("#compat-family-tabs button",has_text="Atlas A3").click()
