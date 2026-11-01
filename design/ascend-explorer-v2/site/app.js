@@ -400,22 +400,23 @@ $("reported-evidence-source").addEventListener("click",()=>{
 /* V2.5: sourced empirical evidence. Never claim external results as
    project-generated, or compare unlike metric scopes as one speedup. */
 const expData=D.experimentEvidence;
+const crossData=D.crossOperatorEvidence;
 let experimentCategory="all";
 let experimentId=expData.case_records[0]?.id||null;
-const experimentTypes={all:"全部真实报告",operator:"算子 Profile",service:"推理与缓存观测"};
+const experimentTypes={all:"全部有来源案例",operator:"算子 Profile",service:"服务与故障",attention:"Attention",moe:"MoE",gdn:"GDN",communication:"多卡通信"};
 function expFmt(v){if(v==null)return "未提供";return Number(v).toLocaleString("zh-CN",{maximumFractionDigits:3})}
-function expKind(r){return r.id.startsWith("ASC-OP")?"operator":"service"}
-function expTier(r){return r.source_kind==="vendor_developer_preview"?"厂商开发预览·作者报告":r.source_kind==="github_issue_report"?"GitHub Issue·提交者报告":"文档示例"}
+function expKind(r){return r.kind||(r.id.startsWith("ASC-OP")?"operator":"service")}
+function expTier(r){return ({"vendor_developer_preview":"厂商开发预览·作者报告","github_issue_report":"GitHub Issue·提交者报告","github_pr_author_report":"GitHub PR·尚未合并","github_issue_probe":"GitHub Issue·单项探针","official_feature_guide_measured":"上游官方特性指南·作者实测","github_issue_regression":"GitHub Issue·版本回退调查","github_rfc_report":"GitHub RFC·研究中"})[r.source_kind]||"来源型案例"}
 function experimentMatches(r,q){
-  return !q||JSON.stringify([r.title,r.family,r.hardware,r.model,r.workload,r.change,r.constraints,r.metrics.map(m=>m.label)]).toLowerCase().includes(q);
+  return !q||JSON.stringify([r.title,r.family,r.area,r.hardware,r.model,r.workload,r.change,r.constraints,r.metrics.map(m=>m.label),r.reported_only]).toLowerCase().includes(q);
 }
 function renderExperimentHub(){
-  const recs=expData.case_records,q=$("experiment-query").value.trim().toLowerCase();
-  const cases=recs.filter(r=>(experimentCategory==="all"||expKind(r)===experimentCategory)&&experimentMatches(r,q));
+  const recs=[...expData.case_records,...crossData.case_records],q=$("experiment-query").value.trim().toLowerCase();
+  const cases=recs.filter(r=>(experimentCategory==="all"||expKind(r)===experimentCategory||r.area===experimentCategory)&&experimentMatches(r,q));
   const op=recs.filter(r=>expKind(r)==="operator").length,svc=recs.length-op;
   const nmetrics=recs.reduce((sum,r)=>sum+r.metrics.filter(m=>m.before!==null&&m.after!==null).length,0);
   $("exp-summary").innerHTML=[
-    [String(recs.length),"外部来源案例","包含同一问题的多个指标；非独立试验次数"],
+    [String(recs.length),"外部来源案例","8 个历史 + 7 个新专题；不是独立试验次数"],
     [String(op)+" / "+String(svc),"算子 / 服务","区分 Kernel Profile 与模型服务观测"],
     [String(nmetrics),"带前后值的指标对","不同口径分开查看，不能跨行累计收益"],
     ["0","本项目 NPU 实测","没有原始设备日志和独立 A/B"]
@@ -425,10 +426,10 @@ function renderExperimentHub(){
   });
   if(!cases.some(r=>r.id===experimentId))experimentId=cases[0]?.id||null;
   $("experiment-cards").innerHTML=cases.length?cases.map(r=>{
-    const tag=expKind(r)==="operator"?"算子":"服务";
+    const tag=r.area?({"attention":"Attention","moe":"MoE","gdn":"GDN","communication":"通信"}[r.area]||"专题"):(expKind(r)==="operator"?"算子":"服务");
     return '<button type="button" class="experiment-card" aria-pressed="'+String(r.id===experimentId)+'" data-id="'+esc(r.id)+'">'+
       '<div class="exp-card-top"><span class="badge neutral">'+tag+'</span><small>'+esc(r.id)+'</small></div>'+
-      '<strong>'+esc(r.title)+'</strong><small>'+esc(r.hardware)+'</small><span class="exp-case-metrics">'+r.metrics.length+' 项可追溯指标</span>'+
+      '<strong>'+esc(r.title)+'</strong><small>'+esc(r.hardware)+'</small><span class="exp-case-metrics">'+(r.metrics.length+(r.reported_only||[]).length)+' 项可追溯指标</span>'+
       '</button>';
   }).join(""):'<p class="empty">无匹配案例。请更改搜索词或来源分类。</p>';
   $("experiment-cards").querySelectorAll("button[data-id]").forEach(button=>button.addEventListener("click",()=>{
@@ -454,23 +455,24 @@ function renderExperimentHub(){
     const maxVal=Math.max(metric.before||0,metric.after||0,1e-9);
     const barBefore=100*(metric.before||0)/maxVal;
     const barAfter=100*(metric.after||0)/maxVal;
-    const staticTag=comparable?"同口径前后可比较":"不同轮次观测 / 非隔离 A/B";
+    const staticTag=comparable?"同口径前后可比较":"仅原始报告数值 · 不证明因果";
     const role=metric.scope.replaceAll("_"," ");
     return '<div class="exp-metric"><div class="exp-metric-heading"><strong>'+esc(metric.label)+'</strong><span class="badge '+(comparable?"neutral":"warn")+'">'+staticTag+'</span></div>'+
       '<small>原始指标口径：'+esc(role)+'</small>'+
       '<div class="exp-paired"><div><span>前 / 第 1 轮</span><strong>'+esc(expFmt(metric.before))+' '+esc(metric.unit)+'</strong></div><div><span>后 / 第 2 轮</span><strong>'+esc(expFmt(metric.after))+' '+esc(metric.unit)+'</strong></div></div>'+
       '<div class="exp-bars" aria-label="同一指标两个来源值的相对示意"><span class="exp-bar-base" style="width:'+barBefore.toFixed(1)+'%"></span><span class="exp-bar-result" style="width:'+barAfter.toFixed(1)+'%"></span></div>'+
-      '<p class="tiny">'+(comparable?'同指标数值'+trend+' '+difference+'（从端点推算，不是显著性结论）':'两轮的原始数值差异，不作为单因素优化收益')+'</p></div>';
+      '<p class="tiny">'+(comparable?'同指标数值'+trend+' '+difference+'（从端点推算，不是显著性结论）':'原始记录中的两个状态/轮次；受变量和环境影响，不作为单因素优化收益')+'</p></div>';
   }).join("");
-  const observed=(selected.reported_only||[]).map(o=>'<li>'+esc(o.metric)+'：'+esc(expFmt(o.before))+' → '+esc(expFmt(o.after))+' '+esc(o.unit)+'；'+esc(o.statement)+'</li>').join("");
+  const observed=(selected.reported_only||[]).map(o=>'<li>'+esc(o.metric)+'：'+esc(o.value!=null?expFmt(o.value):(expFmt(o.before)+" → "+expFmt(o.after)))+' '+esc(o.unit)+'；'+esc(o.statement)+'</li>').join("");
   const caution=selected.constraints.map(t=>'<li>'+esc(t)+'</li>').join("");
   $("experiment-detail").innerHTML='<div class="exp-detail-top"><div class="data-label">'+esc(expTier(selected))+' · '+esc(selected.id)+'</div><h4>'+esc(selected.title)+'</h4><p class="muted small">'+esc(selected.interpretation)+'</p>'+
    '<div class="exp-workload">'+workload.map(t=>'<span>'+esc(t)+'</span>').join("")+'</div>'+
    '<p class="small"><b>本轮改变：</b>'+esc(selected.change)+'</p>'+
    (selected.model?'<p class="small"><b>模型：</b>'+esc(selected.model)+'</p>':'<p class="tiny">这是算子微基准，不是任何大模型的端到端推理测速。</p>')+
+   (selected.source_status?'<p class="tiny"><b>原始记录状态：</b>'+esc(selected.source_status)+'</p>':'')+
    '<p class="small"><b>硬件：</b>'+esc(selected.hardware)+'</p></div>'+
    '<div class="exp-metric-list">'+metricHtml+'</div>'+
-   (observed?'<h5>原文还报告但不能直接形成前后配对的指标</h5><ul class="exp-warnings">'+observed+'</ul>':'')+
+   (observed?'<h5>原始资料提供的补充值（非同口径 A/B）</h5><ul class="exp-warnings">'+observed+'</ul>':'')+
    '<h5>适用边界与反例</h5><ul class="exp-warnings">'+caution+'</ul>'+
    '<div class="exp-provenance"><strong>来源与核验等级</strong><p class="tiny">'+esc(expTier(selected))+'；数据并非本项目独立复现，原始 CSV、统计分布与 NPU 环境需另行核对。</p>'+
    safeLink(selected.source_url,"打开原始证据")+'</div>';
