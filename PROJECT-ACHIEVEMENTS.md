@@ -75,3 +75,16 @@ Qwen 大模型推理优化往往散落在开源 Kernel、框架 PR、博客基�
 项目未来可进入“Ascend 实机推理优化”阶段，但只有在硬件、CANN/驱动、模型权重与 vLLM-Ascend 具体版本都确定后，才能按顺序开展：模型加载 → 正确性基线 → Profiler 分阶段测量 → 单变量优化 → 有回退的 A/B → P50/P95/吞吐联合验收。
 
 本阶段成果不能改写成“自主研发了他人的 Kernel”“已优化 910C 推理速度 X 倍”或“已经部署上线”。**独立项目的真实性与价值，来自已完成的研究系统、工程方法、代码和可验证的软件交付。**
+
+## 阶段二网站研发：昇腾大模型推理与算子优化交互展馆（V2.2）
+
+独立于 Qwen 首期决策原型，新增九模块、离线可运行的昇腾硬件—软件栈—算子—推理流程讲解网页，已将原有 75 节点 / 202 来源关系的研究图谱嵌入展馆。V2.2 继续补充了：
+
+- **有依据的具体设备规格**：华为 Atlas 300I Duo 整卡 FP16/INT8、48/96 GB LPDDR4X 与整卡带宽；Atlas 800I A2 的 4U/8 模组/可选整机全互联等参数。产品层级、精度单位和可选配置单独标注，不与单 NPU 指标混淆。
+- **版本锁定的兼容解释**：按 vLLM-Ascend 0.30.0 官方安装指南记录 HDK/CANN/NNAL/PyTorch/TorchNPU/Triton/vLLM 的整套共同验证环境；展示 Qwen、GLM、DeepSeek 支持表的*文档范围*，不等于本机实测。
+- **真实可点的 AI Core 数据流教学**：针对官方特定架构的 AIC Cube 7 帧、AIV Vector 5 帧，SVG 逐步高亮算子搬入、计算、搬出与可能的访存问题。是机制讲解，而非模拟 NPU 利用率。
+- **质量保障**：独立 JSON 来源契约 + Python 单元测试 + Chromium/WebKit 多尺寸端到端交互回归，新增设计均保留出处与“不支持推断实测”的限制。
+
+[V2.2 完整技术来源报告](design/ascend-explorer-v2/docs/official-hardware-and-ai-core-v2.2.md) · [网站源码](design/ascend-explorer-v2/site/) · [V2 任务跟踪](https://github.com/cao772/ascend-llm-inference-optimization/issues/7)。
+
+当前可确认为自主研发的成果：证据采集与分层模型、教学图示与交互前端、离线构建、自动回归。**尚不能确认昇腾算子重写已完成，或实际模型 TTFT/TPOT/TPS 已提高。**
