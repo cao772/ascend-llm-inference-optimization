@@ -1,4 +1,25 @@
-# Ascend Explorer V2 · 详细设计交付包
+# Ascend Explorer V2 · 交互网页与详细设计
+
+## V2 可运行网页 MVP（与早期设计预览分开）
+
+**新增真实网页代码**保存在 site/：
+
+- [index.html](./site/index.html)、[app.css](./site/app.css)、[app.js](./site/app.js)：九展区的实际互动页面，不再是旧 [preview.html](./preview.html) 的局部演示。
+- [build_site.py](./site/build_site.py)：从现有产品、七类算子数据和完整图谱，打包可离线打开的独立单 HTML。
+- [browser_smoke.py](./site/browser_smoke.py)：Chromium 真实点击产品筛选、芯片组件、软件栈、时间线、算子六帧、诊断、图谱邻域和来源抽屉，以及手机导航与水平溢出测试。
+- [网站专属 CI](../../.github/workflows/ascend-explorer-site.yml)：自动运行数据、JS/HTML 和浏览器测试，输出 HTML + JSON/设计资料 + 截图 Artifact。
+
+本地打包（Python 标准库，不下载大模型）：
+
+    python3 design/ascend-explorer-v2/site/build_site.py --output build/ascend-explorer-v2.html
+    python3 -m unittest discover -s tests -p 'test_ascend_explorer_site.py' -v
+
+用浏览器直接打开 build/ascend-explorer-v2.html；离线交互与证据浏览可用。仓库未确认已启用 GitHub Pages，不把 Actions 构建产物误称为公网网站。
+
+目前交互覆盖全景因果链、产品分类和对照、四层解剖与数据路径、六层软件栈、Token 生命周期、八条影响关系、七专题六帧、七类症状、15 个历史案例、75 节点/202 关系的一跳证据图谱。
+
+边界：这是教育与研究网页，不是已接入 NPU 的可实测推理服务。完整型号精确规格、硬件/模型适配矩阵、源码级 AscendC 性能实证与线上部署待后续完成。
+
 
 项目：**昇腾大模型推理与算子优化** · 版本：v2 design candidate · 状态：**设计完成、实现待开始**。
 
