@@ -63,6 +63,33 @@
   </div>
   <aside class="surface tinted"><span class="data-label">ACTIVE COMPONENT</span><h3 id="chip-detail-title" class="panel-title" style="font-size:22px;margin-top:12px">选择芯片单元</h3><p id="chip-detail-text" class="muted"></p><div class="tutorial-box" id="chip-detail-measure"></div><div class="linkline"><button class="btn ghost" data-drawer-key="architecture" type="button">查看官方架构说明</button></div><p class="tiny">本解剖图是逻辑资源关系，不能用于推断具体芯片的面积、数量或实际通路。</p></aside>
  </div>
+ <div class="surface tile-lab" id="tiling-lab" style="margin-top:18px" aria-labelledby="tiling-title">
+  <div class="section-header"><div><div class="section-index">INTERACTIVE / GEMM TILING LAB</div><h3 id="tiling-title" class="panel-title" style="font-size:22px">矩阵分块与数据复用实验室</h3><p class="section-intro">从 A[M,K] × B[K,N] 看每个小块怎样参与计算：改变 M/N/K、Tile 尺寸和理想复用策略，观察逻辑读入变化。</p></div><span class="badge warn">数学教学估算 · 非 NPU 实测</span></div>
+  <div class="tabs" id="tiling-presets" aria-label="选择矩阵计算示例"></div>
+  <div class="tile-controls">
+   <label>M（输出行）<select id="tile-M" aria-label="M 行数"></select></label>
+   <label>N（输出列）<select id="tile-N" aria-label="N 列数"></select></label>
+   <label>K（归约维度）<select id="tile-K" aria-label="K 维度"></select></label>
+   <label>Tile M <select id="tile-tm" aria-label="Tile M"></select></label>
+   <label>Tile N <select id="tile-tn" aria-label="Tile N"></select></label>
+   <label>Tile K <select id="tile-tk" aria-label="Tile K"></select></label>
+  </div>
+  <div class="tile-summary" id="tiling-summary" aria-live="polite"></div>
+  <div class="tile-layout">
+   <div class="tile-stage">
+    <div class="tile-matrix-trio" id="tiling-matrices" aria-label="矩阵 A B C 的分块示意"></div>
+    <div class="linkline"><button type="button" class="btn ghost" id="tiling-prev">← 上一块</button><button type="button" class="btn primary" id="tiling-next">下一块 →</button><button type="button" class="btn ghost" id="tiling-reset">回到首块</button></div>
+    <div class="tile-step" id="tiling-step" aria-live="polite"></div>
+   </div>
+   <div class="tile-right">
+    <h4 style="margin:0 0 9px">改变理论复用策略</h4>
+    <div class="tabs" id="tiling-methods"></div>
+    <div id="tiling-traffic" class="tile-traffic" aria-live="polite"></div>
+    <div class="tutorial-box" id="tiling-caveat"></div>
+    <button type="button" class="btn ghost" id="tiling-sources">官方 Tiling API 与模型边界</button>
+   </div>
+  </div>
+ </div>
 </div></section>
 
 <section class="section" id="stack" aria-labelledby="stack-title"><div class="container">
@@ -131,5 +158,5 @@
 </main>
 <footer class="footer"><div class="container"><b>ASCEND · INFERENCE & OPERATOR EXPLORER</b><p>教育型交互技术展馆 · 内容引用官方文档与已整理的公开优化案例 · 非线上性能监控 / 非设备规格排行</p><div class="footer-links"><a href="#overview">返回首页</a><a href="https://github.com/cao772/ascend-llm-inference-optimization/issues/7" target="_blank" rel="noopener">开发跟踪 Issue #7</a><a href="https://app.notion.com/p/40b7bbed135281d78e69ca7cd395b56e" target="_blank" rel="noopener">Notion 设计记录</a></div></div></footer>
 <div class="drawer-backdrop" id="drawer-backdrop" hidden></div><aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="drawer-title" hidden><button class="close" id="drawer-close" type="button">关闭 ✕</button><div class="data-label" id="drawer-category">EVIDENCE</div><h2 id="drawer-title"></h2><div id="drawer-content"></div></aside>
-<script id="app-data" type="application/json">/* DATA_JSON_INJECT */</script><script>/* APP_JS_INJECT */</script>
+<script id="app-data" type="application/json">/* DATA_JSON_INJECT */</script><script>/* TILING_JS_INJECT */</script><script>/* APP_JS_INJECT */</script>
 </body></html>
