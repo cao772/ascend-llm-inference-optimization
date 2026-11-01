@@ -93,6 +93,7 @@ class AscendExplorerSiteTests(unittest.TestCase):
     def test_buttons_and_key_interactions_exist(self):
         for key in ("product-tabs", "chip-units", "anatomy-levels", "operator-tabs",
                     "operator-steps", "timeline-stages", "factor-tabs", "case-grid",
+                    "symptoms", "graph-stage", "graph-detail", "graph-search",
                     "symptoms", "drawer-close", "drawer-backdrop", "nav-toggle"):
             self.assertIn(key, self.parser.ids)
         self.assertIn("aria-pressed", self.html)
