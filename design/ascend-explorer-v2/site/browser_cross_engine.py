@@ -51,12 +51,12 @@ def exercise(browser, html, width, screenshots, errors):
 
     page.locator("#path-gemm").click()
     assert page.locator("#core-illustration svg").count()==1
-    assert "FixPipe" in page.locator("#core-illustration").inner_text()
+    assert "FixPipe" in page.locator("#core-illustration").text_content()
     assert "第 1/7 步" in page.locator("#core-step-detail").inner_text()
     page.locator("#path-next").click()
     assert "第 2/7 步" in page.locator("#core-step-detail").inner_text()
     page.locator("#path-vector").click()
-    assert "Vector" in page.locator("#core-illustration").inner_text()
+    assert "Vector" in page.locator("#core-illustration").text_content()
     assert "第 1/5 步" in page.locator("#core-step-detail").inner_text()
     page.locator("#compat-family-tabs button",has_text="Atlas 推理系列").click()
     assert "不适用此组件" in page.locator("#compat-view").inner_text()
