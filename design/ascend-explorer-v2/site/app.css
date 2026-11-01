@@ -84,3 +84,11 @@
 .core-step-detail{padding:12px;border-radius:9px;background:#103a45;border-left:3px solid #69dfd2;color:#d3ede8;font-size:12px;min-height:72px}
 @media(max-width:1150px){.spec-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.compat-models{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:620px){.spec-grid,.compat-slice,.compat-models{grid-template-columns:1fr}.core-illustration svg{width:720px}.compat-view{padding:10px}}
+
+/* V2.2 narrow-screen fix: SVG is scrollable *inside* its panel, not a grid min-content width. */
+.anatomy-view > *,.anatomy-view .surface,#anatomy-diagram,.chip-shell,.chip-cores,.chip-cores button{min-width:0;max-width:100%}
+.core-illustration{min-width:0;max-width:100%;overflow-x:auto;overscroll-behavior-inline:contain}
+.chip-cores{grid-template-columns:repeat(3,minmax(0,1fr))}
+.chip-cores button{overflow-wrap:anywhere;word-break:break-word}
+@media(max-width:950px){.anatomy-view{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:620px){.chip-cores{grid-template-columns:repeat(2,minmax(0,1fr))}.core-illustration svg{width:720px;max-width:none}}
