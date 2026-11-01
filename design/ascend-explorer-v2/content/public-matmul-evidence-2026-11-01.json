@@ -22,6 +22,14 @@
       "note": "GetTiling(TCubeTiling)、SetShape/SetOrgShape、数据类型/位置、单核与多核接口"
     },
     {
+      "id": "SRC-CANN-SETFIXSPLIT",
+      "kind": "official_api",
+      "title": "SetFixSplit, CANN 8.5.0",
+      "url": "https://www.hiascend.com/document/detail/en/CANNCommunityEdition/850/API/ascendcopapi/atlasascendc_api_07_0681.html",
+      "publisher": "Huawei Ascend",
+      "note": "baseM/baseN 可固定；此版本 baseKIn 只支持 -1；baseM × baseN × sizeof(C_TYPE) <= L0CSize，并有每核大小及 dtype 对齐约束"
+    },
+    {
       "id": "SRC-CORE-MEM",
       "kind": "official_api",
       "title": "PlatformAscendC GetCoreMemSize, CANN 8.5.0",
@@ -126,6 +134,15 @@
         "SRC-CORE-MEM"
       ],
       "claim": "Host Tiling can query available L1/L0/UB memory using PlatformAscendC.GetCoreMemSize; physical resource sizes are device/version specific."
+    },
+    {
+      "id": "E02B",
+      "level": "official_api_constraint",
+      "source_ids": [
+        "SRC-CANN-SETFIXSPLIT",
+        "SRC-CORE-MEM"
+      ],
+      "claim": "SetFixSplit may fix baseM and baseN, but CANN 8.5.0 fixes baseKIn to -1; baseM*baseN*sizeof(C_TYPE) cannot exceed L0C size; check target hardware's GetCoreMemSize before claiming a tile valid."
     },
     {
       "id": "E03",
