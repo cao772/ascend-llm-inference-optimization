@@ -26,6 +26,22 @@ class AscendExplorerDesignTests(unittest.TestCase):
                                 m if m is not None else self.m,
                                 self.design, self.ts, self.css)
 
+    def test_design_review_preview_has_keyboard_interactions(self):
+        preview = (BASE / "preview.html").read_text("utf-8")
+        for target in ("id=\"hardware-tabs\"", "id=\"compute\"", "id=\"op-tabs\"",
+                       "id=\"steps\"", "id=\"detail\""):
+            self.assertIn(target.replace("\\\"", "\""), preview)
+        self.assertIn("aria-pressed", preview)
+        self.assertIn("prefers-reduced-motion", preview)
+        self.assertIn("设计交互预览", preview)
+        self.assertNotIn("fetch(", preview)
+        self.assertNotIn("真实提速 2 倍", preview)
+
+    def test_design_preview_not_marked_as_live_benchmark(self):
+        preview = (BASE / "preview.html").read_text("utf-8")
+        self.assertIn("非真实", preview) if "非真实" in preview else self.assertIn("非实机", preview)
+        self.assertIn("没有硬件规格和真实推理测量", preview)
+
     def test_published_design_data_passes(self):
         result = self.check()
         self.assertEqual(result["design_status"], "review_candidate_not_implemented")
