@@ -9,6 +9,7 @@ on:
       - 'design/ascend-explorer-v2/src/**'
       - 'tests/test_ascend_explorer_site.py'
       - 'tests/test_ascend_product_lineage.py'
+      - 'tests/test_ascend_verified_specs_v22.py'
       - 'design/ascend-explorer-v2/site/browser_smoke.py'
       - 'design/ascend-explorer-v2/site/browser_cross_engine.py'
       - '.github/workflows/ascend-explorer-site.yml'
@@ -31,6 +32,7 @@ jobs:
           python3 -m unittest discover -s tests -p 'test_ascend_explorer_design.py' -v
           python3 -m unittest discover -s tests -p 'test_ascend_explorer_site.py' -v
           python3 -m unittest discover -s tests -p 'test_ascend_product_lineage.py' -v
+          python3 -m unittest discover -s tests -p 'test_ascend_verified_specs_v22.py' -v
           node --check design/ascend-explorer-v2/site/app.js
       - name: Build fully standalone offline website
         run: |
@@ -54,6 +56,9 @@ jobs:
           assert len(d["operators"]["stories"])==7
           assert len(d["productLineage"]["families"])==6
           assert len(d["productLineage"]["productProcessorMappings"])==2
+          assert len(d["verifiedSpecs"]["products"])==2
+          assert d["softwareCompat"]["release"]=="vLLM-Ascend 0.30.0"
+          assert len(d["architecturePaths"]["paths"])==2
           assert all(not v for h in d["hardware"]["products"] for v in h["quantitative"].values())
           assert "/* APP_" not in raw
           print("Offline V2 site ready:",p.stat().st_size,"bytes, 9 sections, 7 operator stories")
