@@ -99,23 +99,42 @@ def exercise(browser, html, width, screenshots, errors):
     # V2.5 empirical archive: filter, inspect published profiler, examine cache two rounds.
     assert page.locator("#exp-summary .exp-summary-tile").count()==4
     assert "24" in page.locator("#exp-summary").inner_text()
-    assert page.locator("#experiment-cards .experiment-card").count()==8
+    assert page.locator("#experiment-cards .experiment-card").count()==15
     page.locator("#experiment-tabs button",has_text="算子 Profile").click()
-    assert page.locator("#experiment-cards .experiment-card").count()==6
+    assert page.locator("#experiment-cards .experiment-card").count()==8
     page.locator("#experiment-query").fill("Scalar")
     assert page.locator("#experiment-cards .experiment-card").count()>=1
     assert "10.62" in page.locator("#experiment-detail").inner_text()
     assert "7.87" in page.locator("#experiment-detail").inner_text()
     page.locator("#experiment-query").fill("")
     page.locator("#experiment-tabs button",has_text="推理与缓存").click()
-    assert page.locator("#experiment-cards .experiment-card").count()==2
+    assert page.locator("#experiment-cards .experiment-card").count()==7
     assert "非隔离 A/B" in page.locator("#experiment-detail").inner_text()
     assert "3990.14" in page.locator("#experiment-detail").inner_text() or "3,990.14" in page.locator("#experiment-detail").inner_text()
     page.locator("#experiment-example").click()
     assert "不计入真实报告" in page.locator("#drawer").inner_text()
     page.keyboard.press("Escape")
     assert page.locator("#drawer").is_hidden()
-    page.locator("#experiment-tabs button",has_text="全部真实报告").click()
+
+    page.locator("#experiment-tabs button",has_text="Attention").click()
+    assert page.locator("#experiment-cards .experiment-card").count()==1
+    assert "+6.2%" not in page.locator("#experiment-detail").inner_text()  # raw report value, not invented speedup
+    assert "6.2" in page.locator("#experiment-detail").inner_text()
+    assert "open PR" in page.locator("#experiment-detail").inner_text()
+    page.locator("#experiment-tabs button",has_text="MoE").click()
+    assert page.locator("#experiment-cards .experiment-card").count()==2
+    page.locator("#experiment-cards .experiment-card",has_text="DeepSeek-R1").click()
+    assert "9.72" in page.locator("#experiment-detail").inner_text()
+    assert "退化" in page.locator("#experiment-detail").inner_text()
+    page.locator("#experiment-tabs button",has_text="GDN").click()
+    assert page.locator("#experiment-cards .experiment-card").count()==2
+    assert "39" in page.locator("#experiment-detail").inner_text()
+    page.locator("#experiment-tabs button",has_text="多卡通信").click()
+    assert page.locator("#experiment-cards .experiment-card").count()==2
+    assert "1,719.37" in page.locator("#experiment-detail").inner_text()
+    assert "不证明因果" in page.locator("#experiment-detail").inner_text()
+    page.locator("#experiment-query").fill("")
+    page.locator("#experiment-tabs button",has_text="全部有来源案例").click()
     assert page.locator("#graph-stage .graph-node").count()>=2
     if width<=950:
         page.locator("#nav-toggle").click()
