@@ -12,6 +12,7 @@ on:
       - 'tests/test_ascend_verified_specs_v22.py'
       - 'tests/test_ascend_tiling_math.cjs'
       - 'tests/test_ascend_public_matmul_evidence.py'
+      - 'tests/test_ascend_experiment_evidence_v25.py'
       - 'design/ascend-explorer-v2/site/browser_smoke.py'
       - 'design/ascend-explorer-v2/site/browser_cross_engine.py'
       - '.github/workflows/ascend-explorer-site.yml'
@@ -36,6 +37,7 @@ jobs:
           python3 -m unittest discover -s tests -p 'test_ascend_product_lineage.py' -v
           python3 -m unittest discover -s tests -p 'test_ascend_verified_specs_v22.py' -v
           python3 -m unittest discover -s tests -p 'test_ascend_public_matmul_evidence.py' -v
+          python3 -m unittest discover -s tests -p 'test_ascend_experiment_evidence_v25.py' -v
           node --check design/ascend-explorer-v2/site/app.js
           node --check design/ascend-explorer-v2/site/tiling_math.js
           node --test tests/test_ascend_tiling_math.cjs
@@ -66,6 +68,9 @@ jobs:
           assert len(d["architecturePaths"]["paths"])==2
           assert d["tilingLab"]["kind"]=="educational_analytical_model_not_hardware_benchmark"
           assert d["publicMatmulEvidence"]["local_npu_profiling_count"]==0
+          assert d["experimentEvidence"]["project_own_hardware_measurements"] == 0
+          assert d["experimentEvidence"]["collection"]["public_case_count"] == 8
+          assert d["experimentEvidence"]["collection"]["metric_pairs"] == 24
           assert d["publicMatmulEvidence"]["case"]["first_experiment"]["measured_metric"]=="operator_execution_duration_us"
           assert d["publicMatmulEvidence"]["case"]["second_experiment"]["measured_metric"]=="MTE2_pipeline_duration_us"
           assert all(not v for h in d["hardware"]["products"] for v in h["quantitative"].values())
