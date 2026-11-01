@@ -147,6 +147,31 @@
 
 <section class="section" id="evidence" aria-labelledby="evidence-title"><div class="container">
  <div class="section-header"><div><div class="section-index">08 / CASES · GRAPH · ACHIEVEMENTS</div><h2 id="evidence-title">案例、源码与我们的真正成果</h2><p class="section-intro">研究资产来自已有 GitHub 数据，不将 CUDA/TPU 的作者微基准当作昇腾实测。新模型后续扩展，不会伪装成已经验证的型号兼容性。</p></div></div>
+
+ <div class="surface experiment-hub" id="experiment-hub" style="margin-bottom:17px" aria-labelledby="experiment-hub-title">
+  <div class="section-header">
+   <div><div class="section-index">V2.5 / REAL-WORLD EVIDENCE LAB</div><h3 class="panel-title" id="experiment-hub-title" style="font-size:24px">有来源的真实实验数据中心</h3><p class="section-intro">算子 Profile、完整推理请求、缓存复用等不同层次分开展示。下方数值来自公开作者或问题报告，**不是本项目 NPU 实测**。</p></div>
+   <span class="badge warn">外部来源 · 按实验条件解释</span>
+  </div>
+  <div class="exp-stat-grid" id="exp-summary"></div>
+  <div class="experiment-workspace">
+   <div class="experiment-browser">
+     <div class="tabs" id="experiment-tabs" aria-label="按证据类型筛选实验"></div>
+     <label for="experiment-query" class="sr-only">搜索实验和指标</label>
+     <input id="experiment-query" type="search" placeholder="搜索 MTE2 / Scalar / Cache / A2 / GEMM / FP16" autocomplete="off" />
+     <div class="experiment-cards" id="experiment-cards" aria-label="公开实验案例列表"></div>
+   </div>
+   <div class="experiment-detail" id="experiment-detail" aria-live="polite">
+     <p class="muted">选择左侧案例查看工作负载、分项指标、来源、版本和未验证条件。</p>
+   </div>
+  </div>
+  <div class="exp-methodology">
+    <div><strong>可以对比</strong><p>同一案例内、同一测量口径的优化前后指标；始终展示单位、形状与适用条件。</p></div>
+    <div><strong>不能直接对比</strong><p>完整算子耗时与 MTE2/Scalar 流水耗时；不同硬件与输入规模；缓存冷/热轮次与隔离 A/B。</p></div>
+    <div><strong>本项目实测</strong><p>目前 0 组。只有取得设备、原始 Profiler/Benchmark 文件与版本/正确性记录后才升级证据等级。</p></div>
+  </div>
+  <div class="exp-reference"><span>指标口径与复现协议：</span><a href="https://docs.vllm.ai/projects/ascend/en/v0.30.0/developer_guide/performance_and_debug/performance_benchmark.html" target="_blank" rel="noopener noreferrer">vLLM-Ascend v0.30 Benchmarks</a><span>·</span><button class="btn ghost" type="button" id="experiment-example">查看官方 Benchmark 输出示例（非实测样本）</button></div>
+ </div>
  <div class="grid-4" id="research-stats"></div>
  <div class="surface" style="margin-top:15px"><div class="section-header"><div><h3 class="panel-title">证据案例浏览</h3><p class="small muted">可按模型、平台、优化机制搜索，打开卡片读取作者报告与源码来源。</p></div><div class="tabs" id="evidence-tabs"></div></div>
   <label class="sr-only" for="case-query">筛选案例</label><input id="case-query" type="search" placeholder="搜索 Qwen、Ascend、GDN、MoE 或 PR" style="width:100%;padding:13px;border:1px solid #41637b;border-radius:10px;background:#0a2136;color:white;margin:3px 0 15px">
