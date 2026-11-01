@@ -118,7 +118,7 @@ def exercise(browser, html, width, screenshots, errors):
 
     page.locator("#experiment-tabs button",has_text="Attention").click()
     assert page.locator("#experiment-cards .experiment-card").count()==1
-    assert "+6.2%" not in page.locator("#experiment-detail").inner_text()  # raw report value, not invented speedup
+    assert page.locator("#experiment-detail .exp-metric").count()==0  # unpaired percentages cannot create fake before/after values
     assert "6.2" in page.locator("#experiment-detail").inner_text()
     assert "open PR" in page.locator("#experiment-detail").inner_text()
     page.locator("#experiment-tabs button",has_text="MoE").click()
