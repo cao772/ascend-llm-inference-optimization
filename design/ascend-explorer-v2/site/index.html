@@ -36,9 +36,10 @@
 <section class="section" id="hardware" aria-labelledby="hardware-title"><div class="container">
  <div class="section-header"><div><div class="section-index">01 / HARDWARE ATLAS</div><h2 id="hardware-title">昇腾到底有哪些卡与产品形态？</h2><p class="section-intro">分清“处理器、加速卡、服务器、超节点”四个层级。型号名称、芯片代际和整机部署不是一个维度。</p></div><button class="btn ghost" data-drawer-key="product" type="button">怎么看参数来源？</button></div>
  <div class="surface">
-  <div class="tabs" id="product-tabs" aria-label="按产品形态筛选"></div><div class="breadcrumb" id="product-crumb"></div>
+  <div class="tabs" id="product-tabs" aria-label="第一级：按产品形态筛选"></div><div class="family-rail" id="family-rail" aria-label="第二级：按官方产品族筛选"></div><div class="breadcrumb" id="product-crumb" aria-label="产品四层钻取位置"></div>
   <div class="two-thirds"><div><div class="product-grid" id="product-grid"></div><div class="linkline"><span class="badge neutral">可对比最多 3 个产品</span><button id="compare-products" class="btn ghost" type="button">比较所选产品</button></div></div>
   <aside class="surface hardware-detail" id="product-detail" aria-live="polite"><h3>选择产品查看详情</h3></aside></div>
+  <div class="topology-evidence" id="topology-evidence" hidden aria-live="polite"></div>
  </div>
  <div class="grid-3" style="margin-top:13px"><div class="topic-card"><b>处理器研究专题</b><div id="processor-topics"></div></div><div class="topic-card"><b>产品形态不等于芯片</b><p>同一处理器族可能对应多种整机产品，不能从一篇案例推断所有设备参数。</p></div><div class="topic-card"><b>缺乏官方规格时</b><p>TOPS、内存、带宽和功耗显示「未核验」，不以空白或 0 冒充真实参数。</p></div></div>
  <div class="surface" id="comparison" hidden style="margin-top:14px"><div class="section-header"><h3>已选产品对照</h3><button class="btn ghost" id="clear-compare" type="button">清除对照</button></div><div class="overflow-x" id="compare-table"></div></div>
