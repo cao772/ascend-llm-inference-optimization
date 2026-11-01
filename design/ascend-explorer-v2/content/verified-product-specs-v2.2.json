@@ -1,7 +1,7 @@
 {
   "schemaVersion": "2.2-verified-specifications",
   "asOf": "2026-11-01",
-  "note": "Values are scoped to the exact product and unit. Alternative capacities are variants, not an additive capacity. Server-wide interconnect is not single-NPU memory bandwidth.",
+  "note": "Values are scoped to the exact product and unit. Alternative capacities are variants, not an additive capacity. Server-wide interconnect is not single-NPU memory bandwidth. 这些厂商规格是产品参数，非实测的大模型推理速度，不等于本项目已有 TTFT/TPOT/TPS 成果。",
   "products": [
     {
       "id": "atlas-300i-duo",
