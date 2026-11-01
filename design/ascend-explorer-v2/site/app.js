@@ -39,6 +39,12 @@ function initGenericEvidence(){document.querySelectorAll("[data-drawer-key]").fo
 }))}
 let form="all",familyId="all",productId=null,compareIds=[];
 const lineage=D.productLineage;
+
+const verifiedCatalog=D.verifiedSpecs;
+function verifiedProduct(id){return verifiedCatalog.products.find(p=>p.id===id)}
+function formatScopedValue(x){return (x.values?x.values.join(" / "):String(x.value))+" "+x.unit}
+function verifiedFactsMarkup(rec){return rec?'<div class="section-header"><div><h3 class="panel-title">已核实的具体产品规格</h3><p class="section-intro">来源明确，且为整卡 / 整机或某种可选配置；不可将不同单位拼成同一“显卡算力”。</p></div><span class="badge">华为官方产品页</span></div><div class="spec-grid">'+rec.specs.map(x=>'<div class="spec-tile"><span class="data-label">'+esc(x.label)+'</span><strong>'+esc(formatScopedValue(x))+'</strong><small>'+esc(x.scope)+'</small></div>').join("")+'</div><div class="linkline"><button class="btn ghost" type="button" id="verified-source">查看规格来源与版本限制</button></div>':'<div class="verified-pending">该型号还未采集能够核对到具体 SKU / 配置的官方规格，因此保持“待核验”，不使用同系列其他卡的数字代替。</div>'}
+
 const forms=[{id:"all",label:"全部产品"},{id:"module",label:"模块"},{id:"accelerator_card",label:"推理卡"},{id:"edge_system",label:"边缘整机"},{id:"inference_server",label:"推理服务器"},{id:"training_server",label:"训练服务器"},{id:"compute_pod",label:"超节点"}];
 function familyFor(p){return lineage.productFamilyOverrides[p.id]||lineage.families.find(f=>f.name===p.family)?.id||"unclassified"}
 function familyName(id){return lineage.families.find(f=>f.id===id)?.name||"尚未独立分类"}
@@ -79,6 +85,12 @@ function renderProducts(){
  $("product-add").addEventListener("click",()=>{if(compareIds.includes(p.id))compareIds=compareIds.filter(z=>z!==p.id);else if(compareIds.length<3)compareIds.push(p.id);else {drawer({title:"最多比较三个产品",body:"删除一项已选产品后再加入新产品。未核实的精确参数不会参与数值排名。"});return}renderProducts()});
  $("processor-topics").innerHTML=D.hardware.processorResearchTopics.map(t=>'<p class="small">'+esc(t.name)+' <span class="badge warn">芯片研究标签 / 无SKU规格</span></p>').join("");
  $("compare-products").textContent="对比已选 "+compareIds.length+" 项";
+
+ const spec=verifiedProduct(p.id);
+ $("verified-spec-detail").innerHTML=verifiedFactsMarkup(spec);
+ const btn=$("verified-source");
+ if(btn&&spec)btn.addEventListener("click",()=>drawer({title:spec.productName,category:"供应商规格 / 强制保持单位与范围",body:"下述数值仅对具体产品和标注配置有效，不代表模型推理性能，不能把可选配置相加。",items:[...spec.specs.map(x=>x.label+"："+formatScopedValue(x)+"（"+x.scope+"）"),...spec.limitations],urls:[spec.sourceUrl]}));
+
  const topology=lineage.topologyCase;
  const show=p.id===topology.productId;
  $("topology-evidence").hidden=!show;
@@ -87,7 +99,7 @@ function renderProducts(){
    $("topology-source").addEventListener("click",()=>drawer({title:topology.title,category:"产品级拓扑示例",body:topology.warning,items:topology.steps,urls:[topology.sourceUrl]}));
  }
 }
-$("compare-products").addEventListener("click",()=>{if(compareIds.length===0){drawer({title:"尚未选择产品",body:"先在产品详情中点击「加入对比」。产品对照不会生成未经来源证实的算力、带宽或功耗。"});return}const ps=compareIds.map(id=>D.hardware.products.find(p=>p.id===id)).filter(Boolean);const fields=[["产品名称",p=>p.name],["形态",p=>D.hardware.formVocab[p.form]],["芯片或处理器",p=>p.processor||"未核验"],["板载内存",p=>labelStatus(p.quantitative.deviceMemoryGB)],["内存带宽",p=>labelStatus(p.quantitative.memoryBandwidthGBs)],["功耗",p=>labelStatus(p.quantitative.powerW)],["模型兼容",p=>"待逐配置核验"]];$("compare-table").innerHTML='<table class="compare-table"><thead><tr><th>比较维度</th>'+ps.map(p=>'<th>'+esc(p.name)+'</th>').join("")+'</tr></thead><tbody>'+fields.map(([k,f])=>'<tr><th>'+esc(k)+'</th>'+ps.map(p=>'<td>'+esc(f(p))+'</td>').join("")+'</tr>').join("")+'</tbody></table>';$("comparison").hidden=false;$("comparison").scrollIntoView({behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"instant":"smooth",block:"nearest"})});
+$("compare-products").addEventListener("click",()=>{if(compareIds.length===0){drawer({title:"尚未选择产品",body:"先在产品详情中点击「加入对比」。产品对照不会生成未经来源证实的算力、带宽或功耗。"});return}const ps=compareIds.map(id=>D.hardware.products.find(p=>p.id===id)).filter(Boolean);const fields=[["产品名称",p=>p.name],["形态",p=>D.hardware.formVocab[p.form]],["已核实的产品级参数（不同范围不直接比较）",p=>verifiedProduct(p.id)?verifiedProduct(p.id).specs.slice(0,2).map(x=>x.label+": "+formatScopedValue(x)+"（"+x.scope+"）").join("；"):"无官方规格快照"],["芯片或处理器",p=>p.processor||"未核验"],["板载内存",p=>labelStatus(p.quantitative.deviceMemoryGB)],["内存带宽",p=>labelStatus(p.quantitative.memoryBandwidthGBs)],["功耗",p=>labelStatus(p.quantitative.powerW)],["模型兼容",p=>"待逐配置核验"]];$("compare-table").innerHTML='<table class="compare-table"><thead><tr><th>比较维度</th>'+ps.map(p=>'<th>'+esc(p.name)+'</th>').join("")+'</tr></thead><tbody>'+fields.map(([k,f])=>'<tr><th>'+esc(k)+'</th>'+ps.map(p=>'<td>'+esc(f(p))+'</td>').join("")+'</tr>').join("")+'</tbody></table>';$("comparison").hidden=false;$("comparison").scrollIntoView({behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"instant":"smooth",block:"nearest"})});
 $("clear-compare").addEventListener("click",()=>{compareIds=[];$("comparison").hidden=true;renderProducts()});
 const levels=[{id:"device",label:"① 产品层",title:"设备/加速卡/整机",desc:"Host CPU、NPU、系统内存与设备互联共同组成服务形态。这里不等同于某款单独芯片。"},
 {id:"npu",label:"② NPU 层",title:"NPU 计算和通信资源",desc:"芯片内含计算、存储/数据搬运等资源；单卡与多卡还受硬件拓扑和软件运行时限制。"},
