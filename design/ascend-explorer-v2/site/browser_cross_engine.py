@@ -58,6 +58,17 @@ def exercise(browser, html, width, screenshots, errors):
     page.locator("#path-vector").click()
     assert "Vector" in page.locator("#core-illustration").text_content()
     assert "第 1/5 步" in page.locator("#core-step-detail").inner_text()
+    # V2.4 external published measurements: separate total operator vs MTE2 evidence.
+    assert page.locator("#reported-evidence-grid .reported-row").count()==3
+    text=page.locator("#reported-evidence-grid").inner_text()
+    assert "12,045 μs" in text and "2,532 μs" in text
+    assert "2,452 μs" in text and "808 μs" in text and "591 μs" in text
+    assert "完整算子执行耗时" in text and "MTE2 搬运流水耗时" in text
+    assert "非本项目复测" in page.locator("#matmul-reported-evidence").inner_text()
+    page.locator("#reported-evidence-source").click()
+    assert page.locator("#drawer").is_visible()
+    assert "原始" in page.locator("#drawer").inner_text() or "MTE2" in page.locator("#drawer").inner_text()
+    page.keyboard.press("Escape")
     # V2.3 interactive GEMM: real arithmetic, ragged boundaries, idealized reads.
     assert page.locator("#tiling-summary .tile-stat").count()==6
     page.locator("#tiling-presets button",has_text="非整除").click()
