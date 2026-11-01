@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#071422"><meta name="description" content="昇腾大模型推理与算子优化：互动探索硬件形态、AI Core、CANN、Token 生命周期与算子机制。">
+<title>昇腾大模型推理与算子优化 · 交互技术全景</title>
+<style>/* APP_CSS_INJECT */</style></head>
+<body>
+<header class="topbar"><div class="container topbar-inner">
+ <a class="brand" href="#overview" aria-label="返回昇腾推理优化首页"><span class="brandmark">ASCEND</span><span>大模型推理与算子优化</span><span class="brand-caption">/ 技术全景</span></a>
+ <nav class="nav" id="nav" aria-label="全景导航">
+  <a href="#hardware">硬件产品</a><a href="#anatomy">芯片解剖</a><a href="#stack">软件栈</a><a href="#lifecycle">推理过程</a><a href="#factors">性能因素</a><a href="#operators">算子显微镜</a><a href="#optimization">加速路径</a><a href="#evidence">案例成果</a>
+ </nav>
+ <div class="top-actions"><span class="status-small">研究教学模式 · 非实测</span><button id="nav-toggle" class="menu-toggle" aria-expanded="false" aria-controls="nav">目录</button></div>
+</div></header>
+<main>
+<section class="hero container" id="overview" aria-labelledby="hero-title">
+ <div class="hero-grid">
+  <div>
+   <div class="eyebrow">Ascend / Architecture · Inference · Operators</div>
+   <h1 id="hero-title">从一张昇腾卡<br>深入到<em>每一个 Token</em></h1>
+   <p class="lead">不仅认识昇腾有哪些卡，更要理解：算力和存储怎样协作、一次请求如何变成 Token、延迟来自哪里、算子优化究竟改变了什么。</p>
+   <div class="hero-actions"><a class="btn primary" href="#hardware">探索硬件地图 <span aria-hidden="true">→</span></a><a class="btn ghost" href="#operators">进入算子显微镜</a></div>
+   <p class="hero-small">以官方架构资料和真实开源案例为依据。页面的动态图是教学示意；本项目尚无昇腾 NPU 实际性能数据。</p>
+   <div class="hero-stats"><div class="stat"><strong id="count-products">—</strong><span>官方来源产品条目</span></div><div class="divider"></div><div class="stat"><strong id="count-operators">—</strong><span>算子机制分镜</span></div><div class="divider"></div><div class="stat"><strong id="count-evidence">—</strong><span>已有研究图谱节点</span></div></div>
+  </div>
+  <div class="hero-diagram" aria-label="请求到昇腾 NPU 的教学路径示意">
+   <div class="diagram-caption"><span>01 / REQUEST EXECUTION CHAIN</span><span>点击查看环节</span></div>
+   <div class="line-pipeline" id="hero-chain"></div><div class="connector" aria-hidden="true"></div>
+   <div class="diagram-caption"><span>02 / AI CORE & SYSTEM RESOURCES</span><span>示意，不是物理布局</span></div>
+   <div class="resource-nodes"><span>Cube / MatMul</span><span>Vector / Norm</span><span>GM / Local</span><span>HCCL / Interconnect</span></div>
+   <p class="caption">点击处理阶段可打开证据说明。数据路径连接的不是某个型号芯片的实际布局。</p>
+  </div>
+ </div>
+ <div class="banner" role="note"><b>事实边界：</b>“官方有此产品/能力”不等于“选定模型与版本兼容”，更不等于“当前设备命中算子并获得性能收益”。未采集的型号参数明确显示未核验。</div>
+</section>
+
+<section class="section" id="hardware" aria-labelledby="hardware-title"><div class="container">
+ <div class="section-header"><div><div class="section-index">01 / HARDWARE ATLAS</div><h2 id="hardware-title">昇腾到底有哪些卡与产品形态？</h2><p class="section-intro">分清“处理器、加速卡、服务器、超节点”四个层级。型号名称、芯片代际和整机部署不是一个维度。</p></div><button class="btn ghost" data-drawer-key="product" type="button">怎么看参数来源？</button></div>
+ <div class="surface">
+  <div class="tabs" id="product-tabs" aria-label="按产品形态筛选"></div><div class="breadcrumb" id="product-crumb"></div>
+  <div class="two-thirds"><div><div class="product-grid" id="product-grid"></div><div class="linkline"><span class="badge neutral">可对比最多 3 个产品</span><button id="compare-products" class="btn ghost" type="button">比较所选产品</button></div></div>
+  <aside class="surface hardware-detail" id="product-detail" aria-live="polite"><h3>选择产品查看详情</h3></aside></div>
+ </div>
+ <div class="grid-3" style="margin-top:13px"><div class="topic-card"><b>处理器研究专题</b><div id="processor-topics"></div></div><div class="topic-card"><b>产品形态不等于芯片</b><p>同一处理器族可能对应多种整机产品，不能从一篇案例推断所有设备参数。</p></div><div class="topic-card"><b>缺乏官方规格时</b><p>TOPS、内存、带宽和功耗显示「未核验」，不以空白或 0 冒充真实参数。</p></div></div>
+ <div class="surface" id="comparison" hidden style="margin-top:14px"><div class="section-header"><h3>已选产品对照</h3><button class="btn ghost" id="clear-compare" type="button">清除对照</button></div><div class="overflow-x" id="compare-table"></div></div>
+</div></section>
+
+<section class="section" id="anatomy" aria-labelledby="anatomy-title"><div class="container">
+ <div class="section-header"><div><div class="section-index">02 / INSIDE THE NPU</div><h2 id="anatomy-title">拆开 AI Core，追踪数据流</h2><p class="section-intro">从产品到 NPU、再到 AI Core 的计算/存储/搬运机制。不同架构实现可能不同，图中显示典型抽象而非任何具体型号的物理设计图。</p></div><span class="badge warn">架构抽象 · 非实测</span></div>
+ <div class="layer-strip" id="anatomy-levels"></div>
+ <div class="anatomy-view">
+  <div class="surface" id="anatomy-diagram">
+   <div class="chip-shell" id="chip-shell"><div class="chip-title">AI CORE / CONCEPTUAL BLOCKS</div>
+    <div class="memorybar">GLOBAL MEMORY · 片外全局内存抽象</div>
+    <div class="chip-cores" id="chip-units"></div><div class="memorybar">LOCAL MEMORY · UB / L1 / L0 （依具体架构）</div>
+   </div>
+   <div class="layer-display" id="anatomy-layer-display" hidden></div>
+   <div class="linkline"><button id="path-gemm" class="btn" type="button">矩阵数据路径</button><button id="path-vector" class="btn ghost" type="button">向量数据路径</button><button id="path-next" class="btn ghost" type="button">下一步 →</button></div>
+   <div class="pathline" id="memory-path" aria-live="polite"></div>
+  </div>
+  <aside class="surface tinted"><span class="data-label">ACTIVE COMPONENT</span><h3 id="chip-detail-title" class="panel-title" style="font-size:22px;margin-top:12px">选择芯片单元</h3><p id="chip-detail-text" class="muted"></p><div class="tutorial-box" id="chip-detail-measure"></div><div class="linkline"><button class="btn ghost" data-drawer-key="architecture" type="button">查看官方架构说明</button></div><p class="tiny">本解剖图是逻辑资源关系，不能用于推断具体芯片的面积、数量或实际通路。</p></aside>
+ </div>
+</div></section>
+
+<section class="section" id="stack" aria-labelledby="stack-title"><div class="container">
+ <div class="section-header"><div><div class="section-index">03 / SOFTWARE STACK</div><h2 id="stack-title">软件栈从模型到 NPU 如何贯通</h2><p class="section-intro">下面是逻辑调用层次。框架实际执行路径、算子支持、CANN 和驱动版本必须依据对应软件版本单独核对。</p></div></div>
+ <div class="two-thirds"><div class="surface"><div class="stack" id="stack-layers"></div></div><div class="surface tinted"><div class="data-label">SELECTED LAYER</div><h3 id="stack-detail-title" class="panel-title" style="margin-top:13px">点选层级查看工作机制</h3><p id="stack-detail-text" class="muted"></p><div class="tutorial-box" id="stack-detail-gate"></div><div class="linkline"><button class="btn ghost" data-drawer-key="framework" type="button">查看版本及官方说明</button></div></div></div>
+</div></section>
+
+<section class="section" id="lifecycle" aria-labelledby="life-title"><div class="container">
+ <div class="section-header"><div><div class="section-index">04 / ONE REQUEST, MANY STAGES</div><h2 id="life-title">一次请求，怎样产生一串 Token</h2><p class="section-intro">拖动输入、输出长度和并发，观察需要关注的阶段及资源如何变化。轨道宽度是概念性比例示意，不是延迟预测。</p></div><span class="badge warn">模拟教学 · 不显示虚假毫秒</span></div>
+ <div class="surface">
+  <div class="controls">
+   <div class="control"><label for="isl">输入长度 ISL <strong id="isl-value"></strong></label><input type="range" id="isl" min="0" max="3" step="1" value="1" aria-label="输入 Token 长度"></div>
+   <div class="control"><label for="osl">输出长度 OSL <strong id="osl-value"></strong></label><input type="range" id="osl" min="0" max="3" step="1" value="2" aria-label="输出 Token 长度"></div>
+   <div class="control"><label for="cc">并发 C <strong id="cc-value"></strong></label><input type="range" id="cc" min="0" max="3" step="1" value="1" aria-label="并发请求数量"></div>
+  </div>
+  <div class="timeline" id="timeline-stages"></div><div class="host-tracks" id="lifecycle-tracks"></div>
+  <div class="tutorial-box" id="lifecycle-detail" style="margin-top:15px">选择某个阶段，查看它与 TTFT、TPOT、Cache、并发之间的关系。</div>
+ </div>
+ <div class="metric-grid" id="metric-definitions" style="margin-top:14px"></div>
+</div></section>
+
+<section class="section" id="factors" aria-labelledby="factor-title"><div class="container">
+ <div class="section-header"><div><div class="section-index">05 / CAUSALITY MAP</div><h2 id="factor-title">哪些因素真正影响推理？</h2><p class="section-intro">八条典型影响路径。点选后只突出一条因果关系，同时展示可能的反例、应该测量的指标，而非简单声称“开某项一定变快”。</p></div></div>
+ <div class="surface"><div class="chips" id="factor-tabs"></div><div class="causality" id="factor-chain" style="margin-top:20px"></div>
+  <div class="grid-2" style="margin-top:15px"><div class="tutorial-box"><b>条件性解释</b><p id="factor-description"></p></div><div class="tutorial-box"><b>反例与测量证据</b><p id="factor-validate"></p></div></div>
+ </div>
+</div></section>
+
+<section class="section" id="operators" aria-labelledby="op-title"><div class="container">
+ <div class="section-header"><div><div class="section-index">06 / OPERATOR MICROSCOPE</div><h2 id="op-title">把每个算子放进显微镜</h2><p class="section-intro">七个专题，每个六帧：输入张量 → 执行 → 搬运 → 热点条件 → 优化对比 → 验证回退。来源直接继承研究资料库。</p></div><span class="badge neutral">7 专题 × 6 帧 / 教学示意</span></div>
+ <div class="surface"><div class="tabs" id="operator-tabs"></div><div class="story-grid" style="margin-top:17px">
+  <div><div class="story-steps" id="operator-steps"></div><div class="linkline"><button id="op-prev" class="btn ghost" type="button">← 上一帧</button><button id="op-next" class="btn ghost" type="button">下一帧 →</button></div></div>
+  <div class="visualizer" aria-live="polite"><div><div class="large-step" id="op-number">01 / 06</div><span class="data-label" id="op-stage"></span><h3 id="op-frame-title"></h3><p id="op-frame-description"></p><div class="pathline" id="op-visual-flow"></div></div><div><p class="tiny" id="op-limitation"></p><button class="btn ghost" id="op-sources" type="button">查看案例来源与适用边界</button></div></div>
+ </div></div>
+</div></section>
+
+<section class="section" id="optimization" aria-labelledby="opt-title"><div class="container">
+ <div class="section-header"><div><div class="section-index">07 / DIAGNOSE BEFORE OPTIMIZING</div><h2 id="opt-title">出现性能问题，先定位再加速</h2><p class="section-intro">按症状探索需要排查的不同根因，以及 Profile、A/B、数值正确性和回退条件。这不是没有环境的“自动最优推荐”。</p></div></div>
+ <div class="surface"><div class="diagnosis"><div class="symptoms" id="symptoms"></div><div><div class="decision-steps" id="diagnosis-path"></div><div class="tutorial-box" id="diagnosis-warning" style="margin-top:12px"></div></div></div></div>
+</div></section>
+
+<section class="section" id="evidence" aria-labelledby="evidence-title"><div class="container">
+ <div class="section-header"><div><div class="section-index">08 / CASES · GRAPH · ACHIEVEMENTS</div><h2 id="evidence-title">案例、源码与我们的真正成果</h2><p class="section-intro">研究资产来自已有 GitHub 数据，不将 CUDA/TPU 的作者微基准当作昇腾实测。新模型后续扩展，不会伪装成已经验证的型号兼容性。</p></div></div>
+ <div class="grid-4" id="research-stats"></div>
+ <div class="surface" style="margin-top:15px"><div class="section-header"><div><h3 class="panel-title">证据案例浏览</h3><p class="small muted">可按模型、平台、优化机制搜索，打开卡片读取作者报告与源码来源。</p></div><div class="tabs" id="evidence-tabs"></div></div>
+  <label class="sr-only" for="case-query">筛选案例</label><input id="case-query" type="search" placeholder="搜索 Qwen、Ascend、GDN、MoE 或 PR" style="width:100%;padding:13px;border:1px solid #41637b;border-radius:10px;background:#0a2136;color:white;margin:3px 0 15px">
+  <div class="case-grid" id="case-grid"></div>
+ </div>
+ <div class="grid-2" style="margin-top:15px"><div class="surface"><h3 class="panel-title">项目已交付（软件研究阶段）</h3><ul class="list-clean"><li>有来源约束的证据关系图谱</li><li>源码与失败经验追踪</li><li>模型结构/场景的静态规则分析</li><li>离线软件原型、自动化测试与可视化</li></ul><div class="linkline"><a class="btn ghost" href="https://github.com/cao772/ascend-llm-inference-optimization/pull/4" rel="noopener" target="_blank">GitHub 研发记录</a><a class="btn ghost" href="https://app.notion.com/p/40b7bbed135281dabe95c10c5206be42" rel="noopener" target="_blank">Notion 成果档案</a></div></div>
+  <div class="surface"><h3 class="panel-title">尚未实机验证</h3><div class="banner">没有连接昇腾 NPU、没有真实 Profiler、没有本项目的 TTFT/TPOT/TPS 改善测量。不同型号规格和模型兼容性仍需依据对应官方资料单独核验。</div><ul class="list-clean"><li>环境/驱动/CANN 与模型的兼容性基线</li><li>Prefill 与 Decode 分阶段 Profile</li><li>逐变量性能 A/B + 正确性/稳定性验证</li><li>将实测、负收益和回退回写知识图谱</li></ul></div>
+ </div>
+</div></section>
+</main>
+<footer class="footer"><div class="container"><b>ASCEND · INFERENCE & OPERATOR EXPLORER</b><p>教育型交互技术展馆 · 内容引用官方文档与已整理的公开优化案例 · 非线上性能监控 / 非设备规格排行</p><div class="footer-links"><a href="#overview">返回首页</a><a href="https://github.com/cao772/ascend-llm-inference-optimization/issues/7" target="_blank" rel="noopener">开发跟踪 Issue #7</a><a href="https://app.notion.com/p/40b7bbed135281d78e69ca7cd395b56e" target="_blank" rel="noopener">Notion 设计记录</a></div></div></footer>
+<div class="drawer-backdrop" id="drawer-backdrop" hidden></div><aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="drawer-title" hidden><button class="close" id="drawer-close" type="button">关闭 ✕</button><div class="data-label" id="drawer-category">EVIDENCE</div><h2 id="drawer-title"></h2><div id="drawer-content"></div></aside>
+<script id="app-data" type="application/json">/* DATA_JSON_INJECT */</script><script>/* APP_JS_INJECT */</script>
+</body></html>
