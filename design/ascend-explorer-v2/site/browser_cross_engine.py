@@ -78,7 +78,10 @@ def exercise(browser, html, width, screenshots, errors):
     assert "GLM" in page.locator("#compat-models").inner_text()
 
     assert page.locator("#memory-path span").count()==5
+    page.locator("#operator-tabs button",has_text="MatMul").click()
+    assert page.locator("#gemm-lab-link").is_visible()
     page.locator("#operator-tabs button",has_text="MoE").click()
+    assert page.locator("#gemm-lab-link").is_hidden()
     assert page.locator("#operator-steps button").count()==6
     page.locator("#operator-steps button").nth(5).click()
     assert "06 / 06" in page.locator("#op-number").inner_text()
