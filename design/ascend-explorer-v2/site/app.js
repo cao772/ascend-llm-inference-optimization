@@ -37,22 +37,55 @@ function initGenericEvidence(){document.querySelectorAll("[data-drawer-key]").fo
  else if(key==="architecture")drawer({title:"Ascend C 架构抽象与代际差异",body:"此处使用 Cube/Vector/Scalar/GM/UB/L1/L0/MTE 教学抽象，不指认任何一款芯片的物理单元数量、实际 Cache 大小或内部连线布局。",items:["Cube、Vector、Scalar 执行不同计算与控制任务","GM 与 Local Memory 关系要看具体架构","AIC/AIV 分离仅对应部分官方架构"],urls:[officialArch]});
  else drawer({title:"软件版本与功能兼容性",body:"vLLM-Ascend 在不同时期有不同版本的 Graph、Static/Super Kernel、Sequence Parallel 等能力。必须区分功能文档、设备支持、运行时命中与实际收益。",items:["确认目标芯片/版本/模型/精度/拓扑兼容","通过日志、Profiler 证明目标 Kernel 真实命中","单变量 A/B 并验收数值正确性"],urls:[frameworkDocs,kernelDocs,sequences]});
 }))}
-let form="all",productId=null,compareIds=[];
+let form="all",familyId="all",productId=null,compareIds=[];
+const lineage=D.productLineage;
 const forms=[{id:"all",label:"全部产品"},{id:"module",label:"模块"},{id:"accelerator_card",label:"推理卡"},{id:"edge_system",label:"边缘整机"},{id:"inference_server",label:"推理服务器"},{id:"training_server",label:"训练服务器"},{id:"compute_pod",label:"超节点"}];
-function productSelection(){const items=D.hardware.products;const p=items.find(p=>p.id===productId)||items.find(p=>form==="all"||p.form===form)||items[0];productId=p?.id||null;return p}
+function familyFor(p){return lineage.productFamilyOverrides[p.id]||lineage.families.find(f=>f.name===p.family)?.id||"unclassified"}
+function familyName(id){return lineage.families.find(f=>f.id===id)?.name||"尚未独立分类"}
+function processorProof(p){return lineage.productProcessorMappings.find(m=>m.productId===p.id)}
+function visibleProducts(){return D.hardware.products.filter(p=>(form==="all"||p.form===form)&&(familyId==="all"||familyFor(p)===familyId))}
+function productSelection(){const items=visibleProducts();const p=items.find(p=>p.id===productId)||items[0]||null;productId=p?.id||null;return p}
+function displayBreadcrumb(p){
+ const items=[{title:"形态："+(form==="all"?"全部":D.hardware.formVocab[form]),level:"form"},{title:"产品族："+(familyId==="all"?"全部":familyName(familyId)),level:"family"},{title:"产品："+p.name,level:"product"},{title:"处理器："+(processorProof(p)?.processorFamily||"待核验"),level:"processor"}];
+ $("product-crumb").innerHTML=items.map((i,n)=>(n?'<span class="crumb-arrow" aria-hidden="true">›</span>':"")+'<button class="crumb-btn" type="button" data-level="'+i.level+'" aria-current="'+(n===3?"step":"false")+'">'+esc(i.title)+'</button>').join("");
+ $("product-crumb").querySelectorAll("button").forEach(btn=>btn.addEventListener("click",()=>{
+   const lv=btn.dataset.level;
+   if(lv==="form"){form="all";familyId="all";productId=null;renderProducts()}
+   else if(lv==="family"){form="all";familyId=familyFor(p);productId=null;renderProducts()}
+   else if(lv==="product"){productId=p.id;renderProducts()}
+   else{
+     const m=processorProof(p);
+     drawer({title:p.name+" · 处理器证据",category:"产品→处理器→版本",body:m?m.processorFamily+"：官方产品形态文档将该产品列在配置此处理器的产品族中。":"此产品当前没有固定到处理器型号的充分官方证据，不能用产品族名称臆测芯片。",items:m?[m.scope,"不是精确芯片规格或型号兼容结论"]:["请查具体 SKU 数据手册或服务/设备清单"],urls:m?[m.sourceUrl,p.sourceUrl]:[p.sourceUrl]});
+   }
+ }));
+}
 function renderProducts(){
- tabs($("product-tabs"),forms,form,x=>{form=x;productId=null;renderProducts()});
- const subset=D.hardware.products.filter(p=>form==="all"||p.form===form);if(!subset.some(x=>x.id===productId))productId=subset[0]?.id||null;
- $("product-grid").innerHTML=subset.map(p=>'<button class="product-card" type="button" data-id="'+esc(p.id)+'" aria-pressed="'+(p.id===productId)+'"><span class="data-label">'+esc(D.hardware.formVocab[p.form])+'</span><h3>'+esc(p.name)+'</h3><p>'+esc(p.family)+'</p><span class="badge warn" style="margin-top:10px">详细规格待核验</span></button>').join("");
- $("product-grid").querySelectorAll("button").forEach(b=>b.addEventListener("click",()=>{productId=b.dataset.id;renderProducts()}));
- let p=productSelection();if(!p){$("product-detail").innerHTML='<p class="muted">该分类暂未收录产品。</p>';return}
- $("product-crumb").textContent="产品地图 / "+D.hardware.formVocab[p.form]+" / "+p.family+" / "+p.name;
- const fields=[["所属产品族",p.family],["产品形态",D.hardware.formVocab[p.form]],["处理器",p.processor||"型号未独立核验"],["板载内存",p.quantitative.deviceMemoryGB],["内存带宽",p.quantitative.memoryBandwidthGBs],["峰值算力",p.quantitative.computeTOPS],["功耗",p.quantitative.powerW],["目标模型兼容",p.compatibilityStatus==="not_assessed"?"尚未评估":"需版本证据"]];
- $("product-detail").innerHTML='<div class="data-label">PRODUCT DETAIL / OFFICIAL FAMILY</div><h3>'+esc(p.name)+'</h3><p class="small muted">'+esc(p.remark)+'</p>'+fields.map(([k,v])=>'<div class="fact"><span>'+esc(k)+'</span><b class="'+(v==null?"no-data":"")+'">'+esc(labelStatus(v))+'</b></div>').join("")+'<div class="linkline"><button id="product-source" class="btn ghost" type="button">查看官方来源</button><button id="product-add" class="btn ghost" type="button">'+(compareIds.includes(p.id)?"从对比移除":"加入对比")+'</button></div>';
- $("product-source").addEventListener("click",()=>drawer({title:p.name,category:"OFFICIAL PRODUCT RECORD",body:p.remark,items:p.limitations,urls:[p.sourceUrl]}));
+ tabs($("product-tabs"),forms,form,x=>{form=x;familyId="all";productId=null;renderProducts()});
+ const familyMatches=lineage.families.filter(f=>D.hardware.products.some(p=>(form==="all"||p.form===form)&&familyFor(p)===f.id));
+ const familyOptions=[{id:"all",label:"全部产品族"},...familyMatches.map(x=>({id:x.id,label:x.name}))];
+ if(familyId!=="all"&&!familyMatches.some(f=>f.id===familyId))familyId="all";
+ $("family-rail").innerHTML=familyOptions.map(x=>'<button type="button" class="family-btn" aria-pressed="'+String(x.id===familyId)+'" data-id="'+esc(x.id)+'">'+esc(x.label)+'<small>'+(x.id==="all"?D.hardware.products.filter(p=>form==="all"||p.form===form).length:D.hardware.products.filter(p=>(form==="all"||p.form===form)&&familyFor(p)===x.id).length)+'</small></button>').join("");
+ $("family-rail").querySelectorAll("button").forEach(btn=>btn.addEventListener("click",()=>{familyId=btn.dataset.id;productId=null;renderProducts()}));
+ const subset=visibleProducts();if(!subset.some(p=>p.id===productId))productId=subset[0]?.id||null;
+ $("product-grid").innerHTML=subset.map(p=>'<button class="product-card" type="button" data-id="'+esc(p.id)+'" aria-pressed="'+String(p.id===productId)+'"><span class="data-label">'+esc(D.hardware.formVocab[p.form])+'</span><h3>'+esc(p.name)+'</h3><p>'+esc(familyName(familyFor(p)))+'</p><span class="badge warn" style="margin-top:10px">精确规格待核验</span></button>').join("");
+ $("product-grid").querySelectorAll("button").forEach(btn=>btn.addEventListener("click",()=>{productId=btn.dataset.id;renderProducts()}));
+ let p=productSelection();
+ if(!p){$("product-detail").innerHTML='<p class="muted">该筛选组合暂未收录产品。</p>';$("topology-evidence").hidden=true;return}
+ displayBreadcrumb(p);
+ const map=processorProof(p);
+ const fields=[["所属产品族",familyName(familyFor(p))],["产品形态",D.hardware.formVocab[p.form]],["板载内存",p.quantitative.deviceMemoryGB],["内存带宽",p.quantitative.memoryBandwidthGBs],["峰值算力",p.quantitative.computeTOPS],["功耗",p.quantitative.powerW],["目标模型兼容",p.compatibilityStatus==="not_assessed"?"尚未评估":"需版本证据"]];
+ $("product-detail").innerHTML='<div class="data-label">3 / PRODUCT SKU · 官方产品目录</div><h3>'+esc(p.name)+'</h3><p class="small muted">'+esc(p.remark)+'</p><div class="processor-proof"><span class="data-label">4 / PROCESSOR EVIDENCE</span><strong>'+esc(map?map.processorFamily:"处理器型号未核验")+'</strong><p>'+esc(map?map.scope:"当前官方产品形态记录不足以确定该整机或模块使用的具体处理器。")+'</p><span class="proof-note">'+esc(map?"来源：官方产品形态分组；非 SKU 精确规格":"等待具体 SKU / 主板或处理器官方规格表")+'</span></div>'+fields.map(([k,v])=>'<div class="fact"><span>'+esc(k)+'</span><b class="'+(v==null?"no-data":"")+'">'+esc(labelStatus(v))+'</b></div>').join("")+'<div class="linkline"><button id="product-source" class="btn ghost" type="button">官方来源</button><button id="product-add" class="btn ghost" type="button">'+(compareIds.includes(p.id)?"从对比移除":"加入对比")+'</button></div>';
+ $("product-source").addEventListener("click",()=>drawer({title:p.name,category:"产品形态、族谱与处理器来源",body:p.remark,items:[...p.limitations,...(map?[map.scope]:[])],urls:[p.sourceUrl,...(map?[map.sourceUrl]:[])]}));
  $("product-add").addEventListener("click",()=>{if(compareIds.includes(p.id))compareIds=compareIds.filter(z=>z!==p.id);else if(compareIds.length<3)compareIds.push(p.id);else {drawer({title:"最多比较三个产品",body:"删除一项已选产品后再加入新产品。未核实的精确参数不会参与数值排名。"});return}renderProducts()});
  $("processor-topics").innerHTML=D.hardware.processorResearchTopics.map(t=>'<p class="small">'+esc(t.name)+' <span class="badge warn">芯片研究标签 / 无SKU规格</span></p>').join("");
  $("compare-products").textContent="对比已选 "+compareIds.length+" 项";
+ const topology=lineage.topologyCase;
+ const show=p.id===topology.productId;
+ $("topology-evidence").hidden=!show;
+ if(show){
+   $("topology-evidence").innerHTML='<div class="data-label">PRODUCT-SCOPED TOPOLOGY / OFFICIAL</div><h3>'+esc(topology.title)+'</h3><p>此处展示特定产品官方调度/拓扑说明中的层次，不作为所有昇腾芯片的统一架构图。</p><div class="topology-steps">'+topology.steps.map((t,i)=>'<div class="topology-step"><b>0'+(i+1)+'</b>'+esc(t)+'</div>').join("")+'</div><p class="no-data">'+esc(topology.warning)+'</p><button type="button" class="btn ghost" id="topology-source">查看对应官方拓扑文档</button>';
+   $("topology-source").addEventListener("click",()=>drawer({title:topology.title,category:"产品级拓扑示例",body:topology.warning,items:topology.steps,urls:[topology.sourceUrl]}));
+ }
 }
 $("compare-products").addEventListener("click",()=>{if(compareIds.length===0){drawer({title:"尚未选择产品",body:"先在产品详情中点击「加入对比」。产品对照不会生成未经来源证实的算力、带宽或功耗。"});return}const ps=compareIds.map(id=>D.hardware.products.find(p=>p.id===id)).filter(Boolean);const fields=[["产品名称",p=>p.name],["形态",p=>D.hardware.formVocab[p.form]],["芯片或处理器",p=>p.processor||"未核验"],["板载内存",p=>labelStatus(p.quantitative.deviceMemoryGB)],["内存带宽",p=>labelStatus(p.quantitative.memoryBandwidthGBs)],["功耗",p=>labelStatus(p.quantitative.powerW)],["模型兼容",p=>"待逐配置核验"]];$("compare-table").innerHTML='<table class="compare-table"><thead><tr><th>比较维度</th>'+ps.map(p=>'<th>'+esc(p.name)+'</th>').join("")+'</tr></thead><tbody>'+fields.map(([k,f])=>'<tr><th>'+esc(k)+'</th>'+ps.map(p=>'<td>'+esc(f(p))+'</td>').join("")+'</tr>').join("")+'</tbody></table>';$("comparison").hidden=false;$("comparison").scrollIntoView({behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"instant":"smooth",block:"nearest"})});
 $("clear-compare").addEventListener("click",()=>{compareIds=[];$("comparison").hidden=true;renderProducts()});
