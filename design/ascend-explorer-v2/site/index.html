@@ -107,6 +107,12 @@
   <label class="sr-only" for="case-query">筛选案例</label><input id="case-query" type="search" placeholder="搜索 Qwen、Ascend、GDN、MoE 或 PR" style="width:100%;padding:13px;border:1px solid #41637b;border-radius:10px;background:#0a2136;color:white;margin:3px 0 15px">
   <div class="case-grid" id="case-grid"></div>
  </div>
+ <div class="surface" style="margin-top:15px">
+  <div class="section-header"><div><h3 class="panel-title">知识图谱 · 证据邻域浏览</h3><p class="small muted">选择一个模型、算子、PR、案例或风险，查看与它直接有关的来源关系。显示的是原始图谱子图，不是自动推断的真实性能收益。</p></div><span class="badge neutral" id="graph-counts">读取图谱中…</span></div>
+  <label class="sr-only" for="graph-search">筛选图谱节点</label><input type="search" id="graph-search" placeholder="搜索案例 / MoE / GDN / kernel / PR" style="width:100%;padding:12px;border:1px solid #41637b;border-radius:10px;background:#0a2136;color:#eaf2ff;margin-bottom:14px">
+  <div class="two-thirds"><div class="graph-stage" id="graph-stage" aria-label="中心节点与直接相邻的证据关系图"></div><aside class="surface graph-detail" id="graph-detail" aria-live="polite"></aside></div>
+  <div class="chips" id="graph-matches" style="margin-top:13px" aria-label="可选图谱节点"></div>
+ </div>
  <div class="grid-2" style="margin-top:15px"><div class="surface"><h3 class="panel-title">项目已交付（软件研究阶段）</h3><ul class="list-clean"><li>有来源约束的证据关系图谱</li><li>源码与失败经验追踪</li><li>模型结构/场景的静态规则分析</li><li>离线软件原型、自动化测试与可视化</li></ul><div class="linkline"><a class="btn ghost" href="https://github.com/cao772/ascend-llm-inference-optimization/pull/4" rel="noopener" target="_blank">GitHub 研发记录</a><a class="btn ghost" href="https://app.notion.com/p/40b7bbed135281dabe95c10c5206be42" rel="noopener" target="_blank">Notion 成果档案</a></div></div>
   <div class="surface"><h3 class="panel-title">尚未实机验证</h3><div class="banner">没有连接昇腾 NPU、没有真实 Profiler、没有本项目的 TTFT/TPOT/TPS 改善测量。不同型号规格和模型兼容性仍需依据对应官方资料单独核验。</div><ul class="list-clean"><li>环境/驱动/CANN 与模型的兼容性基线</li><li>Prefill 与 Decode 分阶段 Profile</li><li>逐变量性能 A/B + 正确性/稳定性验证</li><li>将实测、负收益和回退回写知识图谱</li></ul></div>
  </div>
