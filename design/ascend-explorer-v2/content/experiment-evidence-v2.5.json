@@ -1,0 +1,548 @@
+{
+  "schema_version": "2.5.0",
+  "as_of": "2026-11-01",
+  "title": "昇腾推理与算子真实证据档案",
+  "project_own_hardware_measurements": 0,
+  "measurement_policy": "Sources report observations; no raw hardware run by this project. Developer preview and GitHub issue measurements have different evidential standing. Never compare different metric scopes or treat observational rounds as isolated A/B.",
+  "sources": {
+    "tiling": "https://asc.gitcode.com/guide/operator_practice/best_practices/matmul_tuning_cases/matmul_tiling_strategy.html",
+    "mdl": "https://asc.gitcode.com/guide/operator_practice/best_practices/matmul_tuning_cases/matmul_mdl_template.html",
+    "constant": "https://asc.gitcode.com/guide/operator_practice/best_practices/matmul_tuning_cases/matmul_tiling_constant.html",
+    "l2": "https://asc.gitcode.com/guide/operator_practice/best_practices/matmul_tuning_cases/matmul_l2_cache_split.html",
+    "stagger": "https://asc.gitcode.com/guide/operator_practice/best_practices/matmul_tuning_cases/matmul_multi_core_k_stagger.html",
+    "nd2nz": "https://asc.gitcode.com/guide/operator_practice/best_practices/matmul_tuning_cases/aiv_nd2nz_conversion.html",
+    "cache": "https://github.com/vllm-project/vllm-ascend/issues/20354",
+    "bench": "https://docs.vllm.ai/projects/ascend/en/v0.30.0/developer_guide/performance_and_debug/performance_benchmark.html"
+  },
+  "case_records": [
+    {
+      "id": "ASC-OP-001",
+      "title": "分核、基础块与大包搬运",
+      "family": "Matmul",
+      "source_kind": "vendor_developer_preview",
+      "source_url": "https://asc.gitcode.com/guide/operator_practice/best_practices/matmul_tuning_cases/matmul_tiling_strategy.html",
+      "hardware": "Atlas A2 系列（未披露精确 SKU）",
+      "model": null,
+      "workload": {
+        "M": 4096,
+        "N": 5120,
+        "K": 4096,
+        "dtype": "FP16 输入 / FP32 输出",
+        "format": "ND"
+      },
+      "change": "先扩展 Cube 分核数 4→20，再调整 baseM/N/K [64,64,256]→[128,256,64]，最后 CFG_MDL 大包搬运",
+      "constraints": [
+        "三项为不同实验阶段，不能跨指标连乘",
+        "分核数与 Vector 侧 Tiling 设置受具体架构影响"
+      ],
+      "metrics": [
+        {
+          "id": "op-time",
+          "label": "完整算子时间",
+          "before": 12045,
+          "after": 2532,
+          "unit": "μs",
+          "scope": "single_operator",
+          "direction": "lower",
+          "comparable": true
+        },
+        {
+          "id": "mte2-tile",
+          "label": "MTE2 流水（Tile 实验）",
+          "before": 2452,
+          "after": 808,
+          "unit": "μs",
+          "scope": "pipeline_mte2",
+          "direction": "lower",
+          "comparable": true
+        },
+        {
+          "id": "mte2-mdl",
+          "label": "MTE2 流水（大包搬运）",
+          "before": 808,
+          "after": 591,
+          "unit": "μs",
+          "scope": "pipeline_mte2",
+          "direction": "lower",
+          "comparable": true
+        }
+      ],
+      "interpretation": "确认单算子在该作者环境中有改善；不能推出模型 TTFT/TPOT/TPS。"
+    },
+    {
+      "id": "ASC-OP-002",
+      "title": "MDL 模板减少搬运次数",
+      "family": "Matmul / MTE2",
+      "source_kind": "vendor_developer_preview",
+      "source_url": "https://asc.gitcode.com/guide/operator_practice/best_practices/matmul_tuning_cases/matmul_mdl_template.html",
+      "hardware": "案例所用 24 AIC / 48 AIV 架构（未给精确 SKU）",
+      "model": null,
+      "workload": {
+        "M": 128,
+        "N": 30720,
+        "K": 1024,
+        "dtype": "FP16",
+        "format": "ND"
+      },
+      "change": "CFG_NORM → CFG_MDL；base [128,256,64]，stepKa/Kb=4，depthA1/B1=8",
+      "constraints": [
+        "L1 复用换取 MTE2 大包；小 shape 会增加指令头开销",
+        "指标 op_max 与 MTE2_mean 不可混为同一耗时"
+      ],
+      "metrics": [
+        {
+          "id": "aic-max",
+          "label": "最大 AIC 算子耗时",
+          "before": 83.68,
+          "after": 53.4,
+          "unit": "μs",
+          "scope": "max_aic_operator",
+          "direction": "lower",
+          "comparable": true
+        },
+        {
+          "id": "mte2-mean",
+          "label": "平均 MTE2 流水耗时",
+          "before": 75.64,
+          "after": 46.24,
+          "unit": "μs",
+          "scope": "mean_mte2",
+          "direction": "lower",
+          "comparable": true
+        },
+        {
+          "id": "segment",
+          "label": "首计算块 16 次 MMAD 跨度",
+          "before": 10.899,
+          "after": 5.198,
+          "unit": "μs",
+          "scope": "segment_mmad_span",
+          "direction": "lower",
+          "comparable": true
+        }
+      ],
+      "interpretation": "大尺寸的 MTE2 Bound 案例，Norm 与 MDL 的阶段开销权衡。"
+    },
+    {
+      "id": "ASC-OP-003",
+      "title": "Tiling 常量化减少 Scalar 开销",
+      "family": "Matmul / Scalar",
+      "source_kind": "vendor_developer_preview",
+      "source_url": "https://asc.gitcode.com/guide/operator_practice/best_practices/matmul_tuning_cases/matmul_tiling_constant.html",
+      "hardware": "案例所用 24 AIC / 48 AIV 架构（未给精确 SKU）",
+      "model": null,
+      "workload": {
+        "M": 128,
+        "N": 30720,
+        "K": 64,
+        "dtype": "FP16",
+        "format": "ND"
+      },
+      "change": "运行时 Tiling → MatmulApiStaticTiling 全量常量化；base [128,256,64]",
+      "constraints": [
+        "只有已知 singleCore 和 base 形状的配置可全量常量化",
+        "不同指标不得直接累乘"
+      ],
+      "metrics": [
+        {
+          "id": "aic-max",
+          "label": "最大 AIC 耗时",
+          "before": 10.62,
+          "after": 7.87,
+          "unit": "μs",
+          "scope": "max_aic_operator",
+          "direction": "lower",
+          "comparable": true
+        },
+        {
+          "id": "scalar-mean",
+          "label": "平均 Scalar 耗时",
+          "before": 6.32,
+          "after": 3.38,
+          "unit": "μs",
+          "scope": "mean_scalar",
+          "direction": "lower",
+          "comparable": true
+        },
+        {
+          "id": "startup",
+          "label": "首 MTE2 前启动开销",
+          "before": 3.536,
+          "after": 2.185,
+          "unit": "μs",
+          "scope": "startup_interval",
+          "direction": "lower",
+          "comparable": true
+        }
+      ],
+      "interpretation": "小 K Matmul 初始化/调度指令开销可能主导。"
+    },
+    {
+      "id": "ASC-OP-004",
+      "title": "L2 Cache 分块与错位调度",
+      "family": "Matmul / L2",
+      "source_kind": "vendor_developer_preview",
+      "source_url": "https://asc.gitcode.com/guide/operator_practice/best_practices/matmul_tuning_cases/matmul_l2_cache_split.html",
+      "hardware": "文档测试处理器 L2 为 192 MB（不外推其他芯片）",
+      "model": null,
+      "workload": {
+        "M": null,
+        "N": null,
+        "K": 1024,
+        "dtype": "FP16",
+        "format": "ND",
+        "shapes": [
+          "A=[30720,1024]",
+          "B=[4096,1024]"
+        ]
+      },
+      "change": "L2 Tile 分块、尾核均衡和错位分核以降低 GM 压力",
+      "constraints": [
+        "仅超过该案例 L2 阈值且满足负载划分时考虑",
+        "文中未给出优化后 MTE2 的确切独立值，仅报告降低约 10.7%"
+      ],
+      "metrics": [
+        {
+          "id": "aic",
+          "label": "AIC 总执行时间",
+          "before": 867,
+          "after": 805.6,
+          "unit": "μs",
+          "scope": "aic_operator",
+          "direction": "lower",
+          "comparable": true
+        }
+      ],
+      "reported_only": [
+        {
+          "metric": "MTE2 时间",
+          "before": 861.9,
+          "after": null,
+          "unit": "μs",
+          "statement": "原文称下降约 10.7%；没有明确的优化后独立终点"
+        }
+      ],
+      "interpretation": "带宽/缓存优化通常受硬件 L2 大小和块分配影响。"
+    },
+    {
+      "id": "ASC-OP-005",
+      "title": "多核 K 轴错峰加载缓解 GM 冲突",
+      "family": "Matmul / Memory",
+      "source_kind": "vendor_developer_preview",
+      "source_url": "https://asc.gitcode.com/guide/operator_practice/best_practices/matmul_tuning_cases/matmul_multi_core_k_stagger.html",
+      "hardware": "该案例未给出精确 SKU",
+      "model": null,
+      "workload": {
+        "M": 768,
+        "N": 2048,
+        "K": 6144,
+        "dtype": "FP16",
+        "format": "ND"
+      },
+      "change": "CFG_MDL.enableKdimReorderLoad=true；singleCore=[128,512,6144], base=[128,256,64]",
+      "constraints": [
+        "K 轴非全载、大 K、多核，且 A 或 B 在 GM",
+        "作者报告 K 一般大于 4096 的情况可考虑"
+      ],
+      "metrics": [
+        {
+          "id": "total",
+          "label": "完整算子耗时",
+          "before": 98.72,
+          "after": 85.68,
+          "unit": "μs",
+          "scope": "single_operator",
+          "direction": "lower",
+          "comparable": true
+        },
+        {
+          "id": "mte2-mean",
+          "label": "平均 MTE2",
+          "before": 90,
+          "after": 69.87,
+          "unit": "μs",
+          "scope": "mean_mte2",
+          "direction": "lower",
+          "comparable": true
+        },
+        {
+          "id": "mte2-max",
+          "label": "最大 MTE2",
+          "before": 91.94,
+          "after": 75.82,
+          "unit": "μs",
+          "scope": "max_mte2",
+          "direction": "lower",
+          "comparable": true
+        },
+        {
+          "id": "memory-util",
+          "label": "MTE2 平均带宽利用率",
+          "before": 34.4,
+          "after": 41.7,
+          "unit": "%",
+          "scope": "mean_mte2_bandwidth_util",
+          "direction": "higher",
+          "comparable": true
+        }
+      ],
+      "interpretation": "不同核错开 K 方向读取，缓解相同 GM 地址争用。"
+    },
+    {
+      "id": "ASC-OP-006",
+      "title": "Vector 侧 ND2NZ 重排绕过非对齐搬运",
+      "family": "Layout / Vector",
+      "source_kind": "vendor_developer_preview",
+      "source_url": "https://asc.gitcode.com/guide/operator_practice/best_practices/matmul_tuning_cases/aiv_nd2nz_conversion.html",
+      "hardware": "案例所用 24 AIC 的架构（未给精确 SKU）",
+      "model": null,
+      "workload": {
+        "M": 1024,
+        "N": 4095,
+        "K": 1024,
+        "dtype": "FP16",
+        "format": "ND 输入 / NZ 计算"
+      },
+      "change": "随路 ND2NZ → AIV 转换写入 Workspace，AIC 直接读取 NZ；需要 AIV/AIC 同步",
+      "constraints": [
+        "右输入内轴非 256B 对齐",
+        "小张量上额外同步可能使性能变差"
+      ],
+      "metrics": [
+        {
+          "id": "total",
+          "label": "算子总耗时（含重排）",
+          "before": 149.82,
+          "after": 93.76,
+          "unit": "μs",
+          "scope": "single_operator_with_conversion",
+          "direction": "lower",
+          "comparable": true
+        },
+        {
+          "id": "aic-mte2",
+          "label": "AIC 平均 MTE2",
+          "before": 130.77,
+          "after": 22.85,
+          "unit": "μs",
+          "scope": "mean_aic_mte2",
+          "direction": "lower",
+          "comparable": true
+        }
+      ],
+      "reported_only": [
+        {
+          "metric": "AIV 平均 MTE2",
+          "before": 0,
+          "after": 10.31,
+          "unit": "μs",
+          "statement": "新增 AIV 工作，不应当解释为 AIV 流水改善"
+        }
+      ],
+      "interpretation": "工作从 AIC 搬运移至 AIV 重排，并产生同步成本；该算例总时间改善。"
+    },
+    {
+      "id": "ASC-SERVICE-001",
+      "title": "长上下文缓存复用：A2 两轮观测",
+      "family": "Service / Cache",
+      "source_kind": "github_issue_report",
+      "source_url": "https://github.com/vllm-project/vllm-ascend/issues/20354",
+      "hardware": "A2，16 NPU，TP8/DP2/EP，MTP3",
+      "model": "Qwen3.8 Flash-Next（问题报告环境）",
+      "workload": {
+        "requests": 100,
+        "repeat_rounds": 2,
+        "total_input_tokens_each_round": 3028487,
+        "input_tokens_range": [
+          20558,
+          43508
+        ],
+        "concurrency": 1,
+        "request_rate": 1000,
+        "output_cap": 700,
+        "seed": 0
+      },
+      "change": "第二轮复用第一轮 workload，不清空外部缓存；同时包含 GDN/hash 组合修复，不是单项随机 A/B",
+      "constraints": [
+        "作者声明首轮不严格冷缓存",
+        "两轮命中率不同，不能单独归因于硬件/单项优化",
+        "版本 v0.26 开发构建，不能混成当前 v0.30 稳定版结果"
+      ],
+      "metrics": [
+        {
+          "id": "ttft",
+          "label": "平均 TTFT",
+          "before": 3990.14,
+          "after": 907.67,
+          "unit": "ms",
+          "scope": "mean_ttft",
+          "direction": "lower",
+          "comparable": false
+        },
+        {
+          "id": "tpot",
+          "label": "平均 TPOT",
+          "before": 19,
+          "after": 19.11,
+          "unit": "ms",
+          "scope": "mean_tpot",
+          "direction": "lower",
+          "comparable": false
+        },
+        {
+          "id": "qps",
+          "label": "QPS",
+          "before": 0.0641,
+          "after": 0.0794,
+          "unit": "req/s",
+          "scope": "throughput_requests",
+          "direction": "higher",
+          "comparable": false
+        },
+        {
+          "id": "hit",
+          "label": "外部 Cache 命中率",
+          "before": 6.12,
+          "after": 88.89,
+          "unit": "%",
+          "scope": "external_cache_hit_rate",
+          "direction": "higher",
+          "comparable": false
+        }
+      ],
+      "interpretation": "重用条件下 TTFT 与命中率相关变化；不能声明特定修复导致单变量提升。"
+    },
+    {
+      "id": "ASC-SERVICE-002",
+      "title": "长上下文缓存复用：A3 两轮观测",
+      "family": "Service / Cache",
+      "source_kind": "github_issue_report",
+      "source_url": "https://github.com/vllm-project/vllm-ascend/issues/20354",
+      "hardware": "A3，16 NPU，TP8/DP2/EP，MTP3",
+      "model": "Qwen3.8 Flash-Next（问题报告环境）",
+      "workload": {
+        "requests": 100,
+        "repeat_rounds": 2,
+        "total_input_tokens_each_round": 3028487,
+        "input_tokens_range": [
+          20558,
+          43508
+        ],
+        "concurrency": 1,
+        "request_rate": 1000,
+        "output_cap": 700,
+        "seed": 0
+      },
+      "change": "第二轮复用相同 workload，不清空外部缓存；属于观察结果而非隔离 A/B",
+      "constraints": [
+        "首轮不严格冷缓存，且输出 Token 数可能略不同",
+        "不能把跨轮 TTFT 变化单独归因于单一修复",
+        "精确 vLLM/torch-npu 版本需看 issue"
+      ],
+      "metrics": [
+        {
+          "id": "ttft",
+          "label": "平均 TTFT",
+          "before": 3893.36,
+          "after": 972.83,
+          "unit": "ms",
+          "scope": "mean_ttft",
+          "direction": "lower",
+          "comparable": false
+        },
+        {
+          "id": "tpot",
+          "label": "平均 TPOT",
+          "before": 16.75,
+          "after": 16.93,
+          "unit": "ms",
+          "scope": "mean_tpot",
+          "direction": "lower",
+          "comparable": false
+        },
+        {
+          "id": "qps",
+          "label": "QPS",
+          "before": 0.0712,
+          "after": 0.0877,
+          "unit": "req/s",
+          "scope": "throughput_requests",
+          "direction": "higher",
+          "comparable": false
+        },
+        {
+          "id": "hit",
+          "label": "外部 Cache 命中率",
+          "before": 7.2,
+          "after": 88.9,
+          "unit": "%",
+          "scope": "external_cache_hit_rate",
+          "direction": "higher",
+          "comparable": false
+        }
+      ],
+      "interpretation": "展示真实请求分布与复用命中条件下的差异，禁止按冷/热严格实验或独立提升宣传。"
+    }
+  ],
+  "documentation_examples": [
+    {
+      "id": "ASC-DOC-SAMPLE-001",
+      "title": "vLLM-Ascend v0.30 文档输出格式示例",
+      "family": "Benchmark Guide",
+      "source_kind": "documentation_example",
+      "source_url": "https://docs.vllm.ai/projects/ascend/en/v0.30.0/developer_guide/performance_and_debug/performance_benchmark.html",
+      "hardware": "文档中未明确单条输出对应的精确设备和运行环境",
+      "model": "Qwen3-8B 文档命令段",
+      "workload": {
+        "num_prompts": 10,
+        "dataset": "sharegpt",
+        "output_streaming": "见来源示例"
+      },
+      "change": "文档示例输出；不是本项目运行，不作为真实可比较实验样本",
+      "constraints": [
+        "文档用于说明 bench serve 输出指标",
+        "不能把不同命令段的示例当作前后 A/B"
+      ],
+      "metrics": [
+        {
+          "id": "ttft",
+          "label": "示例平均 TTFT",
+          "before": null,
+          "after": 127.1,
+          "unit": "ms",
+          "scope": "doc_output",
+          "direction": "lower",
+          "comparable": false
+        },
+        {
+          "id": "tpot",
+          "label": "示例平均 TPOT",
+          "before": null,
+          "after": 25.85,
+          "unit": "ms",
+          "scope": "doc_output",
+          "direction": "lower",
+          "comparable": false
+        },
+        {
+          "id": "throughput",
+          "label": "示例输出 token/s",
+          "before": null,
+          "after": 133.67,
+          "unit": "tok/s",
+          "scope": "doc_output",
+          "direction": "higher",
+          "comparable": false
+        }
+      ],
+      "interpretation": "可作为指标格式和复现实验步骤的模板，不参与真实性能数据条目统计。"
+    }
+  ],
+  "collection": {
+    "public_case_count": 8,
+    "operator_cases": 6,
+    "service_observations": 2,
+    "metric_pairs": 24,
+    "preview_disclaimer": "asc-devkit site builds from a development branch and explicitly warns content may contain defects; published values are not independently verified by our team."
+  }
+}
