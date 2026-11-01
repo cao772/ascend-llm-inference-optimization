@@ -140,3 +140,51 @@
 .reported-track i{display:block;height:100%;background:linear-gradient(90deg,#4686bd,#6bddcc);border-radius:9px}
 @media(max-width:1100px){.reported-evidence-grid{grid-template-columns:1fr}}
 @media(max-width:400px){.reported-bar-row{grid-template-columns:48px minmax(0,1fr) 77px;gap:4px}.reported-row{padding:10px}.reported-bar-row strong{font-size:10px}}
+
+/* V2.5: source-qualified real-world experimental evidence workbench */
+.experiment-hub{background:linear-gradient(142deg,#152f46,#0c2237);border:1px solid #4a6c75}
+.exp-stat-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:17px 0 18px}
+.exp-summary-tile{background:#0d2a3f;border:1px solid #325c6d;border-radius:12px;padding:15px;min-width:0}
+.exp-summary-tile strong{font-size:25px;color:#84e6d8;display:block;font-weight:850;line-height:1.2}
+.exp-summary-tile span{font-size:12px;color:#e5f2f9;display:block;font-weight:700;margin:6px 0}
+.exp-summary-tile small{font-size:10px;color:#a1bacd;line-height:1.4;display:block}
+.experiment-workspace{display:grid;grid-template-columns:minmax(0,.82fr) minmax(0,1.18fr);gap:14px;align-items:start}
+.experiment-browser,.experiment-detail{min-width:0;border:1px solid #31546b;background:#0d263b;border-radius:13px;padding:16px}
+#experiment-query{width:100%;padding:12px;border-radius:10px;background:#0b2033;border:1px solid #456879;color:#e8f3ff;font-size:12px;margin:13px 0}
+.experiment-cards{max-height:770px;overflow-y:auto;display:grid;gap:8px;align-content:start}
+.experiment-card{display:flex;flex-direction:column;gap:6px;text-align:left;background:#14324a;border:1px solid #315771;border-radius:11px;padding:13px;min-width:0}
+.experiment-card strong{font-size:13px;line-height:1.4;overflow-wrap:anywhere}
+.experiment-card small{font-size:10px;color:#a4bbc9;overflow-wrap:anywhere}
+.experiment-card[aria-pressed=true]{background:#1d454e;border-color:#6cd7d0}
+.exp-card-top{display:flex;justify-content:space-between;gap:8px}
+.exp-case-metrics{font-size:11px;color:#91e4da}
+.experiment-detail{max-height:1050px;overflow-y:auto;min-height:440px}
+.exp-detail-top h4{font-size:20px;margin:9px 0 3px;line-height:1.35}
+.exp-workload{display:flex;gap:6px;flex-wrap:wrap;margin:12px 0}
+.exp-workload span{font-size:10px;color:#c0e0ea;background:#164152;border:1px solid #3a6179;padding:5px 9px;border-radius:6px}
+.exp-metric-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin:16px 0}
+.exp-metric{background:#102c42;border:1px solid #355771;padding:12px;border-radius:11px;min-width:0}
+.exp-metric-heading{display:flex;justify-content:space-between;align-items:start;gap:5px;flex-wrap:wrap}
+.exp-metric-heading strong{font-size:12px}
+.exp-metric-heading .badge{font-size:9px}
+.exp-metric>small{font-size:10px;color:#94b4c6}
+.exp-paired{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:11px}
+.exp-paired>div{display:grid;gap:3px}
+.exp-paired span{font-size:10px;color:#a8c2d2}
+.exp-paired strong{font-size:13px;overflow-wrap:anywhere;color:#d9f7f2}
+.exp-bars{height:34px;display:grid;gap:5px;margin-top:8px}
+.exp-bars>span{display:block;border-radius:5px;height:11px}
+.exp-bar-base{background:#62849b}.exp-bar-result{background:#66d8cb}
+.exp-metric .tiny{font-size:10px;margin:10px 0 0}
+.exp-detail-top .small{margin-bottom:6px}
+.exp-warnings{padding-left:19px;font-size:12px;color:#cfdddf;line-height:1.65}
+.experiment-detail h5{font-size:13px;margin:18px 0 7px}
+.exp-provenance{border-top:1px solid #3d6471;padding:15px 0 2px}
+.exp-provenance strong{font-size:12px}
+.exp-methodology{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:18px 0}
+.exp-methodology>div{border:1px solid #386275;background:#0a2b3d;border-radius:12px;padding:14px;min-width:0}
+.exp-methodology strong{font-size:13px;color:#b4eee7}
+.exp-methodology p{font-size:11px;color:#bacfdc;line-height:1.6;margin:6px 0}
+.exp-reference{display:flex;gap:10px;flex-wrap:wrap;align-items:center;font-size:11px;color:#abc3d3}
+@media(max-width:1050px){.experiment-workspace{grid-template-columns:minmax(0,1fr)}.experiment-cards{grid-template-columns:repeat(2,minmax(0,1fr));max-height:420px}.experiment-detail{max-height:none}}
+@media(max-width:680px){.exp-stat-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.experiment-cards,.exp-metric-list,.exp-methodology{grid-template-columns:minmax(0,1fr)}.experiment-browser,.experiment-detail{padding:12px}.exp-metric-heading strong{font-size:12px}}
