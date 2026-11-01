@@ -13,6 +13,7 @@ on:
       - 'tests/test_ascend_tiling_math.cjs'
       - 'tests/test_ascend_public_matmul_evidence.py'
       - 'tests/test_ascend_experiment_evidence_v25.py'
+      - 'tests/test_ascend_cross_operator_evidence_v26.py'
       - 'design/ascend-explorer-v2/tools/export_evidence_csv.py'
       - 'design/ascend-explorer-v2/site/browser_smoke.py'
       - 'design/ascend-explorer-v2/site/browser_cross_engine.py'
@@ -39,6 +40,7 @@ jobs:
           python3 -m unittest discover -s tests -p 'test_ascend_verified_specs_v22.py' -v
           python3 -m unittest discover -s tests -p 'test_ascend_public_matmul_evidence.py' -v
           python3 -m unittest discover -s tests -p 'test_ascend_experiment_evidence_v25.py' -v
+          python3 -m unittest discover -s tests -p 'test_ascend_cross_operator_evidence_v26.py' -v
           node --check design/ascend-explorer-v2/site/app.js
           node --check design/ascend-explorer-v2/site/tiling_math.js
           node --test tests/test_ascend_tiling_math.cjs
@@ -50,6 +52,7 @@ jobs:
           cp design/ascend-explorer-v2/content/modules.json build/ascend-explorer-v2/modules.json
           python3 design/ascend-explorer-v2/tools/export_evidence_csv.py --output build/ascend-explorer-v2/v25-public-evidence.csv
           cp design/ascend-explorer-v2/content/experiment-evidence-v2.5.json build/ascend-explorer-v2/experiment-evidence-v2.5.json
+          cp design/ascend-explorer-v2/content/cross-operator-evidence-v2.6.json build/ascend-explorer-v2/cross-operator-evidence-v2.6.json
           cp design/ascend-explorer-v2/docs/empirical-evidence-center-v2.5.md build/ascend-explorer-v2/RESEARCH-V2.5.md
       - name: Check bundled factual integrity and offline markers
         run: |
@@ -75,6 +78,9 @@ jobs:
           assert d["experimentEvidence"]["project_own_hardware_measurements"] == 0
           assert d["experimentEvidence"]["collection"]["public_case_count"] == 8
           assert d["experimentEvidence"]["collection"]["metric_pairs"] == 24
+          assert d["crossOperatorEvidence"]["case_count"] == 7
+          assert d["crossOperatorEvidence"]["paired_observations"] == 7
+          assert d["crossOperatorEvidence"]["project_owned_npu_benchmarks"] == 0
           import csv
           with open("build/ascend-explorer-v2/v25-public-evidence.csv", encoding="utf-8-sig", newline="") as f:
               rows = list(csv.DictReader(f))
