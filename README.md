@@ -1,6 +1,6 @@
 # 昇腾大模型推理与算子优化 / Ascend LLM Inference & Operator Optimization
 
-> [V2 全景交互网站详细设计（9 展区、硬件解剖、推理时间线、7 类算子）](design/ascend-explorer-v2/README.md) · [可点击设计预览](design/ascend-explorer-v2/preview.html)。本轮完成设计与来源型数据校验，尚非新网站正式部署。
+> **V2 离线交互网站 MVP 已开发并通过 Chromium 浏览器验收**：[完整网页源码](design/ascend-explorer-v2/site/)、[可运行单文件构建器](design/ascend-explorer-v2/site/build_site.py)、[GitHub Actions 网页及截图交付](https://github.com/cao772/ascend-llm-inference-optimization/actions/runs/41297454294)；[九展区详细设计](design/ascend-explorer-v2/README.md)。**尚未公网部署、没有 NPU 实测；硬件精确型号规格仍待补齐。**
 
 > 长期研究工程仓库。2026-10-30 初始化；当前仅为研究与基准工具建设，**尚未完成昇腾 NPU 实测**。
 
