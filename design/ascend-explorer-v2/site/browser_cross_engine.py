@@ -98,7 +98,7 @@ def exercise(browser, html, width, screenshots, errors):
     assert "06 / 06" in page.locator("#op-number").inner_text()
     # V2.5 empirical archive: filter, inspect published profiler, examine cache two rounds.
     assert page.locator("#exp-summary .exp-summary-tile").count()==4
-    assert "24" in page.locator("#exp-summary").inner_text()
+    assert "31" in page.locator("#exp-summary").inner_text()
     assert page.locator("#experiment-cards .experiment-card").count()==15
     page.locator("#experiment-tabs button",has_text="算子 Profile").click()
     assert page.locator("#experiment-cards .experiment-card").count()==8
