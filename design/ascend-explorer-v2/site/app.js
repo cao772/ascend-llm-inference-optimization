@@ -160,6 +160,38 @@ let symptomId="ttft";function renderDiagnosis(){
  $("diagnosis-path").innerHTML=blocks.map((b,i)=>'<div class="decision-step"><b>0'+(i+1)+' / '+esc(b[0])+'</b><p>'+b[1].map(x=>"• "+esc(x)).join("<br>")+'</p></div>').join("");
  $("diagnosis-warning").textContent="风险与反例： "+s.risk+" 当前没有 NPU 设备与 Profiler，不能推断这是实际瓶颈或预计提升幅度。";
 }
+
+let graphNodeId="case:QINF-001";
+const kindLabels={case:"研究案例",model:"模型结构",upstream_pr:"上游 PR",failure_or_caveat:"失败或限制",mechanism:"优化机制",operator:"算子",architecture_feature:"模型结构特征"};
+function graphNode(id){return D.atlas.nodes.find(n=>n.id===id)}
+function renderGraph(){
+ const nodes=D.atlas.nodes,edges=D.atlas.edges;
+ const q=$("graph-search").value.toLowerCase().trim();
+ const matches=nodes.filter(n=>(n.label+" "+n.id+" "+n.kind).toLowerCase().includes(q));
+ if(!nodes.some(n=>n.id===graphNodeId))graphNodeId=nodes[0].id;
+ const base=graphNode(graphNodeId);
+ const direct=edges.filter(e=>e.source===graphNodeId||e.target===graphNodeId);
+ const neighbors=[...new Set(direct.map(e=>e.source===graphNodeId?e.target:e.source))].sort();
+ const maxNeighbors=window.innerWidth<700?5:8;
+ const shown=neighbors.slice(0,maxNeighbors);
+ const positions=shown.map((id,i)=>{const angle=-Math.PI/2+2*Math.PI*i/Math.max(1,shown.length);return{id,x:50+36*Math.cos(angle),y:50+33*Math.sin(angle)}});
+ let lines='<svg class="graph-lines" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">'+positions.map(p=>'<line x1="50" y1="50" x2="'+p.x.toFixed(2)+'" y2="'+p.y.toFixed(2)+'" stroke="#4caab0" stroke-width=".5" opacity=".75" />').join("")+"</svg>";
+ let html=lines+'<button type="button" class="graph-node primary" data-id="'+esc(base.id)+'" style="left:50%;top:50%" title="'+esc(base.label)+'">'+esc(base.label)+'</button>';
+ html+=positions.map(p=>{const n=graphNode(p.id);return'<button type="button" class="graph-node" data-id="'+esc(n.id)+'" style="left:'+p.x.toFixed(2)+'%;top:'+p.y.toFixed(2)+'%" title="'+esc(n.label)+'">'+esc(n.label)+'</button>'}).join("");
+ $("graph-stage").innerHTML=html;
+ $("graph-stage").querySelectorAll("button").forEach(b=>b.addEventListener("click",()=>{graphNodeId=b.dataset.id;renderGraph()}));
+ $("graph-counts").textContent=D.atlas.counts.nodes+" 个节点 / "+D.atlas.counts.edges+" 条来源关系";
+ $("graph-matches").innerHTML=matches.slice(0,16).map(n=>blockButton(n.label,n.id,graphNodeId)).join("")+(matches.length>16?'<span class="tiny">另有 '+(matches.length-16)+' 条匹配，请缩小搜索条件</span>':"");
+ $("graph-matches").querySelectorAll("button").forEach(b=>b.addEventListener("click",()=>{graphNodeId=b.dataset.id;renderGraph()}));
+ $("graph-detail").innerHTML='<span class="data-label">'+esc(kindLabels[base.kind]||base.kind)+'</span><strong>'+esc(base.label)+'</strong><p class="small muted">一跳相关：'+direct.length+' 条关系；画布显示 '+shown.length+' 个邻居。标签相同不代表技术实现可直接移植。</p>'+direct.slice(0,9).map((e,i)=>{let other=graphNode(e.source===base.id?e.target:e.source);return'<div class="rel"><small>'+esc(e.relation)+' · '+esc(e.evidence_level)+'</small><b>'+esc(other?.label||"来源节点")+'</b><button class="btn ghost" data-edge="'+i+'" type="button">查看关系来源</button></div>'}).join("");
+ $("graph-detail").querySelectorAll("button[data-edge]").forEach(b=>b.addEventListener("click",()=>{
+ const e=direct[+b.dataset.edge],other=graphNode(e.source===graphNodeId?e.target:e.source);
+ drawer({title:base.label+" → "+(other?.label||"相关节点"),category:"GRAPH RELATION / PROVENANCE",body:"关系类型："+e.relation+"。证据等级："+e.evidence_level+"。该关联不代表实机性能提升或版本兼容性。",items:["来源对应此研究图谱记录","项目无本地 NPU 性能实测"],urls:e.provenance_urls||[]});
+ }));
+}
+$("graph-search").addEventListener("input",renderGraph);
+window.addEventListener("resize",()=>{if(Math.abs(window.innerWidth-(window.__lastGraphWidth||0))>160){window.__lastGraphWidth=window.innerWidth;renderGraph()}});
+
 let evidenceFilter="all";
 function casePlatform(c){const h=(c.hardware||"").toLowerCase();return /ascend|910c|910b|昇腾/.test(h)?"ascend":/tpu|ironwood/.test(h)?"tpu":/nvidia|b200|h100|h200|cuda|mi300x|metal|apple|m4/.test(h)?"other":"other"}
 function renderEvidence(){
@@ -177,5 +209,5 @@ function researchSummary(){
  $("count-products").textContent=D.hardware.products.length;$("count-operators").textContent=D.operators.stories.length*D.operators.frameContract.length;$("count-evidence").textContent=atlas.counts.nodes;
 }
 $("case-query").addEventListener("input",renderEvidence);
-renderHero();initGenericEvidence();renderProducts();renderAnatomy();renderStack();renderMetrics();renderLife();renderFactors();renderOperator();renderDiagnosis();researchSummary();renderEvidence();
+renderHero();initGenericEvidence();renderProducts();renderAnatomy();renderStack();renderMetrics();renderLife();renderFactors();renderOperator();renderDiagnosis();researchSummary();renderEvidence();renderGraph();
 })();
