@@ -282,5 +282,72 @@ function researchSummary(){
  $("count-products").textContent=D.hardware.products.length;$("count-operators").textContent=D.operators.stories.length*D.operators.frameContract.length;$("count-evidence").textContent=atlas.counts.nodes;
 }
 $("case-query").addEventListener("input",renderEvidence);
+
+/* Detailed matrix tiling lab. These arithmetic values are conceptual memory-load
+   counts for simple loop orders, NOT actual GM/HBM traffic, timings, or speedups. */
+const tilingContent=D.tilingLab;
+const TMath=globalThis.AscendTilingMath;
+let tilingStep=0,tilingMethod="none";
+const tileDimensionOptions=[32,64,80,96,112,128,144,256,512];
+const tileSizeOptions=[16,32,64,128];
+const tileInputs={M:"tile-M",N:"tile-N",K:"tile-K",tm:"tile-tm",tn:"tile-tn",tk:"tile-tk"};
+function fillTileInputs(){
+ for(const [key,id] of Object.entries(tileInputs)){
+  const options=key.length===1?tileDimensionOptions:tileSizeOptions;
+  $(id).innerHTML=options.map(v=>'<option value="'+v+'">'+v+'</option>').join("");
+  $(id).addEventListener("change",()=>{tilingStep=0;renderTiling()});
+ }
+}
+function setTilePreset(p){
+ for(const key of Object.keys(tileInputs))$(tileInputs[key]).value=String(p[key]);
+ tilingStep=0;renderTiling();
+}
+function matrixTiles(name,rows,cols,activeRow,activeCol){
+ const maxRows=Math.min(rows,9),maxCols=Math.min(cols,9);
+ let cells="";
+ for(let r=0;r<maxRows;r++)for(let c=0;c<maxCols;c++){
+  const active=r===activeRow&&c===activeCol;
+  cells+='<span class="tile-cell'+(active?' selected':'')+'" aria-label="'+esc(name)+' Tile '+(r+1)+'-'+(c+1)+(active?' 选中':'')+'"></span>';
+ }
+ return '<div class="matrix-mini"><div class="matrix-top"><b>'+esc(name)+'</b><small>'+rows+' × '+cols+' 分块网格</small></div><div class="tile-grid" style="grid-template-columns:repeat('+maxCols+',minmax(0,1fr))">'+cells+'</div>'+(rows>9||cols>9?'<p class="tiny">仅展示前 9×9 块，其余未绘制</p>':'')+'</div>';
+}
+function bytesDisplay(x){return x.toLocaleString("zh-CN")+" B"}
+function renderTiling(){
+ const params=Object.fromEntries(Object.entries(tileInputs).map(([k,id])=>[k,Number($(id).value)]));
+ const d=TMath.derive(params);
+ if(tilingStep>=d.tileIterations)tilingStep=0;
+ const t=TMath.tileAt(d,tilingStep);
+ tabs($("tiling-presets"),tilingContent.presets.map(p=>({id:p.id,label:p.label})),"",id=>setTilePreset(tilingContent.presets.find(p=>p.id===id)));
+ const activePreset=tilingContent.presets.find(p=>Object.keys(tileInputs).every(key=>p[key]===params[key]));
+ $("tiling-presets").querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.id===activePreset?.id)));
+ tabs($("tiling-methods"),tilingContent.methods.map(m=>({id:m.id,label:m.label})),tilingMethod,id=>{tilingMethod=id;renderTiling()});
+ const lenFmt=x=>x.toLocaleString("zh-CN");
+ $("tiling-summary").innerHTML=[
+  ["矩阵乘法",d.M+"×"+d.K+" · "+d.K+"×"+d.N],
+  ["输出 Tile",d.mTiles+"×"+d.nTiles+" = "+d.outputTileCount],
+  ["K 分块",String(d.kTiles)],
+  ["逻辑计算任务",lenFmt(d.tileIterations)],
+  ["估算片内工作集",bytesDisplay(d.localFootprintBytes)],
+  ["数学 FLOPs",lenFmt(d.flopsConvention)]
+ ].map(([label,v])=>'<div class="tile-stat"><small>'+label+'</small><strong>'+esc(v)+'</strong></div>').join("");
+ $("tiling-matrices").innerHTML=matrixTiles("A[M,K]",d.mTiles,d.kTiles,t.mIndex,t.kIndex)+
+  '<div class="matrix-op" aria-hidden="true">×</div>'+matrixTiles("B[K,N]",d.kTiles,d.nTiles,t.kIndex,t.nIndex)+
+  '<div class="matrix-op" aria-hidden="true">→</div>'+matrixTiles("C[M,N]",d.mTiles,d.nTiles,t.mIndex,t.nIndex);
+ const start=(m,n)=>"["+m+", "+n+")";
+ $("tiling-step").innerHTML='<strong>计算步骤 '+(tilingStep+1)+' / '+d.tileIterations+'</strong><p>取 A 行段 '+start(t.mStart,t.mEnd)+'、K 段 '+start(t.kStart,t.kEnd)+'；取 B 的 K 段 '+start(t.kStart,t.kEnd)+'、列段 '+start(t.nStart,t.nEnd)+'，累加至 C('+t.mIndex+', '+t.nIndex+')。</p><p class="tiny">本次有效分块：'+t.mExtent+'×'+t.kExtent+' 和 '+t.kExtent+'×'+t.nExtent+'。'+(t.mExtent<d.tm||t.nExtent<d.tn||t.kExtent<d.tk?'当前为边界块，存在不足完整 Tile 的部分。':'当前为完整 Tile。')+'</p>';
+ $("tiling-prev").disabled=tilingStep===0;
+ $("tiling-next").disabled=tilingStep===d.tileIterations-1;
+ const baseline=d.options.none.readBytes,selected=d.options[tilingMethod].readBytes;
+ const selectedMethod=tilingContent.methods.find(x=>x.id===tilingMethod);
+ const ratio=(selected/baseline*100).toFixed(1);
+ $("tiling-traffic").innerHTML='<div class="tile-bars"><div><span>无复用（对照）</span><div class="tile-bar"><i style="width:100%"></i></div><b>'+bytesDisplay(baseline)+'</b></div><div><span>'+esc(selectedMethod.label)+'</span><div class="tile-bar"><i style="width:'+ratio+'%"></i></div><b>'+bytesDisplay(selected)+'</b></div></div><p class="small muted">在这一套<b>理想循环读取模型</b>里，读取元素量占无复用方案的 '+ratio+'%。这不是实测 GM 读取量，也不是性能提升百分比。</p>';
+ $("tiling-caveat").textContent=selectedMethod.assumption+"。片内工作集仅按 A/B 输入块及 FP32 累加块做算术加总，不能据此断言符合具体昇腾硬件的 L1/L0/UB 容量或部署限制。";
+}
+fillTileInputs();setTilePreset(tilingContent.presets[1]);
+$("tiling-prev").addEventListener("click",()=>{if(tilingStep>0){tilingStep--;renderTiling()}});
+$("tiling-next").addEventListener("click",()=>{const d=TMath.derive(Object.fromEntries(Object.entries(tileInputs).map(([k,id])=>[k,+$(id).value])));if(tilingStep<d.tileIterations-1){tilingStep++;renderTiling()}});
+$("tiling-reset").addEventListener("click",()=>{tilingStep=0;renderTiling()});
+$("tiling-sources").addEventListener("click",()=>drawer({title:"GEMM Tiling：数学模型与昇腾官方实现的区别",category:"TEACHING ONLY · NOT NPU TRACE",body:tilingContent.evidenceScope,items:[...TMath.derive({M:64,N:64,K:64,tm:32,tn:32,tk:32}).disclaimers,...tilingContent.neverAssert.map(x=>"不提供："+x)],urls:[tilingContent.source.url,tilingContent.source.sourceSecond]}));
+
 renderHero();initGenericEvidence();renderProducts();renderAnatomy();renderStack();renderMetrics();renderLife();renderFactors();renderOperator();renderDiagnosis();researchSummary();renderEvidence();renderGraph();renderCompatibility();
 })();
