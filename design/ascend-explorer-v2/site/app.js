@@ -451,13 +451,15 @@ function renderExperimentHub(){
     const ratio=metric.before>0&&metric.after!=null?metric.after/metric.before:null;
     const trend=ratio!=null?(metric.direction==="higher"?(ratio>=1?"增加":"降低"):(ratio<=1?"降低":"增加")):"—";
     const difference=ratio!=null?Math.abs((ratio-1)*100).toFixed(1)+"%":"—";
-    const barBefore=100,barAfter=ratio!=null?Math.min(100,100*ratio):0;
+    const maxVal=Math.max(metric.before||0,metric.after||0,1e-9);
+    const barBefore=100*(metric.before||0)/maxVal;
+    const barAfter=100*(metric.after||0)/maxVal;
     const staticTag=comparable?"同口径前后可比较":"不同轮次观测 / 非隔离 A/B";
     const role=metric.scope.replaceAll("_"," ");
     return '<div class="exp-metric"><div class="exp-metric-heading"><strong>'+esc(metric.label)+'</strong><span class="badge '+(comparable?"neutral":"warn")+'">'+staticTag+'</span></div>'+
       '<small>原始指标口径：'+esc(role)+'</small>'+
       '<div class="exp-paired"><div><span>前 / 第 1 轮</span><strong>'+esc(expFmt(metric.before))+' '+esc(metric.unit)+'</strong></div><div><span>后 / 第 2 轮</span><strong>'+esc(expFmt(metric.after))+' '+esc(metric.unit)+'</strong></div></div>'+
-      '<div class="exp-bars" aria-label="同一指标两个来源值的相对示意"><span class="exp-bar-base" style="width:'+barBefore+'%"></span><span class="exp-bar-result" style="width:'+barAfter.toFixed(1)+'%"></span></div>'+
+      '<div class="exp-bars" aria-label="同一指标两个来源值的相对示意"><span class="exp-bar-base" style="width:'+barBefore.toFixed(1)+'%"></span><span class="exp-bar-result" style="width:'+barAfter.toFixed(1)+'%"></span></div>'+
       '<p class="tiny">'+(comparable?'同指标数值'+trend+' '+difference+'（从端点推算，不是显著性结论）':'两轮的原始数值差异，不作为单因素优化收益')+'</p></div>';
   }).join("");
   const observed=(selected.reported_only||[]).map(o=>'<li>'+esc(o.metric)+'：'+esc(expFmt(o.before))+' → '+esc(expFmt(o.after))+' '+esc(o.unit)+'；'+esc(o.statement)+'</li>').join("");
