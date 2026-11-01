@@ -1,5 +1,14 @@
 # Ascend Explorer V2 · 交互网页与详细设计
 
+## V2.3｜GEMM 分块与理想化访存复用交互实验室（2026-11-01）
+
+- [研发记录 / 数学公式与来源](./docs/gemm-tiling-lab-v2.3.md)：基于官方 Ascend C Matmul Tiling/CopyIn-Compute-CopyOut 的机制，区分真实设备和教学模型。
+- [可配置演示与来源数据](./content/gemm-tiling-lab-v2.3.json)：3 组预设（小 M、方形、非整除边界）、4 组理想化复用策略。
+- [可测试的纯 JS 数学核心](./site/tiling_math.js)：每个输出 Tile、K 累加轮次、边界切块，输入读取元素/字节的概念模型；**这些值不是 GM/HBM 测量或性能收益**。
+- [网页交互](./site/app.js)：三个矩阵分块同步高亮、前后逐步执行、复用条件与计算/工作集说明。GEMM 算子专题可直接跳转到该实验室。
+- [6 项 Node.js 单元回归](../../tests/test_ascend_tiling_math.cjs) 和 [Chromium/WebKit 多尺寸交互脚本](./site/browser_cross_engine.py) 纳入现有网页 CI。
+- 保留所有现有 V2.2 产品资料、软件兼容性和 Qwen 图谱，无 NPU 环境时不写“测试速度提高 xx%”。
+
 ## V2.2｜官方规格 + 固定版本兼容 + AI Core 逐帧 SVG（2026-11-01）
 
 - [V2.2 来源与技术审计](./docs/official-hardware-and-ai-core-v2.2.md)：将 Atlas 300I Duo 整卡 FP16/INT8、LPDDR4X 48/96 GB、408 GB/s 与 Atlas 800I A2 整机 4U、8 模组、可选互联 392 GB/s 分开标注，防止把整机互联误称为单芯片显存带宽。
