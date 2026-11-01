@@ -49,7 +49,8 @@ def run(html_path: Path, screenshots: Path | None = None):
         assert "Decode" in page.locator("#lifecycle-detail").inner_text()
         # D4: factor and operator storyboard.
         page.locator("#factor-tabs button", has_text="Graph").click()
-        assert "Graph" in page.locator("#factor-chain").inner_text()
+        assert "静态形状" in page.locator("#factor-chain").inner_text()
+        assert "图命中" in page.locator("#factor-validate").inner_text()
         page.locator("#operator-tabs button", has_text="MoE").click()
         assert page.locator("#operator-steps button").count() == 6
         page.locator("#operator-steps button").nth(5).click()
