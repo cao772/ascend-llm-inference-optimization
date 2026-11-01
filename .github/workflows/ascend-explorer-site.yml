@@ -1,0 +1,61 @@
+name: Ascend explorer V2 website
+on:
+  workflow_dispatch:
+  push:
+    branches: ['research/**']
+    paths:
+      - 'design/ascend-explorer-v2/site/**'
+      - 'design/ascend-explorer-v2/content/**'
+      - 'design/ascend-explorer-v2/src/**'
+      - 'tests/test_ascend_explorer_site.py'
+      - '.github/workflows/ascend-explorer-site.yml'
+permissions:
+  contents: read
+jobs:
+  build-and-validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate design and full interactive site
+        run: |
+          python3 -m unittest discover -s tests -p 'test_ascend_explorer_design.py' -v
+          python3 -m unittest discover -s tests -p 'test_ascend_explorer_site.py' -v
+          node --check design/ascend-explorer-v2/site/app.js
+      - name: Build fully standalone offline website
+        run: |
+          mkdir -p build/ascend-explorer-v2
+          python3 design/ascend-explorer-v2/site/build_site.py --output build/ascend-explorer-v2/ascend-explorer-v2.html
+          cp design/ascend-explorer-v2/DESIGN.md build/ascend-explorer-v2/DESIGN.md
+          cp design/ascend-explorer-v2/content/modules.json build/ascend-explorer-v2/modules.json
+      - name: Check bundled factual integrity and offline markers
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re, json
+          p=Path("build/ascend-explorer-v2/ascend-explorer-v2.html")
+          raw=p.read_text(encoding="utf-8")
+          assert len(raw) > 120_000
+          match=re.search(r'<script id="app-data" type="application/json">(.*?)</script>',raw,re.S)
+          assert match
+          d=json.loads(match.group(1))
+          assert d["atlas"]["project_hardware_measurements"]==0
+          assert d["atlas"]["counts"]["nodes"]==75
+          assert len(d["operators"]["stories"])==7
+          assert all(not v for h in d["hardware"]["products"] for v in h["quantitative"].values())
+          assert "/* APP_" not in raw
+          print("Offline V2 site ready:",p.stat().st_size,"bytes, 9 sections, 7 operator stories")
+          PY
+      - name: Publish verified offline site and design handoff
+        uses: actions/upload-artifact@v4
+        with:
+          name: ascend-inference-explorer-v2-website
+          path: build/ascend-explorer-v2/*
+          if-no-files-found: error
+          retention-days: 60
