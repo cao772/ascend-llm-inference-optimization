@@ -1,0 +1,61 @@
+name: Qwen optimization fullchain research dashboard
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ['research/**']
+    paths:
+      - 'research/decisions/**'
+      - 'research/model-structures/**'
+      - 'research/cases/**'
+      - 'research/failures/**'
+      - 'research/source-traces/**'
+      - 'tools/build_qwen_decision_pipeline.py'
+      - 'tools/render_qwen_decision_dashboard.py'
+      - 'tests/test_qwen_fullchain_pipeline.py'
+      - '.github/workflows/qwen-fullchain.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  validate-render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Validate hypothesis rules and output contract
+        run: python -m unittest discover -s tests -p 'test_qwen_fullchain_pipeline.py' -v
+      - name: Build research JSON and standalone interactive HTML
+        run: |
+          mkdir -p build/qwen-fullchain
+          python tools/build_qwen_decision_pipeline.py --output build/qwen-fullchain/qwen-fullchain-decision-v1.json
+          python tools/render_qwen_decision_dashboard.py --output build/qwen-fullchain/qwen-fullchain-dashboard-v1.html
+      - name: Assert no invented benchmark fields and offline design
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path("build/qwen-fullchain")
+          d=json.loads((p/"qwen-fullchain-decision-v1.json").read_text(encoding="utf-8"))
+          assert d["real_hardware_measurements"] == 0
+          assert d["deployment_available"] is False
+          assert d["scenario_count"] == 5
+          assert len(d["pipeline"]) == 6
+          assert all(s["measurement_status"]=="not_measured" for s in d["scenarios"])
+          assert all(all(v is None for v in s["observed_results"].values()) for s in d["scenarios"])
+          html=(p/"qwen-fullchain-dashboard-v1.html").read_text(encoding="utf-8")
+          assert "<!doctype html>" in html and "research-data" in html
+          assert "https://cdn." not in html and "fetch(" not in html
+          print("Five conditional scenarios, no local measurements, standalone HTML")
+          PY
+      - name: Archive fullchain analysis and dashboard
+        uses: actions/upload-artifact@v4
+        with:
+          name: qwen-fullchain-research-dashboard
+          path: build/qwen-fullchain/*
+          retention-days: 60
+          if-no-files-found: error

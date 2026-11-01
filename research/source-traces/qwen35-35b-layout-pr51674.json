@@ -1,0 +1,7 @@
+{
+  "num_k_heads": 16,
+  "num_v_heads": 32,
+  "source": "https://github.com/vllm-project/vllm/pull/51674",
+  "fact_scope": "Qwen3.5-35B-A3B head layout as stated by author in upstream PR; other runtime fields intentionally unknown",
+  "not_a_live_config_dump": true
+}

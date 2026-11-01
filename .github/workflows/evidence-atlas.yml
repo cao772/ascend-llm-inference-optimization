@@ -1,0 +1,66 @@
+name: Qwen evidence atlas build
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ['research/**']
+    paths:
+      - 'research/cases/**'
+      - 'research/failures/**'
+      - 'research/model-structures/**'
+      - 'research/source-traces/**'
+      - 'research/schemas/**'
+      - 'tools/build_qwen_evidence_atlas.py'
+      - 'tools/query_qwen_evidence.py'
+      - 'tools/build_qwen_model_case_graph.py'
+      - 'tools/build_case_graph.py'
+      - 'tools/validate_operator_pr_lineage.py'
+      - 'tests/test_qwen_evidence_atlas.py'
+      - '.github/workflows/evidence-atlas.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  validate-and-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Test provenance and retrieval guardrails
+        run: python -m unittest discover -s tests -p 'test_qwen_evidence_atlas.py' -v
+      - name: Build complete sourced atlas (no hardware/model downloads)
+        run: |
+          python tools/build_qwen_evidence_atlas.py --output build/qwen-evidence-atlas.json
+          python tools/query_qwen_evidence.py --model-id Qwen/Qwen3.6-27B --output build/qwen36-model-links.json
+          python tools/query_qwen_evidence.py --failure-kind deadlock --output build/deadlock-rollback-evidence.json
+          python tools/query_qwen_evidence.py --mechanism fusion --output build/fusion-cases-and-prs.json
+          cp research/schemas/qwen-evidence-atlas.schema.json build/qwen-evidence-atlas.schema.json
+      - name: Verify graph and citations in output
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          graph = json.loads(Path("build/qwen-evidence-atlas.json").read_text(encoding="utf-8"))
+          counts = graph["counts"]["by_node_kind"]
+          assert counts["case"] >= 15
+          assert counts["model"] >= 5
+          assert counts["upstream_pr"] >= 12
+          assert counts["failure_or_caveat"] >= 8
+          assert graph["project_hardware_measurements"] == 0
+          ids = {n["id"] for n in graph["nodes"]}
+          assert all(e["source"] in ids and e["target"] in ids for e in graph["edges"])
+          assert all(e["provenance_urls"] for e in graph["edges"])
+          assert all(not e["speedup_verified_by_project"] for e in graph["edges"])
+          print(json.dumps(graph["counts"], indent=2))
+          PY
+      - name: Archive offline evidence graph and query examples
+        uses: actions/upload-artifact@v4
+        with:
+          name: qwen-source-evidence-atlas
+          path: build/*.json
+          if-no-files-found: error
+          retention-days: 60

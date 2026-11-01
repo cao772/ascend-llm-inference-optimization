@@ -1,0 +1,429 @@
+{
+  "schema_version": "2.6.0",
+  "reviewed_at": "2026-11-01",
+  "project_owned_npu_benchmarks": 0,
+  "source_count": 7,
+  "case_records": [
+    {
+      "id": "ASC-ATT-001",
+      "title": "FlashAttentionScoreV4 外部 Padding 减少",
+      "kind": "operator",
+      "area": "attention",
+      "source_kind": "github_pr_author_report",
+      "source_url": "https://github.com/vllm-project/vllm-ascend/pull/13787",
+      "source_status": "open PR / unmerged when checked",
+      "hardware": "Ascend 950（原文未公开更细配置）",
+      "model": "作者自有多模态模型（型号未披露）",
+      "workload": {
+        "head_size": 80,
+        "operator": "MMEncoderAttention + FlashAttentionScoreV4",
+        "baseline": "3*(slice+pad)+FA+slice",
+        "candidate": "3*slice+FA",
+        "vllm": "v0.26.0"
+      },
+      "change": "VLLM_ASCEND_MM_ENCODER_ENABLE_PAD=0；仅底层 FA 能原生处理 80 维 head 时避免 pad 到 128",
+      "constraints": [
+        "原 PR 尚未合并，默认行为仍保留 padding",
+        "作者只报告百分比，没有可核对的原始前后耗时/重复样本",
+        "是多模态 Encoder Attention，不是全部 LLM FlashAttention 算子",
+        "head_size=128 情形本身不需要该外部 padding"
+      ],
+      "metrics": [],
+      "reported_only": [
+        {
+          "metric": "FA 单算子性能",
+          "value": 6.2,
+          "unit": "% improvement",
+          "statement": "作者声称 +6.2%；没有原始 before/after 时延，不提供伪造端点"
+        },
+        {
+          "metric": "ViT 单层性能",
+          "value": 1.7,
+          "unit": "% improvement",
+          "statement": "作者声称 +1.7%；不得当成整个模型端到端提升"
+        }
+      ],
+      "interpretation": "有效条件是新的 FA score 实现支持原始 head_size，优化内容是删除不必要的 slice/pad。"
+    },
+    {
+      "id": "ASC-MOE-001",
+      "title": "W8A8 MoE GMM1 权重 Scale 往返转换探针",
+      "kind": "operator",
+      "area": "moe",
+      "source_kind": "github_issue_probe",
+      "source_url": "https://github.com/vllm-project/vllm-ascend/issues/18452",
+      "source_status": "open performance proposal",
+      "hardware": "Ascend 910B2C · CANN 9.1.0 B243 · torch_npu 2.10.0.post4",
+      "model": "MiniMax-M3 W8A8_DYNAMIC（路径研究；探针非整模型部署）",
+      "workload": {
+        "shape_examples": [
+          "16×6144",
+          "128×768",
+          "128×6144"
+        ],
+        "warmup": 30,
+        "rounds": 7,
+        "calls_per_round": 200,
+        "measurement": "NPU Events amortized stream intervals",
+        "operator": "BF16→FP32→BF16 scale cast"
+      },
+      "change": "提议复用已有 BF16 Scale 避免每次 GMM1 cast；仅非 EPLB 栈式权重且生命周期允许",
+      "constraints": [
+        "尚无同一服务的变更前后 TPOT/TTFT，也没有图模式证明",
+        "5.5μs 是单次摊销流区间，可能包含调度间隙，不是孤立 Kernel 时间",
+        "EPLB 专家重映射会使既有 scale 不可复用",
+        "小型 INT8 NZ grouped-matmul 对照输出仅是 bitwise 相等证明"
+      ],
+      "metrics": [],
+      "reported_only": [
+        {
+          "metric": "BF16 Scale cast [16,6144]",
+          "value": 5.495,
+          "unit": "μs/call median",
+          "statement": "临时 BF16 张量 192 KiB"
+        },
+        {
+          "metric": "BF16 Scale cast [128,768]",
+          "value": 5.591,
+          "unit": "μs/call median",
+          "statement": "临时 BF16 张量 192 KiB"
+        },
+        {
+          "metric": "BF16 Scale cast [128,6144]",
+          "value": 5.485,
+          "unit": "μs/call median",
+          "statement": "临时 BF16 张量 1.5 MiB"
+        }
+      ],
+      "interpretation": "已有的冗余拷贝开销可量化，但整体 MoE GMM 优化仍处于提案验证阶段。"
+    },
+    {
+      "id": "ASC-MOE-002",
+      "title": "DeepSeek-R1 MoE 细粒度 TP：节省权重显存与 TPOT 权衡",
+      "kind": "service",
+      "area": "moe",
+      "source_kind": "official_feature_guide_measured",
+      "source_url": "https://github.com/vllm-project/vllm-ascend/blob/main/docs/source/user_guide/feature_guide/Fine_grained_TP.md",
+      "source_status": "current upstream feature guide snapshot 2026-11-01",
+      "hardware": "32 张 Atlas A2 推理卡，每卡 64 GB，DP32+EP32，TP size 8",
+      "model": "DeepSeek-R1-W8A8",
+      "workload": {
+        "batch": 24,
+        "context": "PD 分离 Decode 节点",
+        "components": [
+          "o_proj",
+          "LM head",
+          "MLP",
+          "Embedding"
+        ]
+      },
+      "change": "分别对特定模块沿 DP 维度细粒度切分权重",
+      "constraints": [
+        "文档给出各组件 TPOT 变化量但没有全部模块单独基线值",
+        "总计节省 9.72 GB 每卡；不能把分项 TPOT 无条件相加视为最终净变化",
+        "仅 MoE 模型；o_proj/MLP 要求特定 PD Decode、Graph、TP=1、重计算调度等前提",
+        "o_proj 本身 TPOT +1.5ms 退化，不能只报告获益项"
+      ],
+      "metrics": [],
+      "reported_only": [
+        {
+          "metric": "四组件合计每卡节省",
+          "value": 9.72,
+          "unit": "GB/card",
+          "statement": "已报告总量，非多个部署场景的累积叠加"
+        },
+        {
+          "metric": "o_proj TP8 每卡权重节省",
+          "value": 5.8,
+          "unit": "GB",
+          "statement": "TPOT +1.5ms（性能退化）"
+        },
+        {
+          "metric": "LM head TP8 每卡权重节省",
+          "value": 1.51,
+          "unit": "GB",
+          "statement": "TPOT -1.2ms（改善）"
+        },
+        {
+          "metric": "MLP TP8 每卡权重节省",
+          "value": 0.9,
+          "unit": "GB",
+          "statement": "TPOT -1.0ms（改善）"
+        },
+        {
+          "metric": "Embedding TP8 每卡权重节省",
+          "value": 1.51,
+          "unit": "GB",
+          "statement": "TPOT -1.0ms（改善）"
+        }
+      ],
+      "interpretation": "主要收益是每卡显存节省；性能受通信开销和分片粒度影响，包含明确退化反例。"
+    },
+    {
+      "id": "ASC-GDN-001",
+      "title": "GDN 与 KV Pool：分组数膨胀导致长上下文启动失败",
+      "kind": "service",
+      "area": "gdn",
+      "source_kind": "github_issue_report",
+      "source_url": "https://github.com/vllm-project/vllm-ascend/issues/20352",
+      "source_status": "open bug; integration build context",
+      "hardware": "16 张 Ascend A3；TP8/DP2/EP/MTP3",
+      "model": "Qwen3.8 Flash-Next hybrid QSA/GDN",
+      "workload": {
+        "max_model_len": 262144,
+        "mem_utilization": 0.9,
+        "cache_connector": "AscendStoreConnector",
+        "release": "v0.26 integration build, not plain public v0.26"
+      },
+      "change": "启用 KV transfer 路径后 maybe_merge_gdn_groups 跳过合法分组；与合并后的修复条件比较",
+      "constraints": [
+        "记录的是启动资源校验问题，不是推理吞吐改善",
+        "受该模型 GDN 布局、MTP、prefix 与物理 block ID 兼容约束",
+        "完整端到端恢复涉及三项组合修复，不能把结果归于单个 GDN gate"
+      ],
+      "metrics": [
+        {
+          "id": "groups",
+          "label": "GDN KV Cache Groups",
+          "before": 4,
+          "after": 39,
+          "unit": "groups",
+          "scope": "configuration_impact",
+          "direction": "higher",
+          "comparable": false
+        }
+      ],
+      "reported_only": [
+        {
+          "metric": "最大上下文所需 KV",
+          "value": 19.45,
+          "unit": "GiB",
+          "statement": "故障配置 39 groups 下的内存需求"
+        },
+        {
+          "metric": "可用 KV 空间",
+          "value": 15.47,
+          "unit": "GiB",
+          "statement": "服务启动失败：需求超出可用空间"
+        }
+      ],
+      "interpretation": "证明兼容的 cache 分组策略会显著改变可用 KV 预算；不能以固定 KV byte override 代替根因修复。"
+    },
+    {
+      "id": "ASC-COMM-001",
+      "title": "FULL Decode Graph 导致 HCCL AllReduce 1 秒级慢路径",
+      "kind": "service",
+      "area": "communication",
+      "source_kind": "github_issue_report",
+      "source_url": "https://github.com/vllm-project/vllm-ascend/issues/10088",
+      "source_status": "open bug at reviewed snapshot",
+      "hardware": "Ascend NPU TP=4；vLLM-Ascend 0.20.2 / CANN 9.0.0",
+      "model": "Qwen3.6-27B hybrid GDN+Full Attention",
+      "workload": {
+        "max_concurrency": 10,
+        "num_prompts": 100,
+        "max_model_len": 16384,
+        "comparison": [
+          "FULL_DECODE_ONLY",
+          "PIECEWISE",
+          "eager"
+        ],
+        "speculative_decoding": false
+      },
+      "change": "比较同一配置下 cudagraph 模式 FULL / PIECEWISE / eager，FULL 出现特定 hcom_allReduce 慢路径",
+      "constraints": [
+        "这是一条回归/规避案例，不是用户本地环境可直接照搬的全局性能建议",
+        "只在该作者的混合模型 TP4 复现，同 TP4 Qwen3-8B dense 没出现",
+        "1051ms 为单次异常 allReduce，不是整步 TPOT",
+        "Issue 数据尚无本项目原始 trace CSV 或多次分布"
+      ],
+      "metrics": [
+        {
+          "id": "tpot-median",
+          "label": "TPOT 中位数：FULL vs PIECEWISE",
+          "before": 1719.37,
+          "after": 105.9,
+          "unit": "ms",
+          "scope": "mode_comparison_tpot",
+          "direction": "lower",
+          "comparable": false
+        },
+        {
+          "id": "throughput",
+          "label": "输出吞吐：FULL vs PIECEWISE",
+          "before": 5.82,
+          "after": 90.01,
+          "unit": "tok/s",
+          "scope": "mode_comparison_throughput",
+          "direction": "higher",
+          "comparable": false
+        },
+        {
+          "id": "ttft",
+          "label": "平均 TTFT：FULL vs PIECEWISE",
+          "before": 1363,
+          "after": 1094,
+          "unit": "ms",
+          "scope": "mode_comparison_ttft",
+          "direction": "lower",
+          "comparable": false
+        }
+      ],
+      "reported_only": [
+        {
+          "metric": "FULL 模式异常单次 AllReduce",
+          "value": 1051,
+          "unit": "ms",
+          "statement": "一次 execute_model 有一次约 1 秒的 hcom_allReduce 慢路径"
+        },
+        {
+          "metric": "eager TPOT 中位数",
+          "value": 208.04,
+          "unit": "ms",
+          "statement": "第三个配置状态，不属于 Full→Piecewise 的变化端点"
+        }
+      ],
+      "interpretation": "图模式与异步通信存在交互性异常；是特定配置的故障排查证据，不能泛化成所有 FULL Graph 都慢。"
+    },
+    {
+      "id": "ASC-COMM-002",
+      "title": "GLM-5.2 Prefill DCP 集合通信占比回退",
+      "kind": "service",
+      "area": "communication",
+      "source_kind": "github_issue_regression",
+      "source_url": "https://github.com/vllm-project/vllm-ascend/issues/13973",
+      "source_status": "closed issue at reviewed snapshot",
+      "hardware": "Ascend 910 × 16 cards，DCP8/TP8/EP32；相同并行拓扑",
+      "model": "GLM-5.2 W4A8",
+      "workload": {
+        "context": "P-node prefill only",
+        "versions": [
+          "v0.23",
+          "v0.26rc"
+        ],
+        "bench_num": 1000,
+        "concurrency": 64,
+        "output_len_v023": 700,
+        "output_len_v026": 1,
+        "cann_versions": [
+          "9.0.0",
+          "9.0.1"
+        ]
+      },
+      "change": "跨软件版本比较：DCP collective 非重叠通信占比升高，作者在 Profile 中定位 DispatchFFNCombineW4A8 退化",
+      "constraints": [
+        "v0.23 输出 700，v0.26 输出 1，QPS/TPOT/吞吐不是 apples-to-apples",
+        "CANN 与 torch_npu 版本不同，不能认定单个代码修改造成退化",
+        "Profiler 中的通讯占比与算子时间属于单独口径，不能与端到端延迟连乘",
+        "该 issue 的 TTFT 作者认为可比较，但该判断仍受缓存/到达分布和版本变化影响"
+      ],
+      "metrics": [
+        {
+          "id": "nonoverlap",
+          "label": "单步非重叠 DCP 通信占比",
+          "before": 1.58,
+          "after": 8.19,
+          "unit": "%",
+          "scope": "profile_step_nonoverlap_share",
+          "direction": "lower",
+          "comparable": false
+        },
+        {
+          "id": "ffn",
+          "label": "DispatchFFNCombineW4A8 单次耗时",
+          "before": 15.2,
+          "after": 22.6,
+          "unit": "ms",
+          "scope": "profile_ffn_operator",
+          "direction": "lower",
+          "comparable": false
+        },
+        {
+          "id": "ttft-p50",
+          "label": "Prefill TTFT P50",
+          "before": 7617,
+          "after": 54296,
+          "unit": "ms",
+          "scope": "service_ttft_p50",
+          "direction": "lower",
+          "comparable": false
+        }
+      ],
+      "reported_only": [
+        {
+          "metric": "P-node Prefill 吞吐 v0.23",
+          "value": 38811,
+          "unit": "prompt tok/s",
+          "statement": "v0.26 报告 29911 tok/s，但输出长不同，不做同负载严格配对"
+        },
+        {
+          "metric": "DCP 集合通讯流量变化",
+          "value": 5,
+          "unit": "～6倍",
+          "statement": "作者估算，不等同于实测通信带宽倍数"
+        }
+      ],
+      "interpretation": "Prefill 多卡通信可能成为核心瓶颈；不同输出长度/版本会限制对结果的因果归因。"
+    },
+    {
+      "id": "ASC-SPEC-001",
+      "title": "GDN 模型的推测解码 Accept-Length 与开销权衡",
+      "kind": "service",
+      "area": "gdn",
+      "source_kind": "github_rfc_report",
+      "source_url": "https://github.com/vllm-project/vllm-ascend/issues/18797",
+      "source_status": "RFC / implementation in private repo",
+      "hardware": "2×A2B3、TP2（作者记录，具体卡定义见其部署）",
+      "model": "Qwen3.8-27B / DSpark",
+      "workload": {
+        "dataset": "GSM8K",
+        "temperature": 0,
+        "accept_len_from": 4.9,
+        "accept_len_to": 5.8,
+        "model_hybrid": "GDN"
+      },
+      "change": "扩大推测树预算，accept length 由 4.9 到 5.8",
+      "constraints": [
+        "还没有同配置 TPOT/TPS 前后记录，不可推断提速",
+        "作者明确提醒 GDN 状态搬运是额外开销；有潜在净负收益",
+        "功能在私有仓库迭代，不能声称公开可复现或已合并主线"
+      ],
+      "metrics": [],
+      "reported_only": [
+        {
+          "metric": "接收长度 before",
+          "value": 4.9,
+          "unit": "tokens",
+          "statement": "扩展前作者报告"
+        },
+        {
+          "metric": "接收长度 after",
+          "value": 5.8,
+          "unit": "tokens",
+          "statement": "扩展后作者报告；该指标并不保证性能提升"
+        }
+      ],
+      "interpretation": "更多接受 token 不等于更低 TPOT：需减去 GDN 状态搬运、验证和额外草稿计算。"
+    }
+  ],
+  "source_trust_policy": "Unmerged PR and GitHub issue figures are author-reported. Official guide deployments are guide-reported results. No NPU measurements obtained by this project. Unlike metric scopes and confounded versions are never aggregated.",
+  "case_count": 7,
+  "paired_observations": 7,
+  "unpaired_observations": 18,
+  "categories": [
+    "attention",
+    "moe",
+    "gdn",
+    "communication"
+  ],
+  "documentation_links": [
+    {
+      "url": "https://docs.vllm.ai/projects/ascend/en/v0.30.0/user_guide/release_notes.html",
+      "title": "vLLM-Ascend v0.30 official release, guards and model scope"
+    },
+    {
+      "url": "https://github.com/vllm-project/vllm-ascend/blob/main/docs/source/tutorials/models/GLM5.md",
+      "title": "GLM5 MoE Fused MC2 / FlashComm applicable conditions"
+    }
+  ]
+}

@@ -1,0 +1,216 @@
+{
+  "schemaVersion": "2.0-design",
+  "asOf": "2026-11-01",
+  "navigation": [
+    {
+      "id": "M00",
+      "hash": "#overview",
+      "title": "总览因果链"
+    },
+    {
+      "id": "M01",
+      "hash": "#hardware",
+      "title": "产品与芯片族谱"
+    },
+    {
+      "id": "M02",
+      "hash": "#anatomy",
+      "title": "AI Core 四层解剖"
+    },
+    {
+      "id": "M03",
+      "hash": "#stack",
+      "title": "软件栈与兼容性"
+    },
+    {
+      "id": "M04",
+      "hash": "#lifecycle",
+      "title": "推理生命周期"
+    },
+    {
+      "id": "M05",
+      "hash": "#factors",
+      "title": "推理性能影响地图"
+    },
+    {
+      "id": "M06",
+      "hash": "#operators",
+      "title": "算子显微镜"
+    },
+    {
+      "id": "M07",
+      "hash": "#optimization",
+      "title": "性能症状与加速验证"
+    },
+    {
+      "id": "M08",
+      "hash": "#evidence",
+      "title": "案例与研发成果"
+    }
+  ],
+  "modules": [
+    {
+      "id": "M00",
+      "hash": "#overview",
+      "title": "总览因果链",
+      "interaction": "token-flow",
+      "behavior": "节点选中后打开解释抽屉",
+      "acceptance": [
+        "六个环节完整",
+        "动线不压字",
+        "没有假指标"
+      ],
+      "implementationStatus": "design_only",
+      "keyboard": "Tab Enter Space Escape",
+      "evidenceDrawer": true,
+      "motion": "reduced-motion-safe"
+    },
+    {
+      "id": "M01",
+      "hash": "#hardware",
+      "title": "产品与芯片族谱",
+      "interaction": "hardware-drilldown",
+      "behavior": "形态→系列→SKU→处理器架构",
+      "acceptance": [
+        "卡/服务器/处理器不混同",
+        "产品数据有来源",
+        "未核验字段为空"
+      ],
+      "implementationStatus": "design_only",
+      "keyboard": "Tab Enter Space Escape",
+      "evidenceDrawer": true,
+      "motion": "reduced-motion-safe"
+    },
+    {
+      "id": "M02",
+      "hash": "#anatomy",
+      "title": "AI Core 四层解剖",
+      "interaction": "compute-dataflow",
+      "behavior": "设备→NPU→AI Core→存储数据流",
+      "acceptance": [
+        "Cube/Vector/Scalar/GM/UB/L1/L0/MTE可点",
+        "AIC/AIV版本区分",
+        "两种数据流逐帧"
+      ],
+      "implementationStatus": "design_only",
+      "keyboard": "Tab Enter Space Escape",
+      "evidenceDrawer": true,
+      "motion": "reduced-motion-safe"
+    },
+    {
+      "id": "M03",
+      "hash": "#stack",
+      "title": "软件栈与兼容性",
+      "interaction": "stack-dependency",
+      "behavior": "点击任意软件层展开输入/版本/约束",
+      "acceptance": [
+        "六层不丢",
+        "功能存在和兼容区分",
+        "可查上游版本来源"
+      ],
+      "implementationStatus": "design_only",
+      "keyboard": "Tab Enter Space Escape",
+      "evidenceDrawer": true,
+      "motion": "reduced-motion-safe"
+    },
+    {
+      "id": "M04",
+      "hash": "#lifecycle",
+      "title": "推理生命周期",
+      "interaction": "token-timeline",
+      "behavior": "输入/输出/并发切换概念示意与指标范围",
+      "acceptance": [
+        "Prefill Decode分轨",
+        "TTFT TPOT P95定义显示",
+        "没有假ms/tps"
+      ],
+      "implementationStatus": "design_only",
+      "keyboard": "Tab Enter Space Escape",
+      "evidenceDrawer": true,
+      "motion": "reduced-motion-safe"
+    },
+    {
+      "id": "M05",
+      "hash": "#factors",
+      "title": "推理性能影响地图",
+      "interaction": "causal-map",
+      "behavior": "单一因素→资源→阶段→指标→量测",
+      "acceptance": [
+        "至少8条路径",
+        "每条说明反例",
+        "连线不穿节点"
+      ],
+      "implementationStatus": "design_only",
+      "keyboard": "Tab Enter Space Escape",
+      "evidenceDrawer": true,
+      "motion": "reduced-motion-safe"
+    },
+    {
+      "id": "M06",
+      "hash": "#operators",
+      "title": "算子显微镜",
+      "interaction": "operator-story",
+      "behavior": "七种算子六帧分镜与来源抽屉",
+      "acceptance": [
+        "7种×6帧可切",
+        "输入/访存/回退齐全",
+        "上游特定guard不泛化"
+      ],
+      "implementationStatus": "design_only",
+      "keyboard": "Tab Enter Space Escape",
+      "evidenceDrawer": true,
+      "motion": "reduced-motion-safe"
+    },
+    {
+      "id": "M07",
+      "hash": "#optimization",
+      "title": "性能症状与加速验证",
+      "interaction": "bottleneck-path",
+      "behavior": "症状→至少两个可能根因→证据→候选→回退",
+      "acceptance": [
+        "不在无profile时给最优倍数",
+        "正确性与兼容门槛",
+        "反例展示"
+      ],
+      "implementationStatus": "design_only",
+      "keyboard": "Tab Enter Space Escape",
+      "evidenceDrawer": true,
+      "motion": "reduced-motion-safe"
+    },
+    {
+      "id": "M08",
+      "hash": "#evidence",
+      "title": "案例与研发成果",
+      "interaction": "evidence-graph",
+      "behavior": "从既有15案例/12PR/8风险/5结构打开知识图谱",
+      "acceptance": [
+        "来源归属清晰",
+        "DeepSeek GLM仅待研究入口",
+        "软件原型和NPU实测分开"
+      ],
+      "implementationStatus": "design_only",
+      "keyboard": "Tab Enter Space Escape",
+      "evidenceDrawer": true,
+      "motion": "reduced-motion-safe"
+    }
+  ],
+  "designBreakpoints": [
+    375,
+    768,
+    1024,
+    1440
+  ],
+  "maxContentWidth": 1360,
+  "scope": {
+    "phase": "design_only",
+    "hasNPUResults": false,
+    "legacyQwenDashboardUntouched": true
+  },
+  "requiredModes": [
+    "教学示意",
+    "官方证据",
+    "第三方作者报告",
+    "项目软件测试",
+    "实机待测"
+  ]
+}

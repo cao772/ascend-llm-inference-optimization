@@ -1,0 +1,116 @@
+{
+  "schemaVersion": "2.2-teaching-architecture",
+  "asOf": "2026-11-01",
+  "sourceUrl": "https://www.hiascend.com/document/detail/zh/canncommercial/80RC22/developmentguide/opdevg/Ascendcopdevg/atlas_ascendc_10_0019.html",
+  "sourceTitle": "Ascend C 8.0.RC2.2 AIC/AIV 硬件架构与典型计算数据流",
+  "scope": "AIC/AIV shown for the architecture variant described in the cited document. Not a universal physical diagram for all Ascend chips.",
+  "paths": [
+    {
+      "id": "gemm",
+      "label": "Cube：矩阵计算通路",
+      "engine": "AIC / Cube",
+      "flowType": "typical_architecture",
+      "color": "#69dfd2",
+      "steps": [
+        {
+          "id": "gm-input",
+          "name": "GM",
+          "detail": "从 Global Memory 中读取矩阵分块。",
+          "question": "输入分块是否重复访存？",
+          "verify": "GM 读取量、矩阵 M/N/K、Tile 复用"
+        },
+        {
+          "id": "l1",
+          "name": "L1",
+          "detail": "通过 DMA 搬入 L1 作为下一阶段加载的片内缓存。",
+          "question": "分块是否适合片内缓存？",
+          "verify": "搬入耗时、L1 容量与分块策略"
+        },
+        {
+          "id": "l0ab",
+          "name": "L0A / L0B",
+          "detail": "左/右输入矩阵分别加载到 Cube 专用片上缓存。",
+          "question": "是否有布局转换或加载等待？",
+          "verify": "L0 装载与布局转换阶段"
+        },
+        {
+          "id": "cube",
+          "name": "Cube",
+          "detail": "执行分块矩阵运算，累加结果进入 L0C。",
+          "question": "小 M/N/K 会导致利用率不足吗？",
+          "verify": "实际 Cube 时间、形状和并行占用"
+        },
+        {
+          "id": "l0c",
+          "name": "L0C",
+          "detail": "暂存矩阵乘累加结果。",
+          "question": "结果是否被过早写回 GM？",
+          "verify": "L0C 写回频次及融合链"
+        },
+        {
+          "id": "fixpipe",
+          "name": "FixPipe",
+          "detail": "在该 AIC 架构的典型路径中执行结果转换/搬运环节。",
+          "question": "是否新增布局/类型变换？",
+          "verify": "FixPipe 相关 trace 与输出 dtype"
+        },
+        {
+          "id": "gm-output",
+          "name": "GM 写回",
+          "detail": "将结果送回外部存储，也可能按所选 kernel 继续局部使用。",
+          "question": "是否可避免中间结果反复写回？",
+          "verify": "端到端 GM IO 与正确性"
+        }
+      ]
+    },
+    {
+      "id": "vector",
+      "label": "Vector：向量运算通路",
+      "engine": "AIV / Vector",
+      "flowType": "typical_architecture",
+      "color": "#92bfff",
+      "steps": [
+        {
+          "id": "gm-read",
+          "name": "GM",
+          "detail": "读取向量输入/归一化张量，进入片内缓存。",
+          "question": "输入是否重复读取？",
+          "verify": "GM read/写回量和 tensor shape"
+        },
+        {
+          "id": "ub-in",
+          "name": "UB",
+          "detail": "把向量数据暂存在 Unified Buffer。",
+          "question": "数据重用/布局是否合适？",
+          "verify": "UB 内 tile、layout、搬运等待"
+        },
+        {
+          "id": "vector-op",
+          "name": "Vector",
+          "detail": "计算逐元素运算、归约/归一化的一部分。",
+          "question": "Kernel 过碎、归约同步是否明显？",
+          "verify": "Vector Kernel 次数、归约/访存时间"
+        },
+        {
+          "id": "ub-out",
+          "name": "UB 结果",
+          "detail": "局部保存运算输出，准备写回或继续融合。",
+          "question": "能否减少额外中间张量回写？",
+          "verify": "访存总量与融合正确性"
+        },
+        {
+          "id": "gm-write",
+          "name": "GM 写回",
+          "detail": "写出最终结果到 Global Memory。",
+          "question": "最终数据写回是否成为关键路径？",
+          "verify": "写入耗时、E2E/质量验收"
+        }
+      ]
+    }
+  ],
+  "guardrails": [
+    "数据流为官方特定架构的典型流程；不同处理器需单独确认 AIC/AIV/L0/UB 支持路径。",
+    "显示高亮的节点为教学步骤，不代表硬件动态测量或实际 trace。",
+    "优化提示是条件性问题，不能推测具体吞吐、延迟或加速倍数。"
+  ]
+}

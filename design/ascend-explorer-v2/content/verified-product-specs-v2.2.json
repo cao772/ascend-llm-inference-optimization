@@ -1,0 +1,114 @@
+{
+  "schemaVersion": "2.2-verified-specifications",
+  "asOf": "2026-11-01",
+  "note": "Values are scoped to the exact product and unit. Alternative capacities are variants, not an additive capacity. Server-wide interconnect is not single-NPU memory bandwidth. 这些厂商规格是产品参数，非实测的大模型推理速度，不等于本项目已有 TTFT/TPOT/TPS 成果。",
+  "products": [
+    {
+      "id": "atlas-300i-duo",
+      "productName": "Atlas 300I Duo 推理卡",
+      "level": "card",
+      "vendor": "华为",
+      "sourceUrl": "https://e.huawei.com/cn/products/computing/ascend/atlas-300i-duo",
+      "sourceTitle": "Atlas 300I Duo 推理卡：技术规格",
+      "specs": [
+        {
+          "id": "fp16",
+          "label": "FP16 峰值算力",
+          "value": 140,
+          "unit": "TFLOPS",
+          "scope": "整卡 / FP16",
+          "kind": "peak"
+        },
+        {
+          "id": "int8",
+          "label": "INT8 峰值算力",
+          "value": 280,
+          "unit": "TOPS",
+          "scope": "整卡 / INT8",
+          "kind": "peak"
+        },
+        {
+          "id": "device-memory",
+          "label": "LPDDR4X 容量选项",
+          "values": [
+            48,
+            96
+          ],
+          "unit": "GB",
+          "scope": "整卡两种配置，非 48+96 GB",
+          "kind": "variant"
+        },
+        {
+          "id": "memory-bandwidth",
+          "label": "LPDDR4X 总带宽",
+          "value": 408,
+          "unit": "GB/s",
+          "scope": "整卡",
+          "kind": "peak"
+        },
+        {
+          "id": "board-power",
+          "label": "标示功耗",
+          "value": 150,
+          "unit": "W",
+          "scope": "整卡产品页标称功耗",
+          "kind": "nominal"
+        }
+      ],
+      "limitations": [
+        "参数仅对 Atlas 300I Duo 整卡有效；不能套到 310P 单芯片或 300I Pro。",
+        "INT8 TOPS 与 FP16 TFLOPS 不能直接作同一精度性能排名。",
+        "48 GB 和 96 GB 是可选配置而非叠加。",
+        "标称算力不代表实际 LLM TPS/TPOT。"
+      ]
+    },
+    {
+      "id": "atlas-800i-a2",
+      "productName": "Atlas 800I A2 推理服务器",
+      "level": "server",
+      "vendor": "华为",
+      "sourceUrl": "https://e.huawei.com/cn/products/computing/ascend/atlas-800i-a2",
+      "sourceTitle": "Atlas 800I A2 推理服务器：技术规格",
+      "specs": [
+        {
+          "id": "chassis",
+          "label": "服务器机箱",
+          "value": 4,
+          "unit": "U",
+          "scope": "整机",
+          "kind": "form"
+        },
+        {
+          "id": "modules",
+          "label": "推理模组",
+          "value": 8,
+          "unit": "模组",
+          "scope": "产品页面所述整机方案",
+          "kind": "architecture"
+        },
+        {
+          "id": "host-cpu",
+          "label": "主机 CPU",
+          "value": 4,
+          "unit": "颗鲲鹏920",
+          "scope": "整机",
+          "kind": "configuration"
+        },
+        {
+          "id": "interconnect",
+          "label": "可选 NPU 全互联带宽",
+          "value": 392,
+          "unit": "GB/s",
+          "scope": "特定可选全互联整机配置",
+          "kind": "variant"
+        }
+      ],
+      "limitations": [
+        "392 GB/s 是可选全互联机型的整机互联参数，不是单 NPU HBM 带宽。",
+        "4U、8 模组、CPU 参数为整机维度，不能混为单芯片规格。",
+        "未通过本资料核验所有 SKU 的 NPU 单卡 HBM 容量。",
+        "不能从产品描述推断单个模型已通过实机部署。"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,443 @@
+{
+  "schemaVersion": "2.0-design",
+  "frameContract": [
+    "input",
+    "execution",
+    "memory",
+    "bottleneck",
+    "optimization",
+    "validation"
+  ],
+  "asOf": "2026-11-01",
+  "stories": [
+    {
+      "id": "gemm",
+      "title": "MatMul / GEMM",
+      "stages": [
+        "prefill",
+        "decode"
+      ],
+      "claimLevel": "derived_inference",
+      "sourceUrls": [
+        "https://www.hiascend.com/document/detail/en/CANNCommunityEdition/910/programug/Ascendcopdevg/docs/en/guide/programming_guide/advanced_programming/hardware_implementation/basic_architecture.md"
+      ],
+      "frames": [
+        {
+          "index": 1,
+          "slug": "input",
+          "label": "输入 M/N/K 与矩阵布局",
+          "kind": "conceptual_diagram",
+          "observed": false
+        },
+        {
+          "index": 2,
+          "slug": "execution",
+          "label": "Cube 分块矩阵计算",
+          "kind": "conceptual_diagram",
+          "observed": false
+        },
+        {
+          "index": 3,
+          "slug": "memory",
+          "label": "GM→L1→L0A/B→Cube→L0C 数据流",
+          "kind": "conceptual_diagram",
+          "observed": false
+        },
+        {
+          "index": 4,
+          "slug": "bottleneck",
+          "label": "小 M / 低复用 / 不合适 tile 等候选瓶颈",
+          "kind": "conceptual_diagram",
+          "observed": false
+        },
+        {
+          "index": 5,
+          "slug": "optimization",
+          "label": "分块复用、融合、量化与额外布局转换的逻辑对照",
+          "kind": "conceptual_diagram",
+          "observed": false
+        },
+        {
+          "index": 6,
+          "slug": "validation",
+          "label": "核查精度/shape/实际 kernel 和 profiler 才能裁决",
+          "kind": "evidence_or_validation",
+          "observed": false
+        }
+      ],
+      "limitations": [
+        "不同架构 L0 路径不可一概泛化"
+      ],
+      "localPerformanceEvidence": false
+    },
+    {
+      "id": "rmsnorm",
+      "title": "RMSNorm / Residual",
+      "stages": [
+        "prefill",
+        "decode"
+      ],
+      "claimLevel": "derived_inference",
+      "sourceUrls": [
+        "https://www.hiascend.com/document/detail/en/CANNCommunityEdition/910/programug/Ascendcopdevg/docs/en/guide/programming_guide/advanced_programming/hardware_implementation/basic_architecture.md",
+        "https://github.com/sgl-project/sglang/pull/24629"
+      ],
+      "frames": [
+        {
+          "index": 1,
+          "slug": "input",
+          "label": "输入张量与残差",
+          "kind": "conceptual_diagram",
+          "observed": false
+        },
+        {
+          "index": 2,
+          "slug": "execution",
+          "label": "求平方均值、归一化和加权",
+          "kind": "conceptual_diagram",
+          "observed": false
+        },
+        {
+          "index": 3,
+          "slug": "memory",
+          "label": "Vector/Local memory/GM 往返示意",
+          "kind": "conceptual_diagram",
+          "observed": false
+        },
+        {
+          "index": 4,
+          "slug": "bottleneck",
+          "label": "小算子反复读取写回、同步损耗",
+          "kind": "conceptual_diagram",
+          "observed": false
+        },
+        {
+          "index": 5,
+          "slug": "optimization",
+          "label": "相邻子图融合的访存减少及归约顺序变化",
+          "kind": "conceptual_diagram",
+          "observed": false
+        },
+        {
+          "index": 6,
+          "slug": "validation",
+          "label": "精度、确定性与新版融合代码是否存在",
+          "kind": "evidence_or_validation",
+          "observed": false
+        }
+      ],
+      "limitations": [
+        "融合可能改变浮点归约顺序，已知确定性回退"
+      ],
+      "localPerformanceEvidence": false
+    },
+    {
+      "id": "attention-gdn",
+      "title": "Attention / GDN",
+      "stages": [
+        "prefill",
+        "decode"
+      ],
+      "claimLevel": "derived_inference",
+      "sourceUrls": [
+        "https://github.com/flashinfer-ai/flashinfer/pull/3001",
+        "https://github.com/vllm-project/vllm/pull/51674"
+      ],
+      "frames": [
+        {
+          "index": 1,
+          "slug": "input",
+          "label": "Q/K/V 与 GDN recurrent state 两种结构输入",
+          "kind": "conceptual_diagram",
+          "observed": false
+        },
+        {
+          "index": 2,
+          "slug": "execution",
+          "label": "Prefill 与 Decode 完全不同的计算步骤",
+          "kind": "conceptual_diagram",
+          "observed": false
+        },
+        {
+          "index": 3,
+          "slug": "memory",
+          "label": "KV/cache 与 recurrent state 访问路径",
+          "kind": "conceptual_diagram",
+          "observed": false
+        },
+        {
+          "index": 4,
+          "slug": "bottleneck",
+          "label": "长输入 / state 操作 / layout 转换候选热点",
+          "kind": "conceptual_diagram",
+          "observed": false
+        },
+        {
+          "index": 5,
+          "slug": "optimization",
+          "label": "Prefill Kernel 和 Decode/MTP 融合方案分别示意",
+          "kind": "conceptual_diagram",
+          "observed": false
+        },
+        {
+          "index": 6,
+          "slug": "validation",
+          "label": "分别检查阶段/平台/头比/状态更新正确性",
+          "kind": "evidence_or_validation",
+          "observed": false
+        }
+      ],
+      "limitations": [
+        "上游特定 MTP CUDA Kernel 的 8:1 guard 非普适限制",
+        "FlashInfer GDN prefill 与 vLLM GDN MTP Decode 不是同一实现"
+      ],
+      "localPerformanceEvidence": false
+    },
+    {
+      "id": "kv-cache",
+      "title": "KV Cache 与缓存管理",
+      "stages": [
+        "prefill",
+        "decode"
+      ],
+      "claimLevel": "derived_inference",
+      "sourceUrls": [
+        "https://docs.vllm.ai/projects/ascend/en/v0.30.0/user_guide/release_notes.html"
+      ],
+      "frames": [
+        {
+          "index": 1,
+          "slug": "input",
+          "label": "历史 Token 的 KV 逻辑块",
+          "kind": "conceptual_diagram",
+          "observed": false
+        },
+        {
+          "index": 2,
+          "slug": "execution",
+          "label": "Prefill 建立、Decode 读取、分页复用",
+          "kind": "conceptual_diagram",
+          "observed": false
+        },
+        {
+          "index": 3,
+          "slug": "memory",
+          "label": "NPU GM 中缓存与请求页表示意",
+          "kind": "conceptual_diagram",
+          "observed": false
+        },
+        {
+          "index": 4,
+          "slug": "bottleneck",
+          "label": "长上下文内存压力、碎片、未命中",
+          "kind": "conceptual_diagram",
+          "observed": false
+        },
+        {
+          "index": 5,
+          "slug": "optimization",
+          "label": "分页/前缀缓存/精度/压缩的流程对照",
+          "kind": "conceptual_diagram",
+          "observed": false
+        },
+        {
+          "index": 6,
+          "slug": "validation",
+          "label": "校验命中、正确性、内存峰值和 E2E",
+          "kind": "evidence_or_validation",
+          "observed": false
+        }
+      ],
+      "limitations": [
+        "GDN recurrent state 不等同于传统 Full Attention 的 KV Cache"
+      ],
+      "localPerformanceEvidence": false
+    },
+    {
+      "id": "moe",
+      "title": "MoE Routing / Grouped GEMM",
+      "stages": [
+        "prefill",
+        "decode"
+      ],
+      "claimLevel": "derived_inference",
+      "sourceUrls": [
+        "https://nvidia.github.io/TensorRT-LLM/latest/developer-guide/moe-perf-guide.html",
+        "https://github.com/cao772/ascend-llm-inference-optimization/blob/research/2026-10-30-foundation/research/cases/qwen-optimization-cases-2026-10-30.json"
+      ],
+      "frames": [
+        {
+          "index": 1,
+          "slug": "input",
+          "label": "Router logits、TopK、专家权重",
+          "kind": "conceptual_diagram",
+          "observed": false
+        },
+        {
+          "index": 2,
+          "slug": "execution",
+          "label": "TopK→Dispatch→Experts→Combine",
+          "kind": "conceptual_diagram",
+          "observed": false
+        },
+        {
+          "index": 3,
+          "slug": "memory",
+          "label": "跨卡 AllToAll 与 grouped GEMM 形状",
+          "kind": "conceptual_diagram",
+          "observed": false
+        },
+        {
+          "index": 4,
+          "slug": "bottleneck",
+          "label": "expert token 偏斜导致等待与小矩阵利用率",
+          "kind": "conceptual_diagram",
+          "observed": false
+        },
+        {
+          "index": 5,
+          "slug": "optimization",
+          "label": "专家排序/分组/共享专家 overlap 示意",
+          "kind": "conceptual_diagram",
+          "observed": false
+        },
+        {
+          "index": 6,
+          "slug": "validation",
+          "label": "真实路由直方图和 TP/EP 负载验证",
+          "kind": "evidence_or_validation",
+          "observed": false
+        }
+      ],
+      "limitations": [
+        "均匀路由微基准不代表线上负载",
+        "无 MoE 的 Dense 模型不应显示 Router 专题为直接适用"
+      ],
+      "localPerformanceEvidence": false
+    },
+    {
+      "id": "collectives",
+      "title": "AllReduce / Collectives",
+      "stages": [
+        "prefill",
+        "decode"
+      ],
+      "claimLevel": "derived_inference",
+      "sourceUrls": [
+        "https://docs.vllm.ai/projects/ascend/en/v0.30.0/user_guide/feature_guide/sequence_parallelism.html",
+        "https://github.com/sgl-project/sglang/pull/23402"
+      ],
+      "frames": [
+        {
+          "index": 1,
+          "slug": "input",
+          "label": "TP/EP ranks 上的分片张量",
+          "kind": "conceptual_diagram",
+          "observed": false
+        },
+        {
+          "index": 2,
+          "slug": "execution",
+          "label": "AllReduce/AllGather/ReduceScatter 的数据拼接",
+          "kind": "conceptual_diagram",
+          "observed": false
+        },
+        {
+          "index": 3,
+          "slug": "memory",
+          "label": "NPU 间通信链路与等待阶段",
+          "kind": "conceptual_diagram",
+          "observed": false
+        },
+        {
+          "index": 4,
+          "slug": "bottleneck",
+          "label": "通信等待、带宽与同步、拓扑影响",
+          "kind": "conceptual_diagram",
+          "observed": false
+        },
+        {
+          "index": 5,
+          "slug": "optimization",
+          "label": "SP/融合/Overlap 的路径变化",
+          "kind": "conceptual_diagram",
+          "observed": false
+        },
+        {
+          "index": 6,
+          "slug": "validation",
+          "label": "死锁/确定性/新版本功能删除验证",
+          "kind": "evidence_or_validation",
+          "observed": false
+        }
+      ],
+      "limitations": [
+        "同名融合不同平台实现不可直接移植",
+        "回退后重新引入的 PR 生命周期要保留"
+      ],
+      "localPerformanceEvidence": false
+    },
+    {
+      "id": "graph-mtp",
+      "title": "Graph / Static Kernel / MTP",
+      "stages": [
+        "decode",
+        "prefill"
+      ],
+      "claimLevel": "derived_inference",
+      "sourceUrls": [
+        "https://docs.vllm.ai/projects/ascend/en/v0.30.0/user_guide/feature_guide/graph_mode.html",
+        "https://github.com/vllm-project/vllm/pull/51674"
+      ],
+      "frames": [
+        {
+          "index": 1,
+          "slug": "input",
+          "label": "普通逐步 Decode 与多个小 Kernel 启动",
+          "kind": "conceptual_diagram",
+          "observed": false
+        },
+        {
+          "index": 2,
+          "slug": "execution",
+          "label": "Graph Capture 或投机草稿/验证的执行步骤",
+          "kind": "conceptual_diagram",
+          "observed": false
+        },
+        {
+          "index": 3,
+          "slug": "memory",
+          "label": "Host Dispatch、Cache、编译与状态回退",
+          "kind": "conceptual_diagram",
+          "observed": false
+        },
+        {
+          "index": 4,
+          "slug": "bottleneck",
+          "label": "高 Host gap、图 miss、低接受率候选热点",
+          "kind": "conceptual_diagram",
+          "observed": false
+        },
+        {
+          "index": 5,
+          "slug": "optimization",
+          "label": "Static/Super Kernel/ MTP 前后逻辑对照",
+          "kind": "conceptual_diagram",
+          "observed": false
+        },
+        {
+          "index": 6,
+          "slug": "validation",
+          "label": "Profiler 命中、正确性、编译代价和自然接受率验收",
+          "kind": "evidence_or_validation",
+          "observed": false
+        }
+      ],
+      "limitations": [
+        "Super Kernel 依赖 Static Kernel 与 Npugraph_ex 的版本前提",
+        "教学动画不能以模拟接受率推出真实加速"
+      ],
+      "localPerformanceEvidence": false
+    }
+  ]
+}

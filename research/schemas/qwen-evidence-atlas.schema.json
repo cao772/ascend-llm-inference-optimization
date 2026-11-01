@@ -1,0 +1,213 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/cao772/ascend-llm-inference-optimization/blob/research/2026-10-30-foundation/research/schemas/qwen-evidence-atlas.schema.json",
+  "title": "Qwen inference research evidence atlas v2",
+  "description": "Research graph with provenance, NOT runtime compatibility or speedup certification.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "scope",
+    "project_hardware_measurements",
+    "counts",
+    "nodes",
+    "edges",
+    "rules"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "2.0"
+    },
+    "scope": {
+      "type": "string",
+      "minLength": 8
+    },
+    "source_collection_date": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "project_hardware_measurements": {
+      "const": 0
+    },
+    "counts": {
+      "type": "object",
+      "required": [
+        "nodes",
+        "edges",
+        "by_node_kind",
+        "by_relation"
+      ],
+      "properties": {
+        "nodes": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "edges": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "by_node_kind": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "by_relation": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "nodes": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "kind",
+          "label"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 3
+          },
+          "kind": {
+            "enum": [
+              "case",
+              "model",
+              "upstream_pr",
+              "failure_or_caveat",
+              "operator",
+              "mechanism",
+              "architecture_feature"
+            ]
+          },
+          "label": {
+            "type": "string",
+            "minLength": 1
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uri"
+            }
+          },
+          "source_urls": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uri"
+            }
+          },
+          "local_hardware_measurement": {
+            "const": false
+          },
+          "not_project_reproduced": {
+            "const": true
+          },
+          "runtime_dispatch_verified": {
+            "const": false
+          },
+          "code_compatibility_verified": {
+            "const": false
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "edges": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "source",
+          "target",
+          "relation",
+          "provenance_urls",
+          "evidence_level",
+          "runtime_dispatch_verified_by_project",
+          "speedup_verified_by_project"
+        ],
+        "properties": {
+          "source": {
+            "type": "string",
+            "minLength": 3
+          },
+          "target": {
+            "type": "string",
+            "minLength": 3
+          },
+          "relation": {
+            "enum": [
+              "case_has_documented_failure_or_caveat",
+              "case_mentions_exact_model",
+              "case_uses_quantized_derivative",
+              "config_declares_architecture_feature",
+              "determinism_regression_mitigated_by",
+              "excludes_pr51674_head_ratio_branch",
+              "failure_or_caveat_documented_by_pr",
+              "failure_relevant_to_mechanism",
+              "fix_required_before_enable",
+              "pr_discusses_mechanism",
+              "pr_documents_specific_case",
+              "reintroduced_with_safety_guard_by",
+              "reverted_by",
+              "shares_tags",
+              "subprocess_deadlock_fixed_by",
+              "tagged_mechanism",
+              "tagged_operator"
+            ]
+          },
+          "provenance_urls": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "pattern": "^https://"
+            }
+          },
+          "evidence_level": {
+            "enum": [
+              "upstream_case_risk",
+              "reviewed_case_to_model_source",
+              "official_model_config",
+              "upstream_pr_lifecycle",
+              "static_official_config_plus_source_guard",
+              "upstream_failure_review",
+              "analyst_failure_tag",
+              "upstream_pr_source",
+              "curated_direct_pr_to_case",
+              "derived_tag_cooccurrence",
+              "analyst_coded_from_source"
+            ]
+          },
+          "runtime_dispatch_verified_by_project": {
+            "const": false
+          },
+          "speedup_verified_by_project": {
+            "const": false
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "rules": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "additionalProperties": false
+}

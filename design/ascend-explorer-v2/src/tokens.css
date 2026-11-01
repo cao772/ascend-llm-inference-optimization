@@ -1,0 +1,34 @@
+/* Ascend explorer v2 design tokens. Standalone design system, do not override the older Qwen dashboard. */
+:root {
+  color-scheme: dark;
+  --canvas: #081321; --surface: #0F233A; --surface-raised: #142D48;
+  --surface-strong: #1A3B5E; --stroke: #294661;
+  --text-primary: #EAF2FF; --text-secondary: #B1C4D8;
+  --accent: #68D6CF; --warning: #F2C984; --danger: #FF999E;
+  --source-official: #94BEFF; --source-analysis: #B2A6FF;
+  --focus: #9FECE7;
+  --radius-sm: 8px; --radius-md: 12px; --radius-lg: 18px;
+  --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px;
+  --space-5: 20px; --space-6: 24px; --space-8: 32px; --space-12: 48px;
+  --content-max: 1360px;
+  --font-ui: Inter, -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+  --text-xs: 12px; --text-sm: 14px; --text-md: 16px;
+  --text-heading: clamp(28px, 2.6vw, 36px);
+  --text-hero: clamp(32px, 4vw, 52px);
+  --motion-fast: 180ms; --motion-normal: 340ms; --motion-slow: 450ms;
+}
+body { font-family: var(--font-ui); background: var(--canvas); color: var(--text-primary); }
+a, button, [tabindex] { outline-offset: 3px; }
+:focus-visible { outline: 3px solid var(--focus); }
+.evidence-status { display: inline-flex; align-items: center; gap: 6px; }
+.evidence-status[data-status="unverified"] { color: var(--warning); }
+.evidence-status[data-status="excluded"] { color: var(--danger); }
+.exhibit-content { max-width: var(--content-max); margin-inline: auto; padding-inline: 24px; }
+.exhibit-panel { background: var(--surface); border: 1px solid var(--stroke); border-radius: var(--radius-lg); }
+.exhibit-node { background: var(--surface-raised); border: 1px solid var(--stroke); color: var(--text-primary); }
+.exhibit-node[aria-selected="true"] { border-color: var(--accent); }
+@media (max-width: 1024px) { .exhibit-content { padding-inline: 20px; } }
+@media (max-width: 768px) { .exhibit-content { padding-inline: 16px; } }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+}

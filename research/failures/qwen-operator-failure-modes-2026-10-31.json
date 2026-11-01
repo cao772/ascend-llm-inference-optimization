@@ -1,0 +1,213 @@
+{
+  "schema_version": "1.0",
+  "curated_date": "2026-10-31",
+  "source_policy": "Every item links upstream evidence; user project has no hardware execution. feature_removed or guard_mismatch are not measured regressions.",
+  "no_local_measurements": true,
+  "failures": [
+    {
+      "id": "FAIL-001",
+      "kind": "deadlock",
+      "title": "MNNVL fused allreduce 与 Piecewise CUDA Graph replay 组合可挂起",
+      "symptom": "服务调用或图 replay 长时间无进展",
+      "trigger": "SGLang FlashInfer MNNVL AllReduce fusion in piecewise CUDA graph capture/replay",
+      "root_cause_status": "upstream_diagnosis_not_locally_reproduced",
+      "explanation": "上游报告 Lamport-style wait loop 的进度假设与图 replay 交互；先回退再在重新引入时针对 MNNVL 禁用 PCG",
+      "mitigation": "按 #23402 的后端/graph guard 避免 MNNVL+PCG，必要时回退非融合 AllReduce",
+      "linked_pr_ids": [
+        "PR-SGL-12787",
+        "PR-SGL-20792",
+        "PR-SGL-23402"
+      ],
+      "linked_case_ids": [],
+      "mechanisms": [
+        "fusion",
+        "graph_capture",
+        "communication_overlap"
+      ],
+      "source_urls": [
+        "https://github.com/sgl-project/sglang/pull/23402",
+        "https://github.com/sgl-project/sglang/pull/20792"
+      ],
+      "hardware_scope": "SGLang + FlashInfer MNNVL, GB200/Blackwell context; not Ascend",
+      "confidence": "upstream_code_and_issue_repro",
+      "claim_type": "upstream_failure_and_fix"
+    },
+    {
+      "id": "FAIL-002",
+      "kind": "numerical_regression",
+      "title": "FlashInfer AllReduce 融合破坏不同 Batch 下的 bit-exact logprob 一致性",
+      "symptom": "相同 prefix 在不同 Batch 下的 logprob 不一致",
+      "trigger": "SGLang deterministic inference with FlashInfer AR fusion on supported SM90/SM100 TP>1",
+      "root_cause_status": "upstream_author_reproduced",
+      "explanation": "约简顺序受 batch/reduction shape 影响，导致确定性推理契约不满足",
+      "mitigation": "deterministic 模式强制禁用对应融合路径，保留非确定性默认路径",
+      "linked_pr_ids": [
+        "PR-SGL-22664",
+        "PR-SGL-24629"
+      ],
+      "linked_case_ids": [
+        "QINF-002"
+      ],
+      "mechanisms": [
+        "fusion",
+        "communication"
+      ],
+      "source_urls": [
+        "https://github.com/sgl-project/sglang/pull/24629"
+      ],
+      "hardware_scope": "SGLang FlashInfer SM90/SM100, multiple GPUs, deterministic inference",
+      "confidence": "upstream_code_and_issue_repro",
+      "claim_type": "upstream_failure_and_fix"
+    },
+    {
+      "id": "FAIL-003",
+      "kind": "deadlock",
+      "title": "FlashInfer GDN 持久调度在工作子进程中读到错误的 SM/cluster 数",
+      "symptom": "Kernel 首次调用时可能死锁",
+      "trigger": "SM100 persistent GDN prefill kernel on subprocess EngineCore worker without current CUDA API context",
+      "root_cause_status": "upstream_author_diagnosis",
+      "explanation": "get_max_active_clusters(1) 可能为零/陈旧；持久调度工作分配错误",
+      "mitigation": "FlashInfer PR #3155 将获取方式替换为 get_num_sm(q.device)，由 vLLM #40717 使用满足前提的版本",
+      "linked_pr_ids": [
+        "PR-FI-3001",
+        "PR-FI-3155",
+        "PR-VLLM-40717"
+      ],
+      "linked_case_ids": [
+        "QINF-004"
+      ],
+      "mechanisms": [
+        "kernel_specialization"
+      ],
+      "source_urls": [
+        "https://github.com/flashinfer-ai/flashinfer/pull/3155",
+        "https://github.com/vllm-project/vllm/pull/40717"
+      ],
+      "hardware_scope": "Blackwell SM100 FlashInfer GDN prefill in spawned workers",
+      "confidence": "upstream_code_and_issue_repro",
+      "claim_type": "upstream_failure_and_fix"
+    },
+    {
+      "id": "FAIL-004",
+      "kind": "guard_mismatch",
+      "title": "合并的 GDN MTP Decode Kernel 不满足当前已核对 Qwen 公开模型的头数比例",
+      "symptom": "融合 Kernel 已合并并有微基准，但真实公开模型不走该 dispatch 分支",
+      "trigger": "vLLM #51674 requires num_v_heads == 8 * num_k_heads; surveyed Qwen3.5 models have 2:1, 3:1, 4:1 ratios",
+      "root_cause_status": "upstream_source_guard_and_official_config_verified",
+      "explanation": "优化实现只支持特殊 8:1 layout；不能把人工形状微基准当成公开 checkpoint 的 E2E 收益",
+      "mitigation": "先用配置与分派源码静态筛查，不满足则记录不适用；若扩展 Kernel 必须另行做代码/正确性评审",
+      "linked_pr_ids": [
+        "PR-VLLM-51674"
+      ],
+      "linked_case_ids": [],
+      "mechanisms": [
+        "fusion",
+        "speculative",
+        "kernel_specialization"
+      ],
+      "source_urls": [
+        "https://github.com/vllm-project/vllm/pull/51674",
+        "https://huggingface.co/Qwen/Qwen3.5-35B-A3B/raw/main/config.json"
+      ],
+      "hardware_scope": "specific vLLM CUDA fused GDN post-conv MTP implementation; not generic GDN",
+      "confidence": "merged_source_guard_and_static_config",
+      "claim_type": "static_ineligibility_not_failure_of_other_kernels"
+    },
+    {
+      "id": "FAIL-005",
+      "kind": "feature_removed",
+      "title": "vLLM-Ascend 特定 Matmul+AllReduce+RMSNorm 自定义融合被移除",
+      "symptom": "新版本仓库已找不到先前的配置/图 Pass/自定义算子入口",
+      "trigger": "vLLM-Ascend upgrade to code including #12119",
+      "root_cause_status": "upstream_maintenance_decision",
+      "explanation": "上游 PR 定性为 deprecated/internal path 并删除；不代表所有 AllReduce 或 RMSNorm 融合理论失效",
+      "mitigation": "按固定版本匹配真实文件与配置，避免复用旧私有脚本或不存在的环境变量",
+      "linked_pr_ids": [
+        "PR-ASC-12119"
+      ],
+      "linked_case_ids": [],
+      "mechanisms": [
+        "fusion",
+        "communication_overlap"
+      ],
+      "source_urls": [
+        "https://github.com/vllm-project/vllm-ascend/pull/12119"
+      ],
+      "hardware_scope": "specific vLLM-Ascend code path",
+      "confidence": "upstream_merged_removal",
+      "claim_type": "lifecycle_removal_not_measured_perf_regression"
+    },
+    {
+      "id": "FAIL-006",
+      "kind": "feature_removed",
+      "title": "vLLM-Ascend 特定多流 overlap gate 因低利用率/低价值被移除",
+      "symptom": "旧 FC3 gate/stream 管理逻辑不再存在",
+      "trigger": "vLLM-Ascend upgrade to code including #11956",
+      "root_cause_status": "upstream_maintenance_decision",
+      "explanation": "PR 声称 underutilized/low-value，未提供该功能的普适负收益证据",
+      "mitigation": "将多流重叠作为有条件候选，不假设旧路径可直接用",
+      "linked_pr_ids": [
+        "PR-ASC-11956"
+      ],
+      "linked_case_ids": [],
+      "mechanisms": [
+        "communication_overlap",
+        "fusion"
+      ],
+      "source_urls": [
+        "https://github.com/vllm-project/vllm-ascend/pull/11956"
+      ],
+      "hardware_scope": "specific vLLM-Ascend multistream overlap gate; not all MoE overlap",
+      "confidence": "upstream_merged_removal",
+      "claim_type": "lifecycle_removal_not_measured_perf_regression"
+    },
+    {
+      "id": "FAIL-007",
+      "kind": "feature_removed",
+      "title": "vLLM-Ascend 特定 weight prefetch 特性因低利用率/低价值被移除",
+      "symptom": "上游删除 weight prefetch 相关配置、算子、指导文档",
+      "trigger": "vLLM-Ascend upgrade to code including #11949",
+      "root_cause_status": "upstream_maintenance_decision",
+      "explanation": "PR 声称 underutilized/low-value；不能由此推出所有权重预取都无效",
+      "mitigation": "先审上游真实版本和权重访存瓶颈，避免重启失维护的旧分支",
+      "linked_pr_ids": [
+        "PR-ASC-11949"
+      ],
+      "linked_case_ids": [],
+      "mechanisms": [
+        "memory_traffic"
+      ],
+      "source_urls": [
+        "https://github.com/vllm-project/vllm-ascend/pull/11949"
+      ],
+      "hardware_scope": "specific vLLM-Ascend weight prefetch implementation",
+      "confidence": "upstream_merged_removal",
+      "claim_type": "lifecycle_removal_not_measured_perf_regression"
+    },
+    {
+      "id": "FAIL-008",
+      "kind": "benchmark_interpretation",
+      "title": "Qwen3 FusedMoE 1.04 倍属于微基准接近/噪声区间而非可宣称显著收益",
+      "symptom": "仅见 0.0396ms vs 0.0413ms 的设备时长对比，且性能比接近 1",
+      "trigger": "TileOPs qwen3-30b-decode-b1 microbenchmark cited near 1.04x; stated reading guide 0.95–1.05x same-tier",
+      "root_cause_status": "upstream_benchmark_interpretation",
+      "explanation": "没有统计上有意义的显著性、重复分布或线上复现就不能宣称实际提速",
+      "mitigation": "按原报告约定报告近似持平，并分别标注设备微基准、误差带和 E2E 需求",
+      "linked_pr_ids": [],
+      "linked_case_ids": [
+        "QINF-012"
+      ],
+      "mechanisms": [
+        "kernel_specialization",
+        "routing"
+      ],
+      "source_urls": [
+        "https://tile-ai.github.io/TileOPs.github.io/benchmarks/moe/",
+        "https://tile-ai.github.io/TileOPs.github.io/benchmarks/reading/"
+      ],
+      "hardware_scope": "TileOPs Qwen3 Fused MoE specific microbenchmark shape; GPU test context",
+      "confidence": "upstream_microbenchmark_document",
+      "claim_type": "benchmark_caution_not_kernel_bug"
+    }
+  ]
+}

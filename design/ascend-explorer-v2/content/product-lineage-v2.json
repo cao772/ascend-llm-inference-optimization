@@ -1,0 +1,83 @@
+{
+  "schemaVersion": "2.1-product-linkage",
+  "reviewedAt": "2026-11-01",
+  "policy": "Processor mapping must be explicitly supported by an official product-form document; topology facts are scoped to the named product, not generalized to the Ascend architecture.",
+  "families": [
+    {
+      "id": "200-500-a2",
+      "name": "Atlas 200I/500 A2 推理产品",
+      "focus": "边缘推理/嵌入式",
+      "sourceUrl": "https://www.hiascend.com/doc_center/source/zh/mindx-dl/60rc1/description/productform/%E6%98%87%E8%85%BE%E4%BA%A7%E5%93%81%E5%BD%A2%E6%80%81%E8%AF%B4%E6%98%8E.pdf",
+      "sourceVersion": "产品形态 2024-05-13"
+    },
+    {
+      "id": "atlas-inference",
+      "name": "Atlas 推理系列产品",
+      "focus": "独立加速卡/推理部署",
+      "sourceUrl": "https://www.hiascend.com/doc_center/source/zh/mindx-dl/60rc1/description/productform/%E6%98%87%E8%85%BE%E4%BA%A7%E5%93%81%E5%BD%A2%E6%80%81%E8%AF%B4%E6%98%8E.pdf",
+      "sourceVersion": "产品形态 2024-05-13"
+    },
+    {
+      "id": "800i-a2",
+      "name": "Atlas 800I A2 推理产品",
+      "focus": "数据中心推理整机",
+      "sourceUrl": "https://www.hiascend.com/document/detail/en/mindcluster/2610/faultdiag/faultdiagug/docs/en/faultdiag/ascend-faultdiag/01_introduction/02_supported_products.md",
+      "sourceVersion": "MindCluster 26.1.0 支持形态"
+    },
+    {
+      "id": "a2-training",
+      "name": "Atlas A2 训练系列产品",
+      "focus": "训练及推理的多卡部署",
+      "sourceUrl": "https://www.hiascend.com/document/detail/en/mindcluster/2610/faultdiag/faultdiagug/docs/en/faultdiag/ascend-faultdiag/01_introduction/02_supported_products.md",
+      "sourceVersion": "MindCluster 26.1.0 支持形态"
+    },
+    {
+      "id": "a3-training",
+      "name": "Atlas A3 训练系列产品",
+      "focus": "训练及推理超节点",
+      "sourceUrl": "https://www.hiascend.com/document/detail/en/mindcluster/2610/faultdiag/faultdiagug/docs/en/faultdiag/ascend-faultdiag/01_introduction/02_supported_products.md",
+      "sourceVersion": "MindCluster 26.1.0 支持形态"
+    },
+    {
+      "id": "a3-inference",
+      "name": "Atlas A3 推理系列产品",
+      "focus": "超节点推理形态",
+      "sourceUrl": "https://www.hiascend.com/document/detail/en/mindcluster/2610/faultdiag/faultdiagug/docs/en/faultdiag/ascend-faultdiag/01_introduction/02_supported_products.md",
+      "sourceVersion": "MindCluster 26.1.0 支持形态"
+    }
+  ],
+  "productFamilyOverrides": {
+    "atlas-800i-a3": "a3-inference"
+  },
+  "productProcessorMappings": [
+    {
+      "productId": "atlas-300i-pro",
+      "processorFamily": "Ascend 310P",
+      "confidence": "official_product_family",
+      "sourceUrl": "https://www.hiascend.com/doc_center/source/zh/mindx-dl/60rc1/description/productform/%E6%98%87%E8%85%BE%E4%BA%A7%E5%93%81%E5%BD%A2%E6%80%81%E8%AF%B4%E6%98%8E.pdf",
+      "scope": "Atlas 推理系列产品（配置 Ascend 310P AI 处理器）；仍非详细 SKU 规格"
+    },
+    {
+      "productId": "atlas-300i-duo",
+      "processorFamily": "Ascend 310P",
+      "confidence": "official_product_family",
+      "sourceUrl": "https://www.hiascend.com/doc_center/source/zh/mindx-dl/60rc1/description/productform/%E6%98%87%E8%85%BE%E4%BA%A7%E5%93%81%E5%BD%A2%E6%80%81%E8%AF%B4%E6%98%8E.pdf",
+      "scope": "Atlas 推理系列产品（配置 Ascend 310P AI 处理器）；单卡/多芯片数量需另核对应 SKU"
+    }
+  ],
+  "topologyCase": {
+    "productId": "atlas-900-a3",
+    "title": "Atlas 900 A3 SuperPoD（特定产品拓扑示例）",
+    "steps": [
+      "AI 处理器",
+      "两处理器组成 HiAM 模组（SIO）",
+      "每计算节点八个 HiAM 模组",
+      "HiAM 模组之间 HCCS-L1",
+      "计算节点之间 HCCS-L2"
+    ],
+    "sourceUrl": "https://www.hiascend.com/document/detail/en/mindcluster/730/clustersched/schedulingug/dl_affinity_0007.html",
+    "sourceVersion": "MindCluster 7.3.0 亲和性调度说明；更新于 2026-05-22",
+    "warning": "本图是 Atlas 900 A3 SuperPoD 的来源范围限定示例，不代表 Atlas 800I A2 或 Ascend 310P 的拓扑。"
+  },
+  "unverifiedQuantitativeSpecs": true
+}

@@ -1,0 +1,117 @@
+name: Ascend explorer V2 website
+on:
+  workflow_dispatch:
+  push:
+    branches: ['research/**']
+    paths:
+      - 'design/ascend-explorer-v2/site/**'
+      - 'design/ascend-explorer-v2/content/**'
+      - 'design/ascend-explorer-v2/src/**'
+      - 'tests/test_ascend_explorer_site.py'
+      - 'tests/test_ascend_product_lineage.py'
+      - 'tests/test_ascend_verified_specs_v22.py'
+      - 'tests/test_ascend_tiling_math.cjs'
+      - 'tests/test_ascend_public_matmul_evidence.py'
+      - 'tests/test_ascend_experiment_evidence_v25.py'
+      - 'tests/test_ascend_cross_operator_evidence_v26.py'
+      - 'design/ascend-explorer-v2/tools/export_cross_operator_csv.py'
+      - 'design/ascend-explorer-v2/tools/export_evidence_csv.py'
+      - 'design/ascend-explorer-v2/site/browser_smoke.py'
+      - 'design/ascend-explorer-v2/site/browser_cross_engine.py'
+      - '.github/workflows/ascend-explorer-site.yml'
+permissions:
+  contents: read
+jobs:
+  build-and-validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate design and full interactive site
+        run: |
+          python3 -m unittest discover -s tests -p 'test_ascend_explorer_design.py' -v
+          python3 -m unittest discover -s tests -p 'test_ascend_explorer_site.py' -v
+          python3 -m unittest discover -s tests -p 'test_ascend_product_lineage.py' -v
+          python3 -m unittest discover -s tests -p 'test_ascend_verified_specs_v22.py' -v
+          python3 -m unittest discover -s tests -p 'test_ascend_public_matmul_evidence.py' -v
+          python3 -m unittest discover -s tests -p 'test_ascend_experiment_evidence_v25.py' -v
+          python3 -m unittest discover -s tests -p 'test_ascend_cross_operator_evidence_v26.py' -v
+          node --check design/ascend-explorer-v2/site/app.js
+          node --check design/ascend-explorer-v2/site/tiling_math.js
+          node --test tests/test_ascend_tiling_math.cjs
+      - name: Build fully standalone offline website
+        run: |
+          mkdir -p build/ascend-explorer-v2
+          python3 design/ascend-explorer-v2/site/build_site.py --output build/ascend-explorer-v2/ascend-explorer-v2.html
+          cp design/ascend-explorer-v2/DESIGN.md build/ascend-explorer-v2/DESIGN.md
+          cp design/ascend-explorer-v2/content/modules.json build/ascend-explorer-v2/modules.json
+          python3 design/ascend-explorer-v2/tools/export_evidence_csv.py --output build/ascend-explorer-v2/v25-public-evidence.csv
+          cp design/ascend-explorer-v2/content/experiment-evidence-v2.5.json build/ascend-explorer-v2/experiment-evidence-v2.5.json
+          cp design/ascend-explorer-v2/content/cross-operator-evidence-v2.6.json build/ascend-explorer-v2/cross-operator-evidence-v2.6.json
+          python3 design/ascend-explorer-v2/tools/export_cross_operator_csv.py --output build/ascend-explorer-v2/v26-cross-operator-evidence.csv
+          cp design/ascend-explorer-v2/docs/cross-operator-source-analysis-v2.6.md build/ascend-explorer-v2/RESEARCH-V2.6.md
+          cp design/ascend-explorer-v2/docs/empirical-evidence-center-v2.5.md build/ascend-explorer-v2/RESEARCH-V2.5.md
+      - name: Check bundled factual integrity and offline markers
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re, json
+          p=Path("build/ascend-explorer-v2/ascend-explorer-v2.html")
+          raw=p.read_text(encoding="utf-8")
+          assert len(raw) > 120_000
+          match=re.search(r'<script id="app-data" type="application/json">(.*?)</script>',raw,re.S)
+          assert match
+          d=json.loads(match.group(1))
+          assert d["atlas"]["project_hardware_measurements"]==0
+          assert d["atlas"]["counts"]["nodes"]==75
+          assert len(d["operators"]["stories"])==7
+          assert len(d["productLineage"]["families"])==6
+          assert len(d["productLineage"]["productProcessorMappings"])==2
+          assert len(d["verifiedSpecs"]["products"])==2
+          assert d["softwareCompat"]["release"]=="vLLM-Ascend 0.30.0"
+          assert len(d["architecturePaths"]["paths"])==2
+          assert d["tilingLab"]["kind"]=="educational_analytical_model_not_hardware_benchmark"
+          assert d["publicMatmulEvidence"]["local_npu_profiling_count"]==0
+          assert d["experimentEvidence"]["project_own_hardware_measurements"] == 0
+          assert d["experimentEvidence"]["collection"]["public_case_count"] == 8
+          assert d["experimentEvidence"]["collection"]["metric_pairs"] == 24
+          assert d["crossOperatorEvidence"]["case_count"] == 7
+          assert d["crossOperatorEvidence"]["paired_observations"] == 7
+          assert d["crossOperatorEvidence"]["unpaired_observations"] == 18
+          assert d["crossOperatorEvidence"]["project_owned_npu_benchmarks"] == 0
+          import csv
+          with open("build/ascend-explorer-v2/v25-public-evidence.csv", encoding="utf-8-sig", newline="") as f:
+              rows = list(csv.DictReader(f))
+          assert len(rows) == 24
+          with open("build/ascend-explorer-v2/v26-cross-operator-evidence.csv", encoding="utf-8-sig", newline="") as f:
+              extra = list(csv.DictReader(f))
+          assert len(extra) == 25
+          assert all(x["project_measured"] == "false" and x["isolated_ab"] == "false" for x in extra)
+          assert all(x["project_hardware_reproduction"] == "false" for x in rows)
+          assert d["publicMatmulEvidence"]["case"]["first_experiment"]["measured_metric"]=="operator_execution_duration_us"
+          assert d["publicMatmulEvidence"]["case"]["second_experiment"]["measured_metric"]=="MTE2_pipeline_duration_us"
+          assert all(not v for h in d["hardware"]["products"] for v in h["quantitative"].values())
+          assert "/* APP_" not in raw
+          print("Offline V2 site ready:",p.stat().st_size,"bytes, 9 sections, 7 operator stories")
+          PY
+      - name: Install browser test tools
+        run: |
+          python3 -m pip install playwright==1.56.0
+          python3 -m playwright install --with-deps chromium webkit
+      - name: Test real browser interactions and mobile layout
+        run: |
+          python3 design/ascend-explorer-v2/site/browser_smoke.py build/ascend-explorer-v2/ascend-explorer-v2.html --screenshots build/ascend-explorer-v2
+          python3 design/ascend-explorer-v2/site/browser_cross_engine.py build/ascend-explorer-v2/ascend-explorer-v2.html --screenshots build/ascend-explorer-v2
+      - name: Publish verified offline site and design handoff
+        uses: actions/upload-artifact@v4
+        with:
+          name: ascend-inference-explorer-v2-website
+          path: build/ascend-explorer-v2/*
+          if-no-files-found: error
+          retention-days: 60

@@ -1,0 +1,183 @@
+{
+  "schemaVersion": "2.2-pinned-stack",
+  "retrievedAt": "2026-11-01",
+  "release": "vLLM-Ascend 0.30.0",
+  "sourceUrl": "https://docs.vllm.ai/projects/ascend/en/v0.30.0/getting_started/installation.html",
+  "scope": "Official release-specific validated software stack as printed by the pinned installation guide. This is a co-validated set, not a proof every model/quantization/topology works.",
+  "components": [
+    {
+      "layer": "Python",
+      "version": "3.12",
+      "role": "验证镜像的 Python",
+      "appliesTo": [
+        "A2",
+        "A3",
+        "300I DUO",
+        "950DT"
+      ]
+    },
+    {
+      "layer": "Ascend HDK（驱动/固件）",
+      "version": "26.1.1",
+      "role": "主机驱动和固件要求",
+      "appliesTo": [
+        "A2",
+        "A3",
+        "300I DUO",
+        "950DT"
+      ]
+    },
+    {
+      "layer": "CANN Toolkit + Ops",
+      "version": "9.2.0",
+      "role": "编译/Runtime/芯片算子包",
+      "appliesTo": [
+        "A2",
+        "A3",
+        "300I DUO",
+        "950DT"
+      ]
+    },
+    {
+      "layer": "NNAL",
+      "version": "9.2.0",
+      "role": "ATB 与算子加速接口",
+      "appliesTo": [
+        "A2",
+        "A3",
+        "300I DUO",
+        "950DT"
+      ]
+    },
+    {
+      "layer": "PyTorch",
+      "version": "2.10.0",
+      "role": "张量框架",
+      "appliesTo": [
+        "A2",
+        "A3",
+        "300I DUO",
+        "950DT"
+      ]
+    },
+    {
+      "layer": "TorchNPU",
+      "version": "2.10.0.post7",
+      "role": "PyTorch 设备适配",
+      "appliesTo": [
+        "A2",
+        "A3",
+        "300I DUO",
+        "950DT"
+      ]
+    },
+    {
+      "layer": "Triton Ascend",
+      "version": "3.6.0.post2",
+      "role": "仅以下指定产品族用于 Kernel 加速",
+      "appliesTo": [
+        "A2",
+        "A3",
+        "950DT"
+      ],
+      "notUsedOn": [
+        "300I DUO",
+        "200I Pro"
+      ]
+    },
+    {
+      "layer": "vLLM",
+      "version": "0.30.0",
+      "role": "服务推理引擎",
+      "appliesTo": [
+        "A2",
+        "A3",
+        "300I DUO",
+        "950DT"
+      ]
+    },
+    {
+      "layer": "vLLM-Ascend",
+      "version": "0.30.0",
+      "role": "昇腾硬件插件",
+      "appliesTo": [
+        "A2",
+        "A3",
+        "300I DUO",
+        "950DT"
+      ]
+    }
+  ],
+  "hardwareFamilies": [
+    {
+      "id": "A2",
+      "label": "Atlas A2",
+      "examples": [
+        "Atlas 800T A2",
+        "Atlas 900 A2 PoD",
+        "Atlas 800I A2"
+      ]
+    },
+    {
+      "id": "A3",
+      "label": "Atlas A3",
+      "examples": [
+        "Atlas 800T A3",
+        "Atlas 900 A3 SuperPoD",
+        "Atlas 800I A3"
+      ]
+    },
+    {
+      "id": "300I DUO",
+      "label": "Atlas 推理系列",
+      "examples": [
+        "Atlas 300I DUO",
+        "Atlas 200I Pro"
+      ],
+      "note": "选项名称只代表安装指南列举的产品。"
+    },
+    {
+      "id": "950DT",
+      "label": "950DT 系列",
+      "examples": [
+        "950DT"
+      ]
+    }
+  ],
+  "modelExamples": {
+    "sourceUrl": "https://docs.vllm.ai/projects/ascend/en/v0.30.0/user_guide/support_matrix/supported_models.html",
+    "note": "These are examples from the model support table, not independently reproduced deployment, and not blanket chip compatibility.",
+    "rows": [
+      {
+        "model": "Qwen3.5-27B / Qwen3.6-27B",
+        "documentedHardware": "A2/A3",
+        "documentedStatus": "✅",
+        "interpretation": "文档列为支持；精确卡型、TP/EP、精度仍需逐配置核验"
+      },
+      {
+        "model": "Qwen3.5-397B-A17B",
+        "documentedHardware": "A2/A3",
+        "documentedStatus": "✅",
+        "interpretation": "文档列为支持；并不表示单卡即可部署"
+      },
+      {
+        "model": "GLM-5.3-Flash",
+        "documentedHardware": "A2/A3",
+        "documentedStatus": "✅",
+        "interpretation": "文档列为支持，具体媒体/采样/并行特性需按表内细分字段核对"
+      },
+      {
+        "model": "DeepSeek-V4.1-Flash",
+        "documentedHardware": "A2/A3",
+        "documentedStatus": "✅",
+        "interpretation": "资料注明 W8A8 与两节点 A3/四节点 A2 同位部署条件；不能直接泛化到其他拓扑"
+      }
+    ]
+  },
+  "caveats": [
+    "整套软件发布版本须保持一致，不能任意混合其他发布版本组件。",
+    "‘安装指南覆盖产品族’不等于单个模型真实运行、Kernel 已命中或吞吐改善。",
+    "Triton Ascend 并非在 300I DUO/200I Pro 上按表使用。",
+    "模型支持矩阵可能随页面更新；此 JSON 是 2026-11-01 采集快照，保持 pinned URL 与采集日期。"
+  ]
+}

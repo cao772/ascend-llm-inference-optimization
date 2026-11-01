@@ -1,0 +1,35 @@
+name: Ascend explorer V2 design validation
+on:
+  workflow_dispatch:
+  push:
+    branches: ['research/**']
+    paths:
+      - 'design/ascend-explorer-v2/**'
+      - 'tests/test_ascend_explorer_design.py'
+      - '.github/workflows/ascend-explorer-design.yml'
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Validate sources, type boundaries and storyboards
+        run: python3 -m unittest discover -s tests -p 'test_ascend_explorer_design.py' -v
+      - name: Export current verified design inventory
+        run: python3 design/ascend-explorer-v2/tools/validate_design.py --output build/ascend-explorer-v2/design-inventory.json
+      - name: Upload reviewed DESIGN assets
+        uses: actions/upload-artifact@v4
+        with:
+          name: ascend-explorer-v2-design-assets
+          path: |
+            design/ascend-explorer-v2/DESIGN.md
+            design/ascend-explorer-v2/src/*
+            design/ascend-explorer-v2/content/*.json
+            build/ascend-explorer-v2/design-inventory.json
+          if-no-files-found: error
+          retention-days: 60

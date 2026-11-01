@@ -1,0 +1,549 @@
+{
+  "schema_version": "1.0",
+  "as_of": "2026-10-31",
+  "purpose": "Hypothesis-driven end-to-end pipeline for offline Qwen/Ascend optimization research, not a deployment recommendation or empirical speed prediction",
+  "deployment_available": false,
+  "benchmark_observations": [],
+  "pipeline": [
+    {
+      "id": "P1",
+      "name": "证据接入",
+      "inputs": "官方文档、模型配置、上游PR、作者基准、失败案例",
+      "output": "固定版本、来源类型、精确适用范围",
+      "gate": "来源可追溯"
+    },
+    {
+      "id": "P2",
+      "name": "工作负载建模",
+      "inputs": "Qwen模型、TP/EP、并发、输入输出长度、目标硬件",
+      "output": "模型结构、候选负载分布、系统兼容性待核项",
+      "gate": "不得把研究设定视为真实环境"
+    },
+    {
+      "id": "P3",
+      "name": "瓶颈定位",
+      "inputs": "TTFT/TPOT/host gap/kernel timeline、NPU通信与内存指标",
+      "output": "推断瓶颈候选；有机器后才能确认真正瓶颈",
+      "gate": "没有Profiler只能标注假设"
+    },
+    {
+      "id": "P4",
+      "name": "算子/配置优化",
+      "inputs": "上游已实现功能、形状guard、版本兼容、回退条件",
+      "output": "候选清单、实验开关、对照组",
+      "gate": "排除已删除/当前模型shape不符的专用kernel"
+    },
+    {
+      "id": "P5",
+      "name": "分离变量的A/B验证",
+      "inputs": "同权重、同数据、同硬件、相同环境与重复采样",
+      "output": "TTFT/TPOT/TPS、吞吐、资源、精度、尾延迟和失败",
+      "gate": "质量和确定性先于速度"
+    },
+    {
+      "id": "P6",
+      "name": "裁决和经验回写",
+      "inputs": "A/B统计、正确性、稳定性与回退记录",
+      "output": "保留/限制启用/回退/待补证据",
+      "gate": "没有实际数据不得判为已优化"
+    }
+  ],
+  "measurement_contract": {
+    "hardware": [
+      "chip_sku",
+      "card_count",
+      "topology",
+      "driver",
+      "cann_version",
+      "runtime_version",
+      "temperature_if_available"
+    ],
+    "software": [
+      "model_revision",
+      "framework_git_sha",
+      "graph_backend",
+      "dtype",
+      "quantization",
+      "TP",
+      "EP",
+      "DP",
+      "MTP_version",
+      "enabled_features"
+    ],
+    "workload": [
+      "dataset_id",
+      "prompt_template",
+      "input_tokens",
+      "output_tokens",
+      "concurrency",
+      "request_count",
+      "seed",
+      "sampling_params",
+      "warmup_trials"
+    ],
+    "latency": [
+      "TTFT_p50_ms",
+      "TTFT_p95_ms",
+      "TPOT_p50_ms",
+      "TPOT_p95_ms",
+      "E2E_p50_ms",
+      "E2E_p95_ms",
+      "output_tokens_s",
+      "requests_s",
+      "host_gap_ms",
+      "kernel_time_ms",
+      "memory_peak_gb",
+      "compiled_cache_hit_rate"
+    ],
+    "accuracy": [
+      "quality_metric",
+      "exact_token_match_if_relevant",
+      "logit_error_norm",
+      "determinism",
+      "timeout_rate",
+      "deadlock_free",
+      "recovery_success"
+    ],
+    "extra": [
+      "mtp_accepted_draft_mean_natural",
+      "mtp_accepted_draft_mean_controlled",
+      "moe_expert_load_histogram",
+      "moe_load_skew",
+      "tp_allreduce_ms",
+      "prefill_vs_decode_split"
+    ],
+    "condition": "Measurements are placeholders, NOT observed data. Do not put numbers until actual run evidence is attached."
+  },
+  "scenarios": [
+    {
+      "id": "ASCEND35-C1",
+      "title": "Qwen3.5-35B-A3B · 910C · 低并发",
+      "model": "Qwen/Qwen3.5-35B-A3B",
+      "hardware": "昇腾 910C（未来候选，当前无设备）",
+      "platform": "ascend",
+      "framework_target": "vLLM-Ascend v0.30.0（研究目标，未验证该卡/模型组合）",
+      "stage": "decode",
+      "concurrency": 1,
+      "tp": 2,
+      "ep": null,
+      "isl": 1024,
+      "osl": 512,
+      "latency_goal": "TPOT / TTFT",
+      "description": "参考得物 c=1 路径作为研究切入，但硬件与版本兼容仍须优先核对；此处 1024/512 与 TP2 只是计划测试设定",
+      "reference_case_ids": [
+        "QINF-001"
+      ],
+      "uncertainties": [
+        "910C 对应 CANN/驱动、vLLM-Ascend v0.30.0 兼容性未知",
+        "当前无 profiling，无法确定实际瓶颈",
+        "TP2 只是研究假设"
+      ]
+    },
+    {
+      "id": "ASCEND35-C8",
+      "title": "Qwen3.5-35B-A3B · 910C · 并发8",
+      "model": "Qwen/Qwen3.5-35B-A3B",
+      "hardware": "昇腾 910C（未来候选，当前无设备）",
+      "platform": "ascend",
+      "framework_target": "vLLM-Ascend v0.30.0（研究目标）",
+      "stage": "mixed",
+      "concurrency": 8,
+      "tp": 2,
+      "ep": null,
+      "isl": 1024,
+      "osl": 512,
+      "latency_goal": "P95 TPOT / requests/s",
+      "description": "同模型切到并发8，观察静态图形状覆盖、GDN与专家负载是否变化；不将 c1 优化收益外推至 c8",
+      "reference_case_ids": [
+        "QINF-001"
+      ],
+      "uncertainties": [
+        "没有真实请求到达分布",
+        "混合 Prefill/Decode 需要单独剖析",
+        "模型量化与EP拓扑暂未定"
+      ]
+    },
+    {
+      "id": "ASCEND36-PREFILL",
+      "title": "Qwen3.6-27B · 910C · Prefill",
+      "model": "Qwen/Qwen3.6-27B",
+      "hardware": "昇腾 910C（未来候选，当前无设备）",
+      "platform": "ascend",
+      "framework_target": "vLLM-Ascend v0.30.0（研究目标）",
+      "stage": "prefill",
+      "concurrency": 4,
+      "tp": 2,
+      "ep": null,
+      "isl": 4096,
+      "osl": 128,
+      "latency_goal": "TTFT / Prefill吞吐",
+      "description": "Dense 但含 48 个 GDN/linear_attention 层；研究 Sequence Parallel 的 Prefill 收益与通信代价",
+      "reference_case_ids": [
+        "QINF-003"
+      ],
+      "uncertainties": [
+        "QINF-003 是不同模型且不同硬件，仅作为机制类比",
+        "TP/Sequence Parallel 的目标版本兼容性未验证",
+        "官方配置相关文件仍需固定SHA逐项回读"
+      ]
+    },
+    {
+      "id": "ASCEND36-DECODE",
+      "title": "Qwen3.6-27B · 910C · Decode",
+      "model": "Qwen/Qwen3.6-27B",
+      "hardware": "昇腾 910C（未来候选，当前无设备）",
+      "platform": "ascend",
+      "framework_target": "vLLM-Ascend v0.30.0（研究目标）",
+      "stage": "decode",
+      "concurrency": 1,
+      "tp": 2,
+      "ep": null,
+      "isl": 1024,
+      "osl": 512,
+      "latency_goal": "TPOT / 单请求延迟",
+      "description": "对照 35B MoE 场景，隔离 GDN/主机调度而不是强行套用 MoE 专家路由方案",
+      "reference_case_ids": [],
+      "uncertainties": [
+        "只有结构配置，尚无本机Profiler",
+        "无直接Qwen3.6-27B/910C低并发实测报告"
+      ]
+    },
+    {
+      "id": "B200397-REF",
+      "title": "Qwen3.5-397B-A17B · B200 · 外部参照",
+      "model": "Qwen/Qwen3.5-397B-A17B",
+      "hardware": "NVIDIA B200（仅用于比较公开研究，不代表我方设备）",
+      "platform": "cuda",
+      "framework_target": "vLLM/FlashInfer（按来源版本、非我方部署）",
+      "stage": "prefill",
+      "concurrency": 32,
+      "tp": 8,
+      "ep": null,
+      "isl": 8192,
+      "osl": 1,
+      "latency_goal": "Prefill吞吐",
+      "description": "观察 FlashInfer GDN Prefill 的 shape/backend 限制；不能将 B200 算子提速复制到 910C",
+      "reference_case_ids": [
+        "QINF-004"
+      ],
+      "uncertainties": [
+        "并发/TP是模拟验证规格，并非源文同一配方",
+        "CUDA 13、SM100、head_dim、DSL 依赖需逐项对照",
+        "无真实GPU"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "id": "H-00",
+      "name": "先确认模型/芯片/软件栈是否真的支持",
+      "topic": "compatibility",
+      "stage": "all",
+      "applies_to": [
+        "all"
+      ],
+      "priority": "P0",
+      "conclusion": "必须先过的阻断项：没有当前硬件与软件组合的兼容证据，无法推荐具体启动命令。",
+      "reason": "旧 v0.23.0 内部 patch 与 v0.30.0 稳定版本的路径和开关已发生实质变化。",
+      "predict_if": "若目标版本明确支持本芯片及对应Qwen模型，再允许进入A/B；不支持则先确定可运行基线。",
+      "measure": "软件安装与模型加载成功、正常返回、端到端正确性、基本吞吐",
+      "acceptance": "可执行真实基线且没有模型正确性异常；否则停止后续加速实验",
+      "rollback": "回到官方支持的版本/配置；不回滚到已弃用私有算子。",
+      "evidence": [
+        "https://docs.vllm.ai/projects/ascend/en/v0.30.0/user_guide/release_notes.html",
+        "https://docs.vllm.ai/projects/ascend/en/v0.26.0rc1/user_guide/release_notes.html"
+      ],
+      "related_pr_ids": [
+        "PR-ASC-12119",
+        "PR-ASC-11956",
+        "PR-ASC-11949"
+      ],
+      "related_failure_ids": [
+        "FAIL-005",
+        "FAIL-006",
+        "FAIL-007"
+      ],
+      "inference_level": "source_supported_prerequisite",
+      "flags": [
+        "hardware_availability_unverified",
+        "model_platform_support_unverified"
+      ]
+    },
+    {
+      "id": "H-01",
+      "name": "先划分 TTFT、TPOT 与 Host/NPU 时间",
+      "topic": "profiling",
+      "stage": "all",
+      "applies_to": [
+        "all"
+      ],
+      "priority": "P0",
+      "conclusion": "不存在有证据的瓶颈排名；必须先建立真实基线再判断是调度、内存、通信还是算子计算。",
+      "reason": "不同场景中 c1 的 host gap、c8 的专家负载和长输入的 prefill 成本可能完全不同。",
+      "predict_if": "若 Host 调度占比高，优先研究图执行；若通信高，优先研究TP/EP；若 GDN/专家算子高，再进入专用Kernel分支。",
+      "measure": "TTFT/TPOT p50/p95、host gap、GDN/MoE kernel时间、AllReduce占比、显存、精度",
+      "acceptance": "报告包含每条请求与分阶段 trace；并保留 baseline JSON/Profiler 原始证据",
+      "rollback": "任何一次基准结果失真/环境不一致，恢复基线重新采样。",
+      "evidence": [
+        "https://docs.vllm.ai/projects/ascend/en/v0.30.0/user_guide/feature_guide/graph_mode.html"
+      ],
+      "related_pr_ids": [],
+      "related_failure_ids": [
+        "FAIL-008"
+      ],
+      "inference_level": "methodological_requirement",
+      "flags": [
+        "no_profile"
+      ]
+    },
+    {
+      "id": "H-02",
+      "name": "低并发优先研究 Graph / Static Kernel",
+      "topic": "graph",
+      "stage": "decode",
+      "applies_to": [
+        "ascend"
+      ],
+      "priority": "P1",
+      "conclusion": "低并发下减少 Kernel launch 和 Host 调度间隙值得优先验证，但不是已测定的首要瓶颈。",
+      "reason": "官方 static kernel/npugraph_ex 文档描述启动编译成本和静态形状限制；得物小并发报告也讨论 Host/图优化。",
+      "predict_if": "若 baseline 显示较高 Host gap、请求形状稳定，则启用 Graph 后可能减少调度时间；如果 shape 变化较多则可能出现回退或启动时间增加。",
+      "measure": "Host gap p50/p95、图命中率、Static Kernel operator count、编译耗时、TPOT/TTFT、峰值内存",
+      "acceptance": "相同负载/数值验收通过，Profiler确认 kernel 生效，增量延迟改善在重复测试中超过噪声，且编译成本可接受",
+      "rollback": "关闭 static kernel 或改用官方支持的 graph 后端；保留启动和缓存证据。",
+      "evidence": [
+        "https://docs.vllm.ai/projects/ascend/en/v0.30.0/user_guide/feature_guide/graph_mode.html",
+        "https://mp.weixin.qq.com/s/GXaZWhIZ25ifH07iaTxfZQ"
+      ],
+      "related_pr_ids": [],
+      "related_failure_ids": [
+        "FAIL-001"
+      ],
+      "inference_level": "cross_case_hypothesis",
+      "flags": [
+        "kernel_availability_unknown",
+        "graph_shape_and_memory_risk"
+      ]
+    },
+    {
+      "id": "H-03",
+      "name": "GDN 的 Decode / Prefill 必须分开剖析",
+      "topic": "gdn",
+      "stage": "all",
+      "applies_to": [
+        "linear_attention"
+      ],
+      "priority": "P1",
+      "conclusion": "有 GDN 层的模型适合追踪权重/状态缓存、L2Norm/门控融合、重复布局变换；真正瓶颈需要Profile。",
+      "reason": "Qwen3.5/3.6混合注意力结构显式包含GDN；作者案例和FlashInfer各阶段实现不同，不能互换。",
+      "predict_if": "若 GDN相关算子及布局变换在对应阶段占比高，尝试官方已存在路径或设计一般形状的融合；严禁照搬 8:1 专用 CUDA MTP Kernel。",
+      "measure": "GDN prefill/decode kernel占比、recurrent state访存/精度、动态batch、state rollback、layout转换次数",
+      "acceptance": "各上下文形状与混合批量数值测试通过，真实 Trace 命中相关算子，E2E 增益重复成立",
+      "rollback": "回退官方可用 GDN实现；拒绝违反 state 或 head ratio 的 Kernel。",
+      "evidence": [
+        "https://github.com/vllm-project/vllm/pull/51674",
+        "https://github.com/flashinfer-ai/flashinfer/pull/3001",
+        "https://mp.weixin.qq.com/s/GXaZWhIZ25ifH07iaTxfZQ"
+      ],
+      "related_pr_ids": [
+        "PR-VLLM-51674",
+        "PR-FI-3001",
+        "PR-VLLM-40717"
+      ],
+      "related_failure_ids": [
+        "FAIL-003",
+        "FAIL-004"
+      ],
+      "inference_level": "cross_platform_mechanism_hypothesis",
+      "flags": [
+        "prefill_decode_not_interchangeable",
+        "non_8_to_1_head_ratio"
+      ]
+    },
+    {
+      "id": "H-04",
+      "name": "MoE 路由、Shared Expert 与 Fused MC2",
+      "topic": "moe",
+      "stage": "all",
+      "applies_to": [
+        "ascend",
+        "moe"
+      ],
+      "priority": "P1",
+      "conclusion": "MoE模型的小GEMM/路由/通信组合是核心研究对象，但要先看专家负载分布、EP拓扑及真实Kernel占比。",
+      "reason": "35B-A3B 256专家Top8，397B-A17B 512专家Top10；均匀专家微基准可能无法代表真实路由偏斜。",
+      "predict_if": "若专家负载不均与dispatch/combine等待明显，在支持的TP/EP下测试合适的共享专家重叠、Fused MC2 或路由策略；可能因 shape/负载变化负收益。",
+      "measure": "tokens_per_expert直方图、max/mean负载、grouped GEMM p50/p95、dispatch/combine时间、通信重叠与正确性",
+      "acceptance": "相同token分布且精度正确、通信无死锁；线上TPOT/TPS结果达到重复可辨识收益，否则放弃",
+      "rollback": "恢复安全的MoE实现，禁用存在问题的组合；不恢复被上游删除的旧gate/prefetch代码。",
+      "evidence": [
+        "https://docs.vllm.ai/projects/ascend/en/v0.30.0/user_guide/release_notes.html",
+        "https://github.com/vllm-project/vllm-ascend/blob/main/docs/source/tutorials/models/Qwen3.5-397B-A17B.md",
+        "https://nvidia.github.io/TensorRT-LLM/latest/developer-guide/moe-perf-guide.html"
+      ],
+      "related_pr_ids": [
+        "PR-ASC-11956",
+        "PR-ASC-11949"
+      ],
+      "related_failure_ids": [
+        "FAIL-006",
+        "FAIL-007"
+      ],
+      "inference_level": "model_structure_plus_upstream_optimization_hypothesis",
+      "flags": [
+        "ep_topology_unknown",
+        "routing_skew_unknown"
+      ]
+    },
+    {
+      "id": "H-05",
+      "name": "Dense 模型 Prefill 的 Sequence Parallel",
+      "topic": "sequence_parallel",
+      "stage": "prefill",
+      "applies_to": [
+        "dense"
+      ],
+      "priority": "P1",
+      "conclusion": "Qwen3.5/3.6 Dense 的 TP Prefill 可优先对比官方 Sequence Parallel；但其收益依赖输入长度、TP拓扑、通信链路。",
+      "reason": "vLLM-Ascend 0.30 官方文档明示 Dense SP 把 AllReduce 重排为 reduce-scatter/all-gather 并保持层间序列切片。",
+      "predict_if": "当长输入/多卡通信处于瓶颈且SP被当前版本支持时，Prefill通信关键路径可能缩短；短上下文或并发变化可能无收益。",
+      "measure": "Prefill TTFT p50/p95、all-gather和reduce-scatter时间、吞吐、显存、不同ISL下的曲线",
+      "acceptance": "分别在ISL=512/4096/8192对照TP2及SP开关，正确性无回归、E2E提升超过测量噪声",
+      "rollback": "恢复官方 non-SP 路径，并保留通信profiling证据。",
+      "evidence": [
+        "https://docs.vllm.ai/projects/ascend/en/v0.30.0/user_guide/feature_guide/sequence_parallelism.html"
+      ],
+      "related_pr_ids": [],
+      "related_failure_ids": [],
+      "inference_level": "documented_feature_hypothesis",
+      "flags": [
+        "hardware_topology_unverified",
+        "prefill_only_study"
+      ]
+    },
+    {
+      "id": "H-06",
+      "name": "原生 MTP 的自然接受率与形状覆盖",
+      "topic": "mtp",
+      "stage": "decode",
+      "applies_to": [
+        "mtp"
+      ],
+      "priority": "P2",
+      "conclusion": "理论上若草稿接受率高于额外验证开销，MTP可能减少单位输出成本；不把受控接受率性能数据当作真实业务预期。",
+      "reason": "相关Qwen模型配置包含MTP层，但实际服务是否有对应算子实现与参数还需逐项核查。",
+      "predict_if": "自然提示词业务数据接受率稳定且验证代价小于节省的decode步骤，TPOT可能改善；低接受率、Graph形状回退则可能负收益。",
+      "measure": "accepted_draft_mean_natural、verify成本、draft成本、MTP step数量、TPOT/TTFT、质量一致性、Graph命中",
+      "acceptance": "不改变业务正确性/采样契约；自然接受率和性能在同数据重复样本下得到改善证据；受控结果单独存储",
+      "rollback": "关闭MTP，恢复稳定基线，记录未接受Token与状态回退。",
+      "evidence": [
+        "https://nvidia.github.io/TensorRT-LLM/latest/deployment-guide/deployment-guide-for-qwen3.8-qwen3.5-on-trtllm.html",
+        "https://docs.vllm.ai/projects/speculators/en/latest/user_guide/algorithms/mtp/"
+      ],
+      "related_pr_ids": [
+        "PR-VLLM-51674"
+      ],
+      "related_failure_ids": [
+        "FAIL-004"
+      ],
+      "inference_level": "conditional_system_hypothesis",
+      "flags": [
+        "acceptance_not_measured",
+        "model_specific_runtime_support_unverified"
+      ]
+    },
+    {
+      "id": "H-07",
+      "name": "禁止将已删除的 Ascend 旧版融合照搬到新版",
+      "topic": "legacy_fusion",
+      "stage": "all",
+      "applies_to": [
+        "ascend"
+      ],
+      "priority": "BLOCK",
+      "conclusion": "vLLM-Ascend 已移除特定 matmul+allreduce+rmsnorm/旧 overlap gate/旧 prefetch 代码；这些接口不能视为新版可用。",
+      "reason": "上游 merged PR #12119/#11956/#11949 与官方发行说明记录了移除。",
+      "predict_if": "若从旧教程复制到新版本，可能遇到不存在的文件、配置或行为差异；应先查新版支持的替代路径。",
+      "measure": "安装/启动、配置识别、静态源码入口、Tensor/NPU Trace",
+      "acceptance": "不调用已移除入口且有官方可用替代路径；无后向兼容问题",
+      "rollback": "不复用已删旧补丁；使用官方版本可验证路径。",
+      "evidence": [
+        "https://docs.vllm.ai/projects/ascend/en/v0.26.0rc1/user_guide/release_notes.html",
+        "https://github.com/vllm-project/vllm-ascend/pull/12119"
+      ],
+      "related_pr_ids": [
+        "PR-ASC-12119",
+        "PR-ASC-11956",
+        "PR-ASC-11949"
+      ],
+      "related_failure_ids": [
+        "FAIL-005",
+        "FAIL-006",
+        "FAIL-007"
+      ],
+      "inference_level": "upstream_confirmed_exclusion",
+      "flags": [
+        "removed_source_path"
+      ]
+    },
+    {
+      "id": "H-08",
+      "name": "不要移植 8:1 CUDA GDN MTP 专用 Kernel",
+      "topic": "cuda8x",
+      "stage": "decode",
+      "applies_to": [
+        "linear_attention"
+      ],
+      "priority": "BLOCK",
+      "conclusion": "五个已整理的官方模型 GDN V/K 比例均不是 8:1，此特定PR #51674分支静态guard不满足。",
+      "reason": "PR #51674 fused CUDA post-conv GDN MTP dispatch 明确要求 num_v_heads==8*num_k_heads，结构数据表5款比值2/3/4。",
+      "predict_if": "机械采用现有分支不会命中；不能据此宣称全部 GDN 不能融合。",
+      "measure": "官方config V/K head ratio、模型实际 dispatch Trace（若将来扩展新的Kernel）",
+      "acceptance": "在不满足shape的模型上仅标为排除该分支；若未来存在新PR应重新审计版本",
+      "rollback": "使用原有通用GDN实现；不强行绕开guard。",
+      "evidence": [
+        "https://github.com/vllm-project/vllm/pull/51674"
+      ],
+      "related_pr_ids": [
+        "PR-VLLM-51674"
+      ],
+      "related_failure_ids": [
+        "FAIL-004"
+      ],
+      "inference_level": "static_model_guard_exclusion",
+      "flags": [
+        "known_head_ratio_mismatch"
+      ]
+    },
+    {
+      "id": "H-09",
+      "name": "微基准与整条服务链路分离",
+      "topic": "benchmark_causality",
+      "stage": "all",
+      "applies_to": [
+        "all"
+      ],
+      "priority": "P0",
+      "conclusion": "算子提速不等于线上TPOT或吞吐提速，必须分离计时口径和版本。",
+      "reason": "TileOPs Qwen3 MoE 1.04x 同级接近噪声；FlashInfer GDN prefills有微基准最高倍数，但E2E会小得多。",
+      "predict_if": "A/B只改一个开关并测量完整请求; 提升不能唯一归因时标为组合实验。",
+      "measure": "kernel级 us、TTFT/TPOT、E2E、requests/s、tail latency、重复统计、同负载/精度",
+      "acceptance": "报告区别算子/模型/服务、作者数据/我方实测，禁止相加和跨硬件比较",
+      "rollback": "发现统计噪声或精度回归时，不将实验标成优化成功。",
+      "evidence": [
+        "https://tile-ai.github.io/TileOPs.github.io/benchmarks/reading/",
+        "https://vllm.ai/blog/2026-08-06-qwen35-25k-tps"
+      ],
+      "related_pr_ids": [
+        "PR-FI-3001"
+      ],
+      "related_failure_ids": [
+        "FAIL-008"
+      ],
+      "inference_level": "measurement_methodology",
+      "flags": [
+        "measurement_scope_mismatch"
+      ]
+    }
+  ]
+}
