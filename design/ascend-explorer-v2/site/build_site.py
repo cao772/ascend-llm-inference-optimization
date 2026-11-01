@@ -31,6 +31,7 @@ def build_payload():
         "verifiedSpecs": json_read(base / "content/verified-product-specs-v2.2.json"),
         "softwareCompat": json_read(base / "content/software-compat-v2.2.json"),
         "architecturePaths": json_read(base / "content/architecture-paths-v2.2.json"),
+        "tilingLab": json_read(base / "content/gemm-tiling-lab-v2.3.json"),
         "operators": json_read(base / "content/operator-stories.json"),
         "modules": json_read(base / "content/modules.json"),
         "cases": json_read(ROOT / "research/cases/qwen-optimization-cases-2026-10-30.json"),
@@ -49,16 +50,18 @@ def render():
     source = (HERE / "index.html").read_text(encoding="utf-8")
     style = (HERE / "app.css").read_text(encoding="utf-8")
     script = (HERE / "app.js").read_text(encoding="utf-8")
-    for marker in ("/* APP_CSS_INJECT */", "/* DATA_JSON_INJECT */", "/* APP_JS_INJECT */"):
+    tiling_script = (HERE / "tiling_math.js").read_text(encoding="utf-8")
+    for marker in ("/* APP_CSS_INJECT */", "/* DATA_JSON_INJECT */", "/* TILING_JS_INJECT */", "/* APP_JS_INJECT */"):
         if source.count(marker) != 1:
             raise ValueError("Missing or duplicate injection marker " + marker)
     data = json.dumps(build_payload(), ensure_ascii=False, separators=(",", ":"))
     data = data.replace("<", "\\u003c").replace(">", "\\u003e").replace("&", "\\u0026")
     # Browser must never be able to terminate embedded source tags from project input.
-    if "</script" in data.lower() or "</style" in style.lower() or "</script" in script.lower():
+    if "</script" in data.lower() or "</style" in style.lower() or "</script" in script.lower() or "</script" in tiling_script.lower():
         raise ValueError("unsafe literal closing tag")
     page = source.replace("/* APP_CSS_INJECT */", style)
     page = page.replace("/* DATA_JSON_INJECT */", data)
+    page = page.replace("/* TILING_JS_INJECT */", tiling_script)
     page = page.replace("/* APP_JS_INJECT */", script)
     if "/* APP_" in page:
         raise ValueError("Unfilled source marker")
