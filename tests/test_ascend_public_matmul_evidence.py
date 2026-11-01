@@ -59,7 +59,7 @@ class PublicMatmulEvidenceTests(unittest.TestCase):
         h=build_site.render()
         self.assertIn("reported-evidence-grid",h)
         self.assertIn("public_author_reported_not_independently_reproduced",h)
-        self.assertIn("不能跨行累乘",h)
+        self.assertIn("不可跨行累乘",h)
         self.assertNotIn('"project_npu_reproduction":true',h)
         self.assertIn("MTE2_pipeline_duration_us",h)
         self.assertNotIn("/* APP_JS_INJECT */",h)
